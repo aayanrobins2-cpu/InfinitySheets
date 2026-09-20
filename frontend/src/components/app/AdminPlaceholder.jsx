@@ -22,6 +22,7 @@ function emptyForm({ syllabus, subject }) {
     subject: subject || '',
     topic: topics[0] || '',
     year: '',
+    ibLevel: '',      // IB only: 'HL' | 'SL' | '' (both)
     board: syllabus || '',
     difficulty: 'Medium',
     answerType: 'Multiple choice',
@@ -196,6 +197,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
       subject,
       topic: form.answerType === FULL_PAPER_TYPE ? '' : form.topic,
       year: form.year ? parseInt(form.year, 10) : null,
+      ibLevel: syllabus === 'IB' && form.ibLevel ? form.ibLevel : null,
       board: syllabus,
       difficulty: form.difficulty,
       answerType: form.answerType,
@@ -271,6 +273,15 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
             <Field label="Year (optional)">
               <input className="input-base" type="number" min="1990" max="2099" value={form.year} onChange={(e) => setF({ year: e.target.value })} placeholder="e.g., 2023" />
             </Field>
+            {syllabus === 'IB' && (
+              <Field label="IB level">
+                <select className="input-base" value={form.ibLevel} onChange={(e) => setF({ ibLevel: e.target.value })} data-testid="admin-ib-level">
+                  <option value="">Both HL & SL</option>
+                  <option value="HL">HL only</option>
+                  <option value="SL">SL only</option>
+                </select>
+              </Field>
+            )}
             <Field label="Marks (optional)">
               <input className="input-base" type="number" min="1" max="30" value={form.marks} onChange={(e) => setF({ marks: e.target.value })} placeholder="e.g., 5" />
             </Field>
@@ -406,6 +417,7 @@ function LibraryRow({ p, onRemove }) {
             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10.5px] font-semibold">{p.answerType}</span>
             {p.difficulty && <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10.5px] font-semibold">{p.difficulty}</span>}
             {p.year && <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10.5px] font-semibold">{p.year}</span>}
+            {p.ibLevel && <span className="px-2 py-0.5 rounded-md bg-violet-100 text-violet-800 text-[10.5px] font-semibold">{p.ibLevel}</span>}
             {p.marks && <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10.5px] font-semibold">{p.marks} marks</span>}
           </div>
           <div className="text-[13.5px] font-medium text-slate-900 leading-snug">{p.q}</div>
@@ -466,6 +478,7 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
   const [schemeFile, setSchemeFile] = useState(null);   // optional mark-scheme PDF
   const aiOn = isAiEnabled(state);
   const [year, setYear] = useState('');
+  const [ibLevel, setIbLevel] = useState(''); // IB only
   const [link, setLink] = useState('');
   const [autosave, setAutosave] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -490,6 +503,7 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
         ...q,
         subject,
         board: syllabus,
+        ibLevel: syllabus === 'IB' && ibLevel ? ibLevel : null,
         year: year ? parseInt(year, 10) : q.year || null,
         link: link.trim() || null,
         addedBy,
@@ -571,6 +585,13 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
         </Field>
         <Field label="Year (optional)">
           <input className="input-base" type="number" min="1990" max="2099" value={year} onChange={(e) => setYear(e.target.value)} placeholder="e.g., 2023" />
+          {syllabus === 'IB' && (
+            <select className="input-base" value={ibLevel} onChange={(e) => setIbLevel(e.target.value)} aria-label="IB level" data-testid="admin-bulk-ib-level">
+              <option value="">Both HL & SL</option>
+              <option value="HL">HL only</option>
+              <option value="SL">SL only</option>
+            </select>
+          )}
         </Field>
         <Field label="Reference link (optional, attached to every question)">
           <input className="input-base" type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://example.com/paper.pdf" />

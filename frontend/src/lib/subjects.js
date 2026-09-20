@@ -80,11 +80,16 @@ export function subjectBoards(courses, fallbackTrack) {
 // ---------------------------------------------------------------------------
 export function questionsForSubject(pastPapers, subject, courses, fallbackTrack) {
   if (!subject) return [];
-  const board = subjectBoards(courses, fallbackTrack)[subject]?.board || fallbackTrack;
+  const info = subjectBoards(courses, fallbackTrack)[subject] || {};
+  const board = info.board || fallbackTrack;
+  const level = info.ibLevel; // IB: 'HL' | 'SL' when the student chose one
   return (pastPapers || []).filter((p) =>
     p && p.q && p.subject === subject
     && p.answerType !== 'Full paper'
-    && (!p.board || p.board === board));
+    && (!p.board || p.board === board)
+    // An IB paper tagged HL-only / SL-only is only served to that level;
+    // untagged papers go to both.
+    && (!p.ibLevel || !level || p.ibLevel === level));
 }
 
 // Which curricula actually teach a subject, in EXAM_TRACKS order. This is what
