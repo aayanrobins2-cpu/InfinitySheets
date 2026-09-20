@@ -1,4 +1,5 @@
 import { primaryTrack, topicsFor } from '../../lib/subjects';
+import { papersFor } from '../../lib/paperTypes';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool } from 'lucide-react';
@@ -437,6 +438,7 @@ function LibraryRow({ p, onRemove }) {
             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10.5px] font-semibold">{p.answerType}</span>
             {p.difficulty && <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10.5px] font-semibold">{p.difficulty}</span>}
             {p.year && <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10.5px] font-semibold">{p.year}</span>}
+            {p.paper && <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10.5px] font-semibold">{p.paper}</span>}
             {p.ibLevel && <span className="px-2 py-0.5 rounded-md bg-violet-100 text-violet-800 text-[10.5px] font-semibold">{p.ibLevel}</span>}
             {(p.hasDiagram || p.answerType === 'Drawing') && <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10.5px] font-semibold">Diagram</span>}
             {p.marks && <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10.5px] font-semibold">{p.marks} marks</span>}
@@ -499,7 +501,9 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
   const [schemeFile, setSchemeFile] = useState(null);   // optional mark-scheme PDF
   const aiOn = isAiEnabled(state);
   const [year, setYear] = useState('');
-  const [ibLevel, setIbLevel] = useState(''); // IB only
+  const [paperId, setPaperId] = useState(''); // which paper this PDF is — required
+  const papers = papersFor(syllabus, subject);
+  const paperMeta = papers.find((x) => x.id === paperId) || null;
   const [link, setLink] = useState('');
   const [autosave, setAutosave] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -512,6 +516,7 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
   // the PDF and returns question drafts with answers + marking schemes.
   const extract = async () => {
     if (!file) { toast.error('Choose a PDF first'); return; }
+    if (!paperMeta) { toast.error('Pick which paper this PDF is (Paper 1, Paper 2 …) before scanning'); return; }
     if (!aiOn) { toast.error('AI is switched off in Settings — turn it on to scan the PDF.'); return; }
     if (state.user?.role !== 'admin') { toast.error('Admin access is required to add to the question bank.'); return; }
     setUploading(true);
@@ -524,7 +529,8 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
         ...q,
         subject,
         board: syllabus,
-        ibLevel: syllabus === 'IB' && ibLevel ? ibLevel : null,
+        paper: paperMeta.label,
+        paperId: paperMeta.id,
         year: year ? parseInt(year, 10) : q.year || null,
         link: link.trim() || null,
         addedBy,
@@ -606,13 +612,12 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
         </Field>
         <Field label="Year (optional)">
           <input className="input-base" type="number" min="1990" max="2099" value={year} onChange={(e) => setYear(e.target.value)} placeholder="e.g., 2023" />
-          {syllabus === 'IB' && (
-            <select className="input-base" value={ibLevel} onChange={(e) => setIbLevel(e.target.value)} aria-label="IB level" data-testid="admin-bulk-ib-level">
-              <option value="">Both HL & SL</option>
-              <option value="HL">HL only</option>
-              <option value="SL">SL only</option>
-            </select>
-          )}
+        </Field>
+        <Field label="Which paper is this? (required)">
+          <select className="input-base" value={paperId} onChange={(e) => setPaperId(e.target.value)} data-testid="admin-bulk-paper" required>
+            <option value="">Select the paper…</option>
+            {papers.map((x) => <option key={x.id} value={x.id}>{x.label} — {x.hint}</option>)}
+          </select>
         </Field>
         <Field label="Reference link (optional, attached to every question)">
           <input className="input-base" type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://example.com/paper.pdf" />
