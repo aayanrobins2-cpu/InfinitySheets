@@ -465,14 +465,6 @@ export const QUESTION_BANK = {
 };
 
 // Default fallback questions for any topic missing
-export const FALLBACK_QUESTIONS = [
-  { q: 'This worksheet uses sample questions. Pick the correct option:', options: ['Option A', 'Option B (correct)', 'Option C', 'Option D'], a: 1 },
-  { q: 'Which of these is true about practice?', options: ['It is unhelpful', 'It builds mastery', 'It is random', 'None'], a: 1 },
-  { q: 'A worksheet helps you to:', options: ['Avoid study', 'Test understanding', 'Sleep', 'Browse social'], a: 1 },
-  { q: 'Best way to review mistakes:', options: ['Ignore them', 'Analyze and retry', 'Delete them', 'Forget'], a: 1 },
-  { q: 'Spaced repetition improves:', options: ['Speed only', 'Long-term recall', 'Sleep', 'Nothing'], a: 1 },
-];
-
 export const STATS_LANDING = [
   { num: '9', label: 'exam and syllabus pathways' },
   { num: '48', label: 'subjects across all courses' },

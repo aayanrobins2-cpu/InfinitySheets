@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { TOPICS, QUESTION_BANK, FALLBACK_QUESTIONS, EXAM_DURATIONS } from '../../data/mock';
+import { TOPICS, QUESTION_BANK, EXAM_DURATIONS } from '../../data/mock';
 import { enrolledSubjects, questionsForSubject, resolvedTopics, topicGroups, primaryTrack } from '../../lib/subjects';
 import { Check, X, Clock, ChevronLeft, ChevronRight, Sparkles, FileText, AlertCircle, Download, Flag, Lock, Maximize2, Gauge, RotateCcw, Loader2, ClipboardCheck, Printer, Play, Upload, Trash2, ChevronDown, Minus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -115,12 +115,16 @@ function buildQuestions({ topics, answerType, difficulty, length, pastPapers, ai
   const preferPP = pastPapers && ppMatching.length > 0;
   const preferAI = !!aiGenerated;
 
+  // AI-written questions first; then the small built-in bank for topics that
+  // have real entries; otherwise null — a sheet is never padded with filler.
+  const usedBank = new Set();
   const aiPool = () => {
     if (genIdx < generated.length) return generated[genIdx++];
-    const t = list[Math.floor(Math.random() * Math.max(1, list.length))] || null;
-    const pool = (t && QUESTION_BANK[t]) || FALLBACK_QUESTIONS;
-    const base = pool[Math.floor(Math.random() * pool.length)] || pool[0];
-    return toAnswerType({ ...base, _topic: t, difficulty, source: 'ai-generated' }, answerType);
+    const candidates = list.flatMap((t) => (QUESTION_BANK[t] || []).map((q, k) => ({ q, t, key: `${t}#${k}` }))).filter((c) => !usedBank.has(c.key));
+    if (!candidates.length) return null;
+    const c = candidates[Math.floor(Math.random() * candidates.length)];
+    usedBank.add(c.key);
+    return toAnswerType({ ...c.q, _topic: c.t, difficulty, source: 'question-bank' }, answerType);
   };
   const ppPool = (i) => {
     if (!ppMatching.length) return null;
@@ -153,6 +157,7 @@ function buildQuestions({ topics, answerType, difficulty, length, pastPapers, ai
       picked = aiPool();
     }
     if (!picked) picked = aiPool();
+    if (!picked) break; // nothing real left to add — stop rather than pad
     out.push(picked);
   }
   // Textbook notation everywhere the student reads it: 3², √2, H₂O, ×, ≤.
@@ -787,7 +792,15 @@ export default function Worksheets({ go }) {
       }
     }
     const qs = buildQuestions({ topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, length, pastPapers, aiGenerated, pastPaperPool, reviewQuestions, generated });
-    if (qs.length < length) toast(`Only ${qs.length} past-paper question${qs.length === 1 ? '' : 's'} match this selection, so this sheet has ${qs.length}. Tick AI generated for more.`);
+    if (!qs.length) {
+      toast.error(aiGenerated ? 'The AI did not return any questions (it may be at its daily limit). Try again in a moment, or tick past papers.' : 'No questions are available for this selection yet.');
+      return null;
+    }
+    if (qs.length < length) {
+      toast(aiGenerated && !pastPapers
+        ? `The AI produced ${qs.length} question${qs.length === 1 ? '' : 's'} instead of ${length}, so this sheet is shorter.`
+        : `Only ${qs.length} question${qs.length === 1 ? '' : 's'} match this selection, so this sheet has ${qs.length}.${aiGenerated ? '' : ' Tick Accurate to you for more.'}`);
+    }
     return qs;
   };
 
