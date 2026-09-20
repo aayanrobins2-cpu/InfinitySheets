@@ -9,6 +9,7 @@ import { computeBadges, BADGES } from '../lib/badges';
 import { markCard } from '../lib/flashcards';
 import { initAnalytics, identify, track } from '../lib/analytics';
 import { toast } from 'sonner';
+import { haptic, setHapticsEnabled } from '../lib/haptics';
 
 // Study data now lives in Supabase (Postgres + RLS) when the user is signed in
 // with a real account.
@@ -41,6 +42,7 @@ const defaultState = {
     examDate: '',
     keyboardShortcuts: true,
     sound: true,
+    haptics: true,
     aiEnabled: true,
     askMistakeReason: true,
     glass: 50,
@@ -234,6 +236,8 @@ export function AppProvider({ children }) {
     root.style.setProperty('--glass-blur', off ? '0px' : `${Math.round(30 * (i / 50) * 10) / 10}px`);
     root.classList.toggle('no-glass', off);
   }, [state.settings?.glass, state.settings?.glassOff, state.theme]);
+
+  useEffect(() => { setHapticsEnabled(state.settings?.haptics !== false); }, [state.settings?.haptics]);
 
   // Theme class on <html>
   useEffect(() => {
@@ -694,7 +698,7 @@ export function AppProvider({ children }) {
     setState((s) => ({ ...s, badges }));
     fresh.forEach((id) => {
       const b = BADGES.find((x) => x.id === id);
-      if (b) toast.success(`${b.emoji} Badge unlocked: ${b.name}`, { description: b.how });
+      if (b) { toast.success(`${b.emoji} Badge unlocked: ${b.name}`, { description: b.how }); haptic('celebrate'); }
       track('badge_unlocked', { badge: id });
     });
     bg(() => store.upsertSettings({ ...stateRef.current, badges }, uid()), 'badges');

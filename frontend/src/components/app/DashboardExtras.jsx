@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Zap, Check, Timer, Play, Pause, RotateCcw, Coffee } from 'lucide-react';
 import { toast } from 'sonner';
+import { haptic } from '../../lib/haptics';
 import { useApp } from '../../context/AppContext';
 import { todaysChallenge, challengeDone, challengeStreak } from '../../lib/dailyChallenge';
 import { track } from '../../lib/analytics';
@@ -62,6 +63,7 @@ export function PomodoroTimer() {
     if (phase === 'focus') {
       logFocusSession({ minutes: PRESETS[preset][0], at: new Date().toISOString() });
       track('focus_session', { minutes: PRESETS[preset][0] });
+      haptic('warning');
       toast.success(`Pomodoro done — ${PRESETS[preset][0]} min logged. Take ${PRESETS[preset][1]} minutes.`);
       setPhase('break');
     } else {

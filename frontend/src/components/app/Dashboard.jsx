@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, Mail, SlidersHorizontal, GripVertical, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { haptic } from '../../lib/haptics';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
 import { predictedScore, formatGrade, scoreToIBGrade } from '../../lib/predictedGrade';
 import { SUBJECT_INFO } from '../../data/mock';
@@ -661,7 +662,7 @@ export default function Dashboard({ go }) {
     clearTimeout(r.timer);
     r.timer = setTimeout(() => {
       r.active = true; setLiftId(id);
-      try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) { /* ignore */ }
+      haptic('medium');
     }, 450);
   };
   const onCardPointerMove = (e) => {

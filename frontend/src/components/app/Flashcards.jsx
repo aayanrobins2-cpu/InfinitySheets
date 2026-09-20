@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Layers, ChevronRight, Printer, Lightbulb, Loader2, Check, X, ArrowLeft, RotateCcw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { haptic } from '../../lib/haptics';
 import { useApp } from '../../context/AppContext';
 import { buildTopicDeck, topicProgress, deckKey } from '../../lib/flashcards';
 import { enrolledSubjects, boardFor, resolvedTopics } from '../../lib/subjects';
@@ -110,6 +111,7 @@ function TopicSession({ subject, topic, board, aiOn, onBack, markFlashcard, save
   const answer = (knew) => {
     if (!card) return;
     markFlashcard(card.key, knew);
+    haptic(knew ? 'success' : 'error');
     track('flashcard_marked', { knew });
     setTally((t) => ({ known: t.known + (knew ? 1 : 0), unknown: t.unknown + (knew ? 0 : 1), seen: new Set([...t.seen, card.key]) }));
     setFlipped(false);
