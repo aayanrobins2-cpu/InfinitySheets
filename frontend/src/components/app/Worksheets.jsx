@@ -745,7 +745,9 @@ export default function Worksheets({ go }) {
       toast.error('No past-paper questions match this selection. Ask an admin to upload some, or also tick AI generated.');
       return null;
     }
-    const length = recap ? 10 : Math.max(3, Math.min(30, Math.round(duration / 3)));
+    // Recap: as many quick answers as the chosen duration allows (~1/min),
+    // not a fixed 10; normal sheets pace at ~3 min per question.
+    const length = recap ? Math.max(5, Math.min(40, Math.round(duration))) : Math.max(3, Math.min(30, Math.round(duration / 3)));
     const reviewQuestions = withReviews && includeReviews && !recap ? reviewsDue.filter((r) => topics.includes(r.topic) || !r.topic).map(reviewToQuestion) : [];
     let generated = [];
     if (aiGenerated && aiOn) {
@@ -813,7 +815,7 @@ export default function Worksheets({ go }) {
     telemetryRef.current = { data: emptyTelemetry(qs.length), enteredAt: null, hiddenAt: null };
     if (examMode) enterFullscreen();
     setStartTime(Date.now());
-    setTimeLeft((simulation ? simPreset.minutes : recap ? 10 : duration) * 60);
+    setTimeLeft((simulation ? simPreset.minutes : duration) * 60);
     setStage('take');
   };
 
@@ -1737,7 +1739,7 @@ export default function Worksheets({ go }) {
               testid="ws-pace-coach"
             />
             <CheckboxCard
-              label={<span>Recap <span className="text-slate-500 font-normal">— 10 short answers, 10 min, answers only</span></span>}
+              label={<span>Recap <span className="text-slate-500 font-normal">— quick short answers, as many as the time allows, answers only</span></span>}
               icon={<Zap className="w-5 h-5 text-emerald-600" />}
               checked={recap}
               onChange={(v) => { setRecap(v); if (v) setSimulation(false); }}

@@ -25,7 +25,7 @@ import Groups from './Groups';
 import ConsentGate from './ConsentGate';
 import CommandPalette from './CommandPalette';
 import { isPlus } from '../../lib/entitlements';
-import { PlusUpgradeScreen } from './PlusLock';
+import { PlusPreview } from './PlusLock';
 import { pageview } from '../../lib/analytics';
 import { maybeRemind } from '../../lib/reminders';
 import { dueReviews } from '../../lib/spacedRepetition';
@@ -254,7 +254,7 @@ export default function AppShell({ hash }) {
           syncStatus={syncStatus}
         />
         <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-7 max-w-[1280px]">
-          {PLUS_NAV[current.key] && !plus ? <PlusUpgradeScreen feature={PLUS_NAV[current.key]} /> : renderRoute(current.key, params, go, isAdmin)}
+          {PLUS_NAV[current.key] && !plus ? <PlusPreview feature={PLUS_NAV[current.key]}>{renderRoute(current.key, params, go, isAdmin)}</PlusPreview> : renderRoute(current.key, params, go, isAdmin)}
         </div>
       </main>
 

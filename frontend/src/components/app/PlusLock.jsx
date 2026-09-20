@@ -62,3 +62,21 @@ export function PlusUpgradeScreen({ feature }) {
     </div>
   );
 }
+
+// A locked page a free user can still look at: the real page renders greyed
+// out and non-interactive under a click-catching overlay, with a sticky lock
+// banner. Scrolling works, so they can see everything the tier offers.
+export function PlusPreview({ feature, children }) {
+  const { requirePlus } = usePlus();
+  const label = PLUS_FEATURES[feature] || 'This feature';
+  return (
+    <div className="relative" data-testid={`plus-preview-${feature}`}>
+      <div className="sticky top-2 z-20 mb-4 rounded-xl border border-violet-200 bg-violet-50/95 backdrop-blur px-4 py-2.5 flex items-center gap-2 text-[13px] text-violet-900 shadow-sm">
+        <Lock className="w-4 h-4 text-violet-600 shrink-0" />
+        <span><b>{label}</b> is part of InfinitySheets+. Have a look around — upgrade to use it.</span>
+      </div>
+      <div className="opacity-50 grayscale-[0.35] select-none pointer-events-none" aria-hidden="true">{children}</div>
+      <button type="button" aria-label={`${label} — InfinitySheets+ only`} onClick={() => requirePlus(feature)} className="absolute inset-0 z-10 cursor-not-allowed bg-transparent" />
+    </div>
+  );
+}

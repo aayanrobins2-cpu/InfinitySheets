@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { X, Upload, FileText, Sparkles, Loader2, Plus, Trash2, GraduationCap, Search, CheckCircle2, ExternalLink, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { courseSearch, isAiEnabled } from '../../lib/ai';
+import { SUBJECTS_BY_BOARD } from '../../data/syllabi';
+import { EXAM_TRACKS } from '../../data/mock';
 
 /**
  * CustomCourseWizard
@@ -40,7 +42,7 @@ const CAT = {
   syllabus: { label: 'Syllabus', hint: 'The official syllabus / specification (PDF).', accept: '.pdf,.doc,.docx' },
 };
 
-export default function CustomCourseWizard({ onClose, onCreated }) {
+export default function CustomCourseWizard({ onClose, onCreated, onUseOffered }) {
   const { state, addCourse } = useApp();
   const aiOn = isAiEnabled(state);
 
@@ -71,6 +73,25 @@ export default function CustomCourseWizard({ onClose, onCreated }) {
   const removeFile = (cat, idx) => setByCat((prev) => ({ ...prev, [cat]: prev[cat].filter((_, i) => i !== idx) }));
   const allFiles = [...byCat.questions, ...byCat.notes, ...byCat.syllabus];
   const canSubmit = name.trim().length > 0 && subject.trim().length > 0;
+
+  // Before searching the web: is this course already on InfinitySheets? Match
+  // the subject against every board's list, narrowed by any board named in
+  // the description / course name.
+  const offered = useMemo(() => {
+    const q = subject.trim().toLowerCase();
+    if (q.length < 3) return [];
+    const text = `${name} ${description}`.toLowerCase();
+    const boardHint = EXAM_TRACKS.filter((t) => text.includes(t.name.toLowerCase()) || text.includes(t.id.toLowerCase())).map((t) => t.id);
+    const out = [];
+    Object.entries(SUBJECTS_BY_BOARD).forEach(([board, list]) => {
+      if (boardHint.length && !boardHint.includes(board)) return;
+      list.forEach((sub) => {
+        const l = sub.toLowerCase();
+        if (l === q || l.includes(q) || q.includes(l)) out.push({ board, boardName: EXAM_TRACKS.find((t) => t.id === board)?.name || board, subject: sub, exact: l === q });
+      });
+    });
+    return out.sort((a, b) => Number(b.exact) - Number(a.exact)).slice(0, 6);
+  }, [subject, name, description]);
 
   const runSearch = async (userReply) => {
     if (!aiOn) { toast.error('Turn AI on in Settings to search for your course'); return; }
@@ -167,6 +188,20 @@ export default function CustomCourseWizard({ onClose, onCreated }) {
               )}
             </div>
             <p className="text-[11.5px] text-blue-900/70 mt-1">The AI searches for real, official courses and specifications that match yours — it may ask a couple of quick questions first.</p>
+
+            {offered.length > 0 && !matched && (
+              <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5" data-testid="cc-offered">
+                <div className="text-[12.5px] font-semibold text-emerald-900 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Already on InfinitySheets</div>
+                <div className="text-[11.5px] text-emerald-800/80 mt-0.5">This looks like a course we already offer, with its syllabus built in. Use it instead of a custom course:</div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {offered.map((o) => (
+                    <button key={o.board + o.subject} type="button" onClick={() => onUseOffered ? onUseOffered(o) : toast(`Add it from “Add a course” → ${o.boardName} → ${o.subject}`)} className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-white px-2.5 py-1 text-[12px] font-medium text-emerald-900 hover:bg-emerald-100" data-testid={`cc-offered-${o.board}-${o.subject}`}>
+                      {o.boardName} · {o.subject}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {matched ? (
               <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 flex items-start gap-2" data-testid="cc-matched">

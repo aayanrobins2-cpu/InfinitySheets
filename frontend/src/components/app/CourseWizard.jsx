@@ -137,6 +137,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
     return (
       <CustomCourseWizard
         onCreated={isOnboarding ? ({ subject }) => completeOnboarding({ examTrack: 'Custom', examDate: '', subjects: [subject], frequency, weeklyGoal }) : undefined}
+        onUseOffered={({ board, subject }) => { setCustomOpen(false); setExamTrack(board); setPicked([subject]); setDates({}); setStep(1); toast.success(`${subject} is already offered — added to this course`); }}
         onClose={() => { setCustomOpen(false); if (onClose) onClose(); }}
       />
     );
