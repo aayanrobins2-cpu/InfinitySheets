@@ -1,8 +1,9 @@
 import { primaryTrack, topicsFor } from '../../lib/subjects';
 import { papersFor } from '../../lib/paperTypes';
+import { findDuplicates } from '../../lib/duplicates';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool } from 'lucide-react';
+import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool, Copy } from 'lucide-react';
 import { SUBJECTS, EXAM_TRACKS } from '../../data/mock';
 import { FULL_PAPER_TYPE } from '../../data/pastPapers';
 import { toast } from 'sonner';
@@ -176,6 +177,10 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
     if (!filterTopic) return scopedPastPapers;
     return scopedPastPapers.filter((p) => p.topic === filterTopic);
   }, [scopedPastPapers, filterTopic]);
+  // Duplicate detector: exact + near-duplicate questions in this category.
+  const dupGroups = useMemo(() => findDuplicates(scopedPastPapers), [scopedPastPapers]);
+  const dupExtras = dupGroups.reduce((n, g) => n + g.items.length - 1, 0);
+  const [showDups, setShowDups] = useState(false);
 
   const validate = () => {
     const isPaper = form.answerType === FULL_PAPER_TYPE;
@@ -379,8 +384,39 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
             <div className="text-[12px] tracking-[0.16em] uppercase font-semibold text-blue-700">Past-paper library</div>
             <div className="text-[12.5px] text-slate-500">{syllabus} · {subject} · {scopedPastPapers.length} total{filterTopic ? ` · ${filteredPastPapers.length} shown` : ''}</div>
           </div>
-          <Filter className="w-5 h-5 text-slate-400" />
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setShowDups((v) => !v)} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border transition-colors ${dupExtras ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'border-[color:var(--color-border)] text-slate-500 hover:bg-slate-50'}`} data-testid="admin-dup-toggle" title="Find duplicate questions">
+              <Copy className="w-3.5 h-3.5" /> Duplicates{dupExtras ? <span className="ml-0.5 rounded-full bg-amber-600 text-white px-1.5 text-[10.5px]">{dupExtras}</span> : null}
+            </button>
+            <Filter className="w-5 h-5 text-slate-400" />
+          </div>
         </div>
+        {showDups && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/40 p-3" data-testid="admin-dup-panel">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="text-[12.5px] font-semibold text-amber-900">{dupGroups.length ? `${dupGroups.length} group${dupGroups.length === 1 ? '' : 's'} of duplicates · ${dupExtras} extra question${dupExtras === 1 ? '' : 's'}` : 'No duplicates found in this category'}</div>
+              {dupExtras > 0 && (
+                <button type="button" onClick={() => { dupGroups.forEach((g) => g.items.slice(1).forEach((q) => removePastPaper(q.id))); toast.success(`Removed ${dupExtras} duplicate question${dupExtras === 1 ? '' : 's'}`); }} className="text-[12px] font-semibold text-rose-700 hover:text-rose-900" data-testid="admin-dup-remove-all">Remove all extras (keep first of each)</button>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 max-h-[360px] overflow-auto pr-1">
+              {dupGroups.map((g) => (
+                <div key={g.key} className="rounded-lg border border-[color:var(--color-border)] bg-white p-2.5">
+                  <div className="text-[10.5px] uppercase tracking-wide font-semibold mb-1.5 text-slate-500">{g.exact ? 'Identical' : 'Near-identical'} · {g.items.length} copies</div>
+                  {g.items.map((q, i) => (
+                    <div key={q.id} className="flex items-start gap-2 py-1 border-t border-[color:var(--color-border)] first:border-t-0">
+                      <div className="min-w-0 flex-1 text-[12.5px] text-slate-800">
+                        <span className="text-slate-900">{q.q}</span>
+                        <div className="text-[11px] text-slate-500 mt-0.5">{q.topic || '—'}{q.year ? ` · ${q.year}` : ''}{q.paper ? ` · ${q.paper}` : ''}{q.answerType ? ` · ${q.answerType}` : ''}{i === 0 ? ' · kept' : ''}</div>
+                      </div>
+                      {i > 0 && <button type="button" onClick={() => removePastPaper(q.id)} className="text-[11.5px] font-semibold text-rose-700 hover:text-rose-900 shrink-0" data-testid={`admin-dup-remove-${q.id}`}>Remove</button>}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <select className="input-base mb-4" value={filterTopic} onChange={(e) => setFilterTopic(e.target.value)}>
           <option value="">All topics</option>
