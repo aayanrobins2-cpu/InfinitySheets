@@ -468,9 +468,28 @@ export default function Worksheets({ go }) {
   // The same questions the Question Bank lists for this subject — one shared
   // selector, so the two can never disagree. Topic / answer-type narrowing is
   // layered on top in buildQuestions and ppAvailable.
+  // Ids of past-paper questions this student has already answered correctly.
+  // A question they got right is "marked correct": it only comes back
+  // infrequently. Ones they got wrong stay in rotation, and spaced-repetition
+  // reviews are a separate stream that is meant to repeat.
+  const masteredIds = useMemo(() => {
+    const set = new Set();
+    (state.worksheets || []).forEach((w) => (w.questions || []).forEach((q, i) => { if (q && q.id && w.results && w.results[i] === true) set.add(q.id); }));
+    return set;
+  }, [state.worksheets]);
   const pastPaperPool = useMemo(
-    () => { const hidden = new Set(state.flaggedQuestionIds || []); return questionsForSubject(state.pastPapers, subject, state.courses, track).filter((p) => !hidden.has(p.id)); },
-    [state.pastPapers, subject, state.courses, track, state.flaggedQuestionIds],
+    () => {
+      const hidden = new Set(state.flaggedQuestionIds || []);
+      const all = questionsForSubject(state.pastPapers, subject, state.courses, track).filter((p) => !hidden.has(p.id));
+      const fresh = all.filter((p) => !masteredIds.has(p.id));
+      const mastered = all.filter((p) => masteredIds.has(p.id));
+      // Let a mastered question slip back in only occasionally (about 1 in 6,
+      // at most two per sheet) so it is refreshed, not drilled again.
+      const revisit = mastered.filter(() => Math.random() < 0.16).slice(0, 2);
+      return [...fresh, ...revisit];
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.pastPapers, subject, state.courses, track, state.flaggedQuestionIds, masteredIds],
   );
   const [difficulty, setDifficulty] = useState('Medium');
   const [duration, setDuration] = useState(challengePick ? 15 : examMinutes);

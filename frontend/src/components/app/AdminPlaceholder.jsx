@@ -393,9 +393,29 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
           </div>
         ) : (
           <div className="flex flex-col gap-2 max-h-[640px] overflow-auto pr-1">
-            {filteredPastPapers.map((p) => (
-              <LibraryRow key={p.id} p={p} onRemove={removePastPaper} />
-            ))}
+            {(() => {
+              // Diagram-based questions (a figure to read, or a drawing to
+              // make) are kept in their own section so they are easy to find.
+              const isDiagram = (p) => !!p.hasDiagram || p.answerType === 'Drawing';
+              const diagram = filteredPastPapers.filter(isDiagram);
+              const rest = filteredPastPapers.filter((p) => !isDiagram(p));
+              return (
+                <>
+                  {diagram.length > 0 && (
+                    <div data-testid="library-diagram-section">
+                      <div className="sticky top-0 z-[1] bg-white/95 backdrop-blur text-[10.5px] tracking-[0.14em] uppercase font-semibold text-violet-700 py-1.5 mb-1 border-b border-violet-100">Diagram-based questions · {diagram.length}</div>
+                      <div className="flex flex-col gap-2">{diagram.map((p) => <LibraryRow key={p.id} p={p} onRemove={removePastPaper} />)}</div>
+                    </div>
+                  )}
+                  {rest.length > 0 && (
+                    <div>
+                      {diagram.length > 0 && <div className="sticky top-0 z-[1] bg-white/95 backdrop-blur text-[10.5px] tracking-[0.14em] uppercase font-semibold text-slate-500 py-1.5 mt-3 mb-1 border-b border-[color:var(--color-border)]">Other questions · {rest.length}</div>}
+                      <div className="flex flex-col gap-2">{rest.map((p) => <LibraryRow key={p.id} p={p} onRemove={removePastPaper} />)}</div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -418,6 +438,7 @@ function LibraryRow({ p, onRemove }) {
             {p.difficulty && <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10.5px] font-semibold">{p.difficulty}</span>}
             {p.year && <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10.5px] font-semibold">{p.year}</span>}
             {p.ibLevel && <span className="px-2 py-0.5 rounded-md bg-violet-100 text-violet-800 text-[10.5px] font-semibold">{p.ibLevel}</span>}
+            {(p.hasDiagram || p.answerType === 'Drawing') && <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10.5px] font-semibold">Diagram</span>}
             {p.marks && <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10.5px] font-semibold">{p.marks} marks</span>}
           </div>
           <div className="text-[13.5px] font-medium text-slate-900 leading-snug">{p.q}</div>
