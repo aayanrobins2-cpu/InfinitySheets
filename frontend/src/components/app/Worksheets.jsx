@@ -23,6 +23,7 @@ import { workedSolution } from '../../lib/ai';
 import { track as trackEvent } from '../../lib/analytics';
 import { Wand2, BookOpenCheck, MessageCircleQuestion, Zap } from 'lucide-react';
 import { usePlus, PlusBadge } from './PlusLock';
+import { papersFor } from '../../lib/paperTypes';
 import AiChat from './ai/AiChat';
 
 // Why a question was missed — tagged on the result screen.
@@ -35,7 +36,6 @@ function stripFullImages(working) {
   return (working || []).map((w) => (w ? { ...w, images: (w.images || []).map(({ thumb }) => ({ thumb })) } : w));
 }
 
-const ANSWER_TYPES = ['Multiple choice', 'Typed response', 'Exam style'];
 const DIFFICULTIES = ['Easy', 'Medium', 'Exam level', 'Hard'];
 const DURATION_MIN = 5;
 const DURATION_MAX = 240;
@@ -226,7 +226,7 @@ function sanitizeForPDF(s) {
     .replace(/[^\x20-\x7e\n\r\t°±²³¹¼½¾×÷]/g, '');
 }
 
-function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerType, duration, studentName }) {
+function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerType, duration, studentName, paperLabel }) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -280,7 +280,7 @@ function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerTy
   const topicStr = (topics || []).join(', ') || '-';
   const metaLines = [
     `${subject}  -  ${topicStr}`,
-    `Difficulty: ${difficulty}  -  Answer type: ${answerType}  -  Duration: ${duration} min  -  Questions: ${questions.length}`,
+    `Difficulty: ${difficulty}  -  ${paperLabel ? `Paper: ${paperLabel}` : `Answer type: ${answerType}`}  -  Duration: ${duration} min  -  Questions: ${questions.length}`,
     `Generated: ${dateStr}`,
   ].map(sanitizeForPDF);
   metaLines.forEach((m) => {
@@ -469,6 +469,7 @@ export default function Worksheets({ go }) {
   });
 
   const [answerType, setAnswerType] = useState('Multiple choice');
+  const [paperId, setPaperId] = useState(null); // which real paper (Paper 1 / Section A …) the sheet imitates
 
   // The same questions the Question Bank lists for this subject — one shared
   // selector, so the two can never disagree. Topic / answer-type narrowing is
@@ -547,6 +548,16 @@ export default function Worksheets({ go }) {
   }, [paper?.startedAt, paper?.submittedAt]);
   const ibLevelForSubject = useMemo(() => subjectBoards(state.courses, track)[subject]?.ibLevel, [state.courses, track, subject]);
   const boardForSubject = useMemo(() => subjectBoards(state.courses, track)[subject]?.board || track, [state.courses, track, subject]);
+  // The real papers for this subject's board (Paper 1, Paper 2, Section A …).
+  // Picking one sets the answer format the builder generates.
+  const papers = useMemo(() => papersFor(boardForSubject, subject), [boardForSubject, subject]);
+  const paperType = papers.find((x) => x.id === paperId) || papers[0];
+  useEffect(() => {
+    // Board/subject changed: snap to the first paper of the new list.
+    if (!papers.some((x) => x.id === paperId)) { setPaperId(papers[0]?.id || null); if (papers[0]) setAnswerType(papers[0].answerType); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [papers]);
+  const pickPaper = (id) => { const x = papers.find((y) => y.id === id); if (!x) return; setPaperId(x.id); setAnswerType(x.answerType); };
   const reviewsDue = useMemo(() => dueReviews(state.worksheets || [], { subject }), [state.worksheets, subject]);
   const adaptivePick = useMemo(() => adaptiveDifficulty(state.worksheets || [], subject, topics, state.settings?.defaultDifficulty || 'Medium'), [state.worksheets, subject, topics, state.settings?.defaultDifficulty]);
   const effDifficulty = adaptive ? adaptivePick.level : difficulty;
@@ -867,6 +878,7 @@ export default function Worksheets({ go }) {
         answerType,
         duration,
         studentName: state.user?.name || '',
+        paperLabel: paperType?.label,
       });
       toast.success('PDF ready \u2014 check your downloads folder.');
       // Open a paper session so the student can time it and hand in the answers.
@@ -1589,8 +1601,9 @@ export default function Worksheets({ go }) {
               </button>
             )}
           </Field>
-          <Field label="Answer type">
-            <Segmented value={answerType} onChange={setAnswerType} options={ANSWER_TYPES} />
+          <Field label="Paper">
+            <Segmented value={paperType?.id} onChange={pickPaper} options={papers.map((x) => x.id)} format={(id) => papers.find((x) => x.id === id)?.label || id} />
+            {paperType?.hint && <div className="text-[11px] text-slate-500 mt-1" data-testid="ws-paper-hint">{paperType.hint}<span className="text-slate-400"> · {paperType.answerType}</span></div>}
           </Field>
         </div>
 
