@@ -229,9 +229,12 @@ export function AppProvider({ children }) {
     const i = Math.max(0, Math.min(100, Number(state.settings?.glass ?? 50)));
     const dark = state.theme === 'dark';
     const base = dark ? 0.86 : 0.84;
-    const alpha = i <= 50 ? base + ((50 - i) / 50) * (1 - base) : base - ((i - 50) / 50) * 0.26;
+    // 0 = fully solid, 50 = the stock look, 100 = almost see-through.
+    const CLEAR = 0.15;
+    const alpha = i <= 50 ? base + ((50 - i) / 50) * (1 - base) : base - ((i - 50) / 50) * (base - CLEAR);
     const off = !!state.settings?.glassOff;
     root.style.setProperty('--glass-alpha', off ? '1' : alpha.toFixed(3));
+    root.style.setProperty('--glass-alpha-pct', `${Math.round((off ? 1 : alpha) * 100)}%`);
     root.style.setProperty('--glass-alpha-strong', off ? '1' : Math.min(1, alpha + 0.1).toFixed(3));
     root.style.setProperty('--glass-blur', off ? '0px' : `${Math.round(30 * (i / 50) * 10) / 10}px`);
     root.classList.toggle('no-glass', off);

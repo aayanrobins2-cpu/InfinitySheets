@@ -865,6 +865,7 @@ html.dark .text-white { color: #fff !important; }
      --glass-alpha / --glass-alpha-strong / --glass-blur are set from the
      Settings slider (AppContext); these are the defaults = the stock look. */
   --glass-alpha: 0.84;
+  --glass-alpha-pct: 84%;
   --glass-alpha-strong: 0.94;
   --glass-blur: 30px;
   --glass-bg: rgba(255, 255, 255, var(--glass-alpha));
@@ -976,10 +977,10 @@ html.dark [class*="text-rose-600/"], html.dark [class*="text-rose-700/"] { color
    orange), tuned separately for light and dark. The glass rules below
    only match .bg-white, so these keep their own tint. ===== */
 .tile { border-radius: 1rem; border: 1px solid; padding: 1rem; }
-.tile-violet  { background: #f3effe; border-color: #d9ccfb; }
-.tile-royal   { background: #eef2ff; border-color: #c3cffa; }
-.tile-emerald { background: #ecfdf3; border-color: #b6ebcf; }
-.tile-orange  { background: #fff4ec; border-color: #fbd0b3; }
+.tile-violet  { background: color-mix(in srgb, #f3effe var(--glass-alpha-pct, 100%), transparent); border-color: #d9ccfb; }
+.tile-royal   { background: color-mix(in srgb, #eef2ff var(--glass-alpha-pct, 100%), transparent); border-color: #c3cffa; }
+.tile-emerald { background: color-mix(in srgb, #ecfdf3 var(--glass-alpha-pct, 100%), transparent); border-color: #b6ebcf; }
+.tile-orange  { background: color-mix(in srgb, #fff4ec var(--glass-alpha-pct, 100%), transparent); border-color: #fbd0b3; }
 .tile-violet .tile-accent  { color: #6d28d9; }
 .tile-royal .tile-accent   { color: #2b4fd8; }
 .tile-emerald .tile-accent { color: #047857; }
@@ -989,10 +990,10 @@ html.dark [class*="text-rose-600/"], html.dark [class*="text-rose-700/"] { color
 .tile-emerald .tile-bar { background: #10b981; }
 .tile-orange .tile-bar  { background: #f97316; }
 .tile-royal .tile-track, .tile-orange .tile-track, .tile-violet .tile-track, .tile-emerald .tile-track { background: rgba(15, 23, 42, 0.08); }
-html.dark .tile-violet  { background: rgba(124, 58, 237, 0.16) !important; border-color: rgba(167, 139, 250, 0.35) !important; }
-html.dark .tile-royal   { background: rgba(65, 105, 225, 0.18) !important; border-color: rgba(99, 132, 240, 0.45) !important; }
-html.dark .tile-emerald { background: rgba(16, 185, 129, 0.14) !important; border-color: rgba(52, 211, 153, 0.35) !important; }
-html.dark .tile-orange  { background: rgba(249, 115, 22, 0.22) !important; border-color: rgba(251, 146, 60, 0.5) !important; }
+html.dark .tile-violet  { background: color-mix(in srgb, rgba(124, 58, 237, 0.16) var(--glass-alpha-pct, 100%), transparent) !important; border-color: rgba(167, 139, 250, 0.35) !important; }
+html.dark .tile-royal   { background: color-mix(in srgb, rgba(65, 105, 225, 0.18) var(--glass-alpha-pct, 100%), transparent) !important; border-color: rgba(99, 132, 240, 0.45) !important; }
+html.dark .tile-emerald { background: color-mix(in srgb, rgba(16, 185, 129, 0.14) var(--glass-alpha-pct, 100%), transparent) !important; border-color: rgba(52, 211, 153, 0.35) !important; }
+html.dark .tile-orange  { background: color-mix(in srgb, rgba(249, 115, 22, 0.22) var(--glass-alpha-pct, 100%), transparent) !important; border-color: rgba(251, 146, 60, 0.5) !important; }
 html.dark .tile-violet .tile-accent  { color: #c4b5fd !important; }
 html.dark .tile-royal .tile-accent   { color: #93b0ff !important; }
 html.dark .tile-emerald .tile-accent { color: #6ee7b7 !important; }
