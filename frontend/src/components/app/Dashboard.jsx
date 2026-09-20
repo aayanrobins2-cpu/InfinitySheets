@@ -29,25 +29,40 @@ const SUBJECT_TONE_BADGE = {
   success: 'bg-emerald-100 text-emerald-700',
 };
 
-// Rotating dashboard greetings. `{name}` is substituted with the student's
-// first name (falling back to "Student"). One is picked per component mount,
-// so refreshing the page yields a new greeting.
+// Rotating dashboard greetings — pop-culture nods that fit a study app.
+// `{name}` is the student's first name. One is picked per mount, so every
+// visit gets a different line.
 const GREETING_TEMPLATES = [
-  '{name} strikes again!',
-  'Ready for another win, {name}?',
-  'Welcome back, {name}.',
-  "Let's crush it today, {name}.",
-  'Back at it, {name}!',
-  'Time to shine, {name}.',
-  'Your worksheets missed you, {name}.',
-  'One session closer, {name}.',
-  '{name}, the grind continues.',
-  'Nice to see you, {name}.',
-  "Let's make today count, {name}.",
-  'Onwards and upwards, {name}.',
-  '{name} is in the building.',
-  'Focus mode: engaged, {name}.',
-  'Small wins add up, {name}.',
+  "May the marks be with you, {name}.",
+  "Expecto perfect scores, {name}.",
+  "I am inevitable — and so is your revision, {name}.",
+  "Just keep studying, {name}.",
+  "Winter is coming. So are exams, {name}.",
+  "One does not simply skip revision, {name}.",
+  "With great syllabus comes great responsibility, {name}.",
+  "{name}, this is the way.",
+  "To infinity and beyond the pass mark, {name}.",
+  "Everything is awesome when you revise, {name}.",
+  "Avengers, assemble your notes, {name}.",
+  "Wingardium Levi-o-SA — it's the flick that gets the marks, {name}.",
+  "Hakuna matata, {name} — but do the worksheet first.",
+  "{name}, you're a wizard at this.",
+  "The odds are ever in your favour today, {name}.",
+  "Do or do not. There is no cramming, {name}.",
+  "Great Scott, {name} — 1.21 gigawatts of focus!",
+  "Elementary, my dear {name}.",
+  "Say my name. Say my grade. {name}, you're on it.",
+  "Roads? Where we're going we don't need roads — just past papers, {name}.",
+  "Bazinga! {name} is back.",
+  "{name} has entered the chat. Books open.",
+  "It's dangerous to go alone — take this worksheet, {name}.",
+  "Autobots, roll out, {name}.",
+  "The first rule of study club: you do talk about it, {name}.",
+  "Keep calm and revise on, {name}.",
+  "Live long and pass, {name}.",
+  "Nobody puts {name} in the corner. Not with these grades.",
+  "Here's looking at you, {name}. Now look at your notes.",
+  "I'll be back — and so will you, {name}. Every day.",
 ];
 
 function pickGreeting(fullName) {
