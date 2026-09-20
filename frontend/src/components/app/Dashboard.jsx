@@ -680,7 +680,8 @@ export default function Dashboard({ go }) {
     // Auto-scroll when dragging close to the top / bottom of the window so a
     // card can be carried past what is on screen.
     const edge = 70; const vh = window.innerHeight;
-    if (e.clientY > vh - edge) window.scrollBy(0, 14); else if (e.clientY < edge) window.scrollBy(0, -14);
+    const scroller = document.querySelector('[data-app-scroll]') || window;
+    if (e.clientY > vh - edge) scroller.scrollBy(0, 14); else if (e.clientY < edge) scroller.scrollBy(0, -14);
   };
   const suppressClick = useRef(false);
   const endPress = (e) => {

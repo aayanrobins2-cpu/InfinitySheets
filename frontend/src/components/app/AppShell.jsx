@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, GraduationCap, Pencil, FileText, Library, History, TrendingUp, Dumbbell, Sparkles, AlertTriangle, Settings, Shield, BookOpen, Layers, Users } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import Dashboard from './Dashboard';
@@ -160,7 +160,8 @@ export default function AppShell({ hash }) {
     if (isMobile) setSidebarOpen(false);
   };
   // Analytics page views + the once-a-day study reminder check.
-  useEffect(() => { pageview(current.key); }, [current.key]);
+  const mainRef = useRef(null);
+  useEffect(() => { pageview(current.key); if (mainRef.current) mainRef.current.scrollTop = 0; }, [current.key]);
   useEffect(() => {
     const check = () => maybeRemind({
       enabled: !!state.settings?.pushReminders,
@@ -195,7 +196,7 @@ export default function AppShell({ hash }) {
   };
 
   return (
-    <div className="min-h-screen section-bg flex relative">
+    <div className="h-screen overflow-hidden section-bg flex relative">
       {/* Mobile scrim — dim the app when the drawer is open so the page
           content becomes clearly "behind" the sidebar. */}
       {isMobile && sidebarOpen && (
@@ -218,7 +219,7 @@ export default function AppShell({ hash }) {
         }
         aria-hidden={!sidebarOpen}
       >
-        <div className={isMobile ? 'w-full h-[calc(100vh-16px)]' : 'w-[230px] h-[calc(100vh-16px)] sticky top-2'}>
+        <div className={isMobile ? 'w-full h-[calc(100vh-16px)]' : 'w-[230px] h-[calc(100vh-16px)]'}>
           <Sidebar
             nav={NAV}
             activeKey={current.key}
@@ -230,7 +231,7 @@ export default function AppShell({ hash }) {
         </div>
       </div>
 
-      <main className="min-w-0 flex-1 relative">
+      <main ref={mainRef} data-app-scroll className="min-w-0 flex-1 relative h-screen overflow-y-auto overscroll-contain">
         {isDemo && (
           <div className="sticky top-0 z-30 bg-violet-600 text-white text-[12.5px] font-medium px-4 py-1.5 flex items-center justify-center gap-3" data-testid="demo-banner">
             <span>Test mode — sample data, nothing is saved.</span>
