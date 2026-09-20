@@ -646,12 +646,16 @@ export default function Dashboard({ go }) {
   // with a mouse and with touch (a normal tap / scroll is untouched).
   const [liftId, setLiftId] = useState(null);
   const [liftOver, setLiftOver] = useState(null);
+  const liftOverRef = useRef(null); // last card the pointer was over while lifted
   const pressRef = useRef({ timer: null, id: null, x: 0, y: 0, active: false });
   const cardAtPoint = (x, y) => document.elementFromPoint(x, y)?.closest('[data-dash-card]')?.getAttribute('data-dash-card') || null;
   const onCardPointerDown = (id) => (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     // Don't hijack presses that start on controls inside the card.
-    if (e.target.closest('button, a, input, select, textarea, [role="switch"]')) return;
+    // Only typing targets and links are exempt — cards are mostly buttons,
+    // so a press on a tile must still be able to arm the long-press. A click
+    // that follows a completed lift is swallowed (see suppressClick).
+    if (e.target.closest('a, input, select, textarea')) return;
     const r = pressRef.current;
     r.id = id; r.x = e.clientX; r.y = e.clientY; r.active = false;
     clearTimeout(r.timer);
@@ -670,24 +674,35 @@ export default function Dashboard({ go }) {
     }
     e.preventDefault();
     const over = cardAtPoint(e.clientX, e.clientY);
+    if (over) liftOverRef.current = over;
     if (over !== liftOver) setLiftOver(over);
+    // Auto-scroll when dragging close to the top / bottom of the window so a
+    // card can be carried past what is on screen.
+    const edge = 70; const vh = window.innerHeight;
+    if (e.clientY > vh - edge) window.scrollBy(0, 14); else if (e.clientY < edge) window.scrollBy(0, -14);
   };
+  const suppressClick = useRef(false);
   const endPress = (e) => {
     const r = pressRef.current;
     clearTimeout(r.timer);
     if (r.active && r.id) {
-      const over = e ? cardAtPoint(e.clientX, e.clientY) : liftOver;
+      suppressClick.current = true; setTimeout(() => { suppressClick.current = false; }, 350);
+      const over = (e && cardAtPoint(e.clientX, e.clientY)) || liftOverRef.current;
       if (over && over !== r.id) reorderCard(r.id, over);
     }
-    r.id = null; r.active = false; setLiftId(null); setLiftOver(null);
+    r.id = null; r.active = false; liftOverRef.current = null; setLiftId(null); setLiftOver(null);
   };
   useEffect(() => {
     // Lifting must block page scroll on touch; restore when dropped.
     if (!liftId) return undefined;
     const prev = document.body.style.touchAction; document.body.style.touchAction = 'none';
     const up = (e) => endPress(e); const cancel = () => endPress(null);
+    const block = (e) => e.preventDefault();                 // stops the page scrolling under the finger
+    const clickTrap = (e) => { if (suppressClick.current) { e.stopPropagation(); e.preventDefault(); } };
     window.addEventListener('pointerup', up); window.addEventListener('pointercancel', cancel);
-    return () => { document.body.style.touchAction = prev; window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); };
+    window.addEventListener('touchmove', block, { passive: false });
+    window.addEventListener('click', clickTrap, true);
+    return () => { document.body.style.touchAction = prev; window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); window.removeEventListener('touchmove', block); window.removeEventListener('click', clickTrap, true); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liftId, liftOver]);
   const [overId, setOverId] = useState(null);   // card the pointer is currently over
@@ -713,7 +728,10 @@ export default function Dashboard({ go }) {
     if (from < 0 || to < 0) return;
     const next = [...prefsList];
     const [moved] = next.splice(from, 1);
-    next.splice(next.findIndex((p) => p.id === toId), 0, moved);
+    // Dragging down lands AFTER the card you drop on; dragging up lands
+    // before it — so dropping on the neighbouring card always does something.
+    const at = next.findIndex((p) => p.id === toId);
+    next.splice(from < to ? at + 1 : at, 0, moved);
     savePrefs(next);
   };
 
@@ -823,8 +841,9 @@ export default function Dashboard({ go }) {
             onPointerMove={onCardPointerMove}
             onPointerUp={endPress}
             onPointerCancel={() => endPress(null)}
-            className={`relative rounded-2xl transition-[transform,box-shadow,opacity] duration-150 ${liftId === c.id ? 'scale-[1.02] shadow-2xl ring-2 ring-violet-400 z-20 opacity-95 cursor-grabbing' : ''} ${liftId && liftOver === c.id && liftId !== c.id ? 'ring-2 ring-blue-400/70' : ''}`}
-            style={liftId === c.id ? { touchAction: 'none' } : undefined}
+            onContextMenu={(e) => { if (pressRef.current.id || liftId) e.preventDefault(); }}
+            className={`relative rounded-2xl select-none [-webkit-touch-callout:none] transition-[transform,box-shadow,opacity] duration-150 ${liftId === c.id ? 'scale-[1.02] shadow-2xl ring-2 ring-violet-400 z-20 opacity-95 cursor-grabbing' : ''} ${liftId && liftOver === c.id && liftId !== c.id ? 'ring-2 ring-blue-400/70' : ''}`}
+            style={{ touchAction: liftId ? 'none' : 'pan-y' }}
             data-testid={`dash-card-${c.id}`}
           >
             {c.node}
