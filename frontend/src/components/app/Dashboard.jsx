@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, Mail, SlidersHorizontal, GripVertical, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
@@ -641,6 +641,55 @@ export default function Dashboard({ go }) {
   }, [cardPrefs, CARDS.map((c) => c.id).join('|')]);
   const [manageOpen, setManageOpen] = useState(false);
   const [dragId, setDragId] = useState(null);   // card being dragged in the manager
+  // Long-press a card on the dashboard itself to lift it, then drag it over
+  // another card and let go to drop it there. Pointer events so it works
+  // with a mouse and with touch (a normal tap / scroll is untouched).
+  const [liftId, setLiftId] = useState(null);
+  const [liftOver, setLiftOver] = useState(null);
+  const pressRef = useRef({ timer: null, id: null, x: 0, y: 0, active: false });
+  const cardAtPoint = (x, y) => document.elementFromPoint(x, y)?.closest('[data-dash-card]')?.getAttribute('data-dash-card') || null;
+  const onCardPointerDown = (id) => (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    // Don't hijack presses that start on controls inside the card.
+    if (e.target.closest('button, a, input, select, textarea, [role="switch"]')) return;
+    const r = pressRef.current;
+    r.id = id; r.x = e.clientX; r.y = e.clientY; r.active = false;
+    clearTimeout(r.timer);
+    r.timer = setTimeout(() => {
+      r.active = true; setLiftId(id);
+      try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) { /* ignore */ }
+    }, 450);
+  };
+  const onCardPointerMove = (e) => {
+    const r = pressRef.current;
+    if (!r.id) return;
+    if (!r.active) {
+      // Moved before the hold finished → it's a scroll/drag, not a long press.
+      if (Math.hypot(e.clientX - r.x, e.clientY - r.y) > 8) { clearTimeout(r.timer); r.id = null; }
+      return;
+    }
+    e.preventDefault();
+    const over = cardAtPoint(e.clientX, e.clientY);
+    if (over !== liftOver) setLiftOver(over);
+  };
+  const endPress = (e) => {
+    const r = pressRef.current;
+    clearTimeout(r.timer);
+    if (r.active && r.id) {
+      const over = e ? cardAtPoint(e.clientX, e.clientY) : liftOver;
+      if (over && over !== r.id) reorderCard(r.id, over);
+    }
+    r.id = null; r.active = false; setLiftId(null); setLiftOver(null);
+  };
+  useEffect(() => {
+    // Lifting must block page scroll on touch; restore when dropped.
+    if (!liftId) return undefined;
+    const prev = document.body.style.touchAction; document.body.style.touchAction = 'none';
+    const up = (e) => endPress(e); const cancel = () => endPress(null);
+    window.addEventListener('pointerup', up); window.addEventListener('pointercancel', cancel);
+    return () => { document.body.style.touchAction = prev; window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liftId, liftOver]);
   const [overId, setOverId] = useState(null);   // card the pointer is currently over
   const prefsList = (() => {
     const byId = new Map(CARDS.map((c) => [c.id, c]));
@@ -672,7 +721,7 @@ export default function Dashboard({ go }) {
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-[28px] font-semibold tracking-tight text-slate-900">{greeting}</h2>
-        <p className="text-[14px] text-slate-500 mt-1">Here is your study overview.</p>
+        <p className="text-[14px] text-slate-500 mt-1">Here is your study overview. <span className="text-slate-400">Long-press a card to move it.</span></p>
       </div>
       <div className="-mt-3 flex items-center justify-end">
         <button type="button" onClick={() => setManageOpen((v) => !v)} className="btn-outline-dark inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-medium" data-testid="manage-cards">
@@ -768,7 +817,18 @@ export default function Dashboard({ go }) {
           and the action row are fixed. */}
       {orderedCards.map((c) => (
         <React.Fragment key={c.id}>
-          {c.node}
+          <div
+            data-dash-card={c.id}
+            onPointerDown={onCardPointerDown(c.id)}
+            onPointerMove={onCardPointerMove}
+            onPointerUp={endPress}
+            onPointerCancel={() => endPress(null)}
+            className={`relative rounded-2xl transition-[transform,box-shadow,opacity] duration-150 ${liftId === c.id ? 'scale-[1.02] shadow-2xl ring-2 ring-violet-400 z-20 opacity-95 cursor-grabbing' : ''} ${liftId && liftOver === c.id && liftId !== c.id ? 'ring-2 ring-blue-400/70' : ''}`}
+            style={liftId === c.id ? { touchAction: 'none' } : undefined}
+            data-testid={`dash-card-${c.id}`}
+          >
+            {c.node}
+          </div>
           {c.id === 'subjects' && (
       <AdSlot slot="dashboard-bottom" />
           )}
