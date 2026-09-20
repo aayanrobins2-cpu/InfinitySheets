@@ -421,6 +421,38 @@ export async function buildStudyPlan({ board, boards = {}, examDate, exams = [],
 }
 
 /**
+ * "Tweak it further": revise the current plan from a plain-English
+ * instruction ("only my midterm topics", "nothing on Sundays", "more maths").
+ * Returns the same shape as buildStudyPlan plus a one-line `reply` for the
+ * chat. Task done-state is carried over where the task survives.
+ */
+export async function tweakStudyPlan({ plan, instruction, history = [], board, boards = {}, exams = [], subjects, startDate }) {
+  const current = JSON.stringify({ summary: plan.summary, days: plan.days.map((d) => ({ day: d.day, date: d.date, tasks: d.tasks.map((t) => ({ subject: t.subject, topic: t.topic, minutes: t.minutes, what: t.what })) })) });
+  const examLines = (exams || []).filter((e) => e && e.date).map((e) => `${e.subject}${e.name && e.name !== 'Exam' ? ` (${e.name})` : ''} — ${e.date}`);
+  const content = [
+    `Today is ${startDate}. Subjects: ${(subjects || []).join(', ') || '(none)'}.`,
+    examLines.length ? `Registered exams: ${examLines.join('; ')}.` : '',
+    Object.keys(boards).length ? `Board per subject: ${Object.entries(boards).map(([s, b]) => `${s} (${b.board}${b.ibLevel ? ' ' + b.ibLevel : ''})`).join(', ')}.` : '',
+    `CURRENT PLAN (JSON): ${current}`,
+    history.length ? `Earlier tweaks in this conversation: ${history.map((h) => `${h.role === 'user' ? 'Student' : 'You'}: ${h.content}`).join(' | ')}` : '',
+    `The student now asks: "${instruction}"`,
+    'Revise the plan to follow this request while keeping everything else sensible. Keep the same JSON shape, the same day/date fields, at most 3 tasks per day. Add a short "reply" (one or two sentences) explaining what you changed. Reply as {"reply": string, "summary": string, "days": [...]}.',
+  ].filter(Boolean).join('\n');
+  const text = await askAi({ mode: 'plan', context: { board }, messages: [{ role: 'user', content }] });
+  const parsed = parseJsonReply(text);
+  const days = (parsed.days || []).slice(0, 7).map((d) => ({
+    day: String(d.day || ''),
+    date: String(d.date || ''),
+    tasks: (d.tasks || []).slice(0, 3).map((t) => ({ subject: String(t.subject || ''), topic: String(t.topic || ''), minutes: Math.max(5, Math.min(180, Number(t.minutes) || 20)), what: String(t.what || '') })),
+  })).filter((d) => d.tasks.length);
+  if (!days.length) throw new Error('The AI returned an empty plan');
+  // Carry over ticks for tasks that survived the tweak.
+  const doneKeys = new Set(plan.days.flatMap((d) => d.tasks.filter((t) => t.done).map((t) => `${t.subject}|${t.topic}`)));
+  days.forEach((d) => d.tasks.forEach((t) => { if (doneKeys.has(`${t.subject}|${t.topic}`)) t.done = true; }));
+  return { reply: String(parsed.reply || 'Updated your plan.'), summary: String(parsed.summary || plan.summary || ''), days };
+}
+
+/**
  * Admin: read a syllabus PDF and list its topics. Resolves to
  * [{ name, summary }].
  */
