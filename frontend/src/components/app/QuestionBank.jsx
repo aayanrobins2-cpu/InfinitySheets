@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SUBJECT_INFO } from '../../data/mock';
-import { enrolledSubjects, subjectBoards, boardName, questionsForSubject, primaryTrack } from '../../lib/subjects';
+import { enrolledSubjects, subjectBoards, boardName, questionsForSubject, primaryTrack, subjectMark } from '../../lib/subjects';
 import { BookOpen, Eye, EyeOff, Sparkles, Library, ChevronRight, Search, ArrowLeft, ArrowRight, ExternalLink, FileText } from 'lucide-react';
 import { syllabusLink } from '../../data/syllabus';
 import { textbook } from '../../lib/notation';
@@ -98,7 +98,7 @@ function SubjectPicker({ subjects, questionsBySubject, boards, onPick }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="qbank-subject-grid">
           {subjects.map((s) => {
-            const info = SUBJECT_INFO[s] || { emoji: '\u25A0' };
+            const info = SUBJECT_INFO[s] || { emoji: subjectMark(s) };
             const qs = questionsBySubject[s] || [];
             const count = qs.length;
             const topicCount = new Set(qs.map((q) => q.topic)).size;
@@ -251,7 +251,7 @@ function BrowseSubject({ subject, chosenSubjects, questionsBySubject, boards, on
       {chosenSubjects.length > 1 && (
         <div className="flex flex-wrap gap-2 mb-5">
           {chosenSubjects.map((s) => {
-            const info = SUBJECT_INFO[s] || { emoji: '\u25A0' };
+            const info = SUBJECT_INFO[s] || { emoji: subjectMark(s) };
             const sel = subject === s;
             return (
               <button key={s} onClick={() => onSwitchSubject(s)}
@@ -271,7 +271,7 @@ function BrowseSubject({ subject, chosenSubjects, questionsBySubject, boards, on
 }
 
 function SubjectQuestions({ subject, board, questions, totalInSubject, revealed, setRevealed, launchPractice }) {
-  const info = SUBJECT_INFO[subject] || { emoji: '\u25A0' };
+  const info = SUBJECT_INFO[subject] || { emoji: subjectMark(subject) };
   const byTopic = useMemo(() => {
     const m = {};
     questions.forEach((q) => { (m[q.topic] = m[q.topic] || []).push(q); });

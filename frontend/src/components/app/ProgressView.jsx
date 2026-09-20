@@ -4,7 +4,7 @@ import { SUBJECT_INFO } from '../../data/mock';
 import { TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react';
 import EmptyStateScene from '../decor/EmptyStateScene';
 import { predictedScore, predictedBreakdown, formatGrade, TONE_CLASSES, isGradedTrack } from '../../lib/predictedGrade';
-import { subjectBoards, activeWorksheets, primaryTrack } from '../../lib/subjects';
+import { subjectBoards, activeWorksheets, primaryTrack, subjectMark } from '../../lib/subjects';
 import { useStrengthsWeaknesses, useSavedSwOverridesFor, useSavedSwPrefs, computeSw, pickOverridesFor } from '../../hooks/useStrengthsWeaknesses';
 import PredictedScoreMini from './PredictedScoreMini';
 import { TimingTrendsCard } from './StudyInsights';
@@ -174,7 +174,7 @@ export default function ProgressView() {
           {allSubjects.map((s, i) => {
             const color = SUBJECT_COLORS[i % SUBJECT_COLORS.length];
             const off = isHidden(s);
-            const info = SUBJECT_INFO[s] || { emoji: '\u25A0' };
+            const info = SUBJECT_INFO[s] || { emoji: subjectMark(s) };
             const d = deltas[s] || {};
             const isHovered = hoveredSubject === s;
             const dimmed = !!hoveredSubject && !isHovered && !off;
@@ -267,7 +267,7 @@ export default function ProgressView() {
                 key={s}
                 s={s}
                 color={SUBJECT_COLORS[allSubjects.indexOf(s) % SUBJECT_COLORS.length]}
-                info={SUBJECT_INFO[s] || { emoji: '\u25A0' }}
+                info={SUBJECT_INFO[s] || { emoji: subjectMark(s) }}
                 p={predictedBySubject[s] || { predicted: 0, count: 0, grade: null }}
                 d={deltas[s] || {}}
                 ws={ws}

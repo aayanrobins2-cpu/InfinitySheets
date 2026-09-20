@@ -173,3 +173,14 @@ export function topicGroups(syllabusTopics, board, subject) {
   const flat = resolvedTopics(syllabusTopics, board, subject);
   return flat.length ? [{ chapter: 'All topics', units: flat }] : [];
 }
+
+// Short letter tag for a subject tile when no hand-picked one exists —
+// initials of the meaningful words ("Sports, Exercise & Health Science" →
+// "SEH", "Spanish B" → "SB", "Mandarin ab initio" → "MA"), 1-3 letters.
+const MARK_STOP = new Set(['and', 'of', 'the', 'in', 'a', 'an', 'to', 'for', 'with']);
+export function subjectMark(name) {
+  const words = String(name || '').replace(/[&/,:()]/g, ' ').split(/\s+/).filter((w) => w && !MARK_STOP.has(w.toLowerCase()));
+  if (!words.length) return '?';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return words.slice(0, 3).map((w) => w[0].toUpperCase()).join('');
+}

@@ -1,3 +1,4 @@
+import { subjectMark } from '../../lib/subjects';
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Plus, GraduationCap, Trash2, CalendarClock, ArrowRight, Sparkles } from 'lucide-react';
@@ -28,7 +29,7 @@ function normalize(course) {
 }
 
 function SubjectRow({ s }) {
-  const info = SUBJECT_INFO[s.subject] || { emoji: '\u25A0' };
+  const info = SUBJECT_INFO[s.subject] || { emoji: subjectMark(s.subject) };
   const days = daysUntil(s.examDate);
   return (
     <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-[color:var(--color-border)]">

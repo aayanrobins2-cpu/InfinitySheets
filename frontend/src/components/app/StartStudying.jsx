@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SUBJECTS, SUBJECT_INFO, EXAM_TRACKS } from '../../data/mock';
-import { enrolledSubjects, subjectBoards, boardName, tracksOffering, defaultBoardFor, primaryTrack } from '../../lib/subjects';
+import { enrolledSubjects, subjectBoards, boardName, tracksOffering, defaultBoardFor, primaryTrack, subjectMark } from '../../lib/subjects';
 
 import { BookOpen, ArrowRight, Search, Plus, X, ChevronDown, ChevronUp, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
@@ -109,7 +109,7 @@ export default function StartStudying({ go, subjectParam }) {
   // removed so the student doesn't end up with a course with no subjects.
 
   const renderCard = (s, taken) => {
-    const info = SUBJECT_INFO[s] || { emoji: '\u25A0', tagline: 'Practice and improve.', tone: 'primary' };
+    const info = SUBJECT_INFO[s] || { emoji: subjectMark(s), tagline: 'Practice and improve.', tone: 'primary' };
     return (
       <div key={s} className="group relative card-soft p-5 overflow-hidden flex flex-col" data-testid={`subject-tile-${s}`}>
         <button

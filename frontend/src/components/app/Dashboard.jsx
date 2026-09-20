@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
 import { predictedScore, formatGrade, scoreToIBGrade } from '../../lib/predictedGrade';
 import { SUBJECT_INFO } from '../../data/mock';
-import { enrolledSubjects, subjectBoards, boardName, activeWorksheets, primaryTrack, resolvedTopics } from '../../lib/subjects';
+import { enrolledSubjects, subjectBoards, boardName, activeWorksheets, primaryTrack, resolvedTopics, subjectMark } from '../../lib/subjects';
 import PredictedScoreMini from './PredictedScoreMini';
 import CreateWorksheetButton from './CreateWorksheetButton';
 import { diagnosisSnippet } from './ai/DiagnosisPanel';
@@ -404,7 +404,7 @@ export default function Dashboard({ go }) {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {mySubjects.map((s) => {
-              const info = SUBJECT_INFO[s] || { emoji: '\u25A0', tone: 'primary' };
+              const info = SUBJECT_INFO[s] || { emoji: subjectMark(s), tone: 'primary' };
               const b = mySubjectBoards[s];
               const recs = recommendedTopics(ws, s, resolvedTopics(state.syllabusTopics, b?.board || studyTrack, s), { limit: 3 });
               return (

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { EXAM_TRACKS, SUBJECT_INFO, TOPIC_SUMMARY } from '../../data/mock';
-import { topicsFor } from '../../lib/subjects';
+import { topicsFor, subjectMark } from '../../lib/subjects';
 import { ArrowLeft, BookOpen, GraduationCap, CalendarClock, ArrowRight } from 'lucide-react';
 import InfinityBackground from '../decor/InfinityBackground';
 import CreateWorksheetButton from './CreateWorksheetButton';
@@ -34,7 +34,7 @@ function TopicRow({ topic, subjectEntry }) {
 }
 
 function SubjectBlock({ s, board, onStudy }) {
-  const info = SUBJECT_INFO[s.subject] || { emoji: '\u25A0' };
+  const info = SUBJECT_INFO[s.subject] || { emoji: subjectMark(s.subject) };
   // Custom courses can bring their own topics on the subject entry. Fall back
   // to the built-in TOPICS map for standard subjects.
   const topics = (Array.isArray(s.topics) && s.topics.length) ? s.topics : topicsFor(board, s.subject);

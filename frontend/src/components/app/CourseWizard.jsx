@@ -1,3 +1,4 @@
+import { subjectMark } from '../../lib/subjects';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { EXAM_TRACKS, SUBJECTS, SUBJECT_INFO } from '../../data/mock';
@@ -252,7 +253,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
               </div>
               <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[42vh] overflow-y-auto pr-1">
                 {trackSubjects.filter((s) => s.toLowerCase().includes(subjectQuery.trim().toLowerCase())).map((s) => {
-                  const info = SUBJECT_INFO[s] || { emoji: '\u25A0', tagline: 'Practice and improve.' };
+                  const info = SUBJECT_INFO[s] || { emoji: subjectMark(s), tagline: 'Practice and improve.' };
                   const sel = picked.includes(s);
                   return (
                     <button key={s} onClick={() => togglePick(s)}
@@ -349,7 +350,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
 
               <div className="mt-5 flex flex-col gap-3">
                 {picked.map((s) => {
-                  const info = SUBJECT_INFO[s] || { emoji: '\u25A0' };
+                  const info = SUBJECT_INFO[s] || { emoji: subjectMark(s) };
                   const v = dates[s] || '';
                   const days = v ? Math.max(0, Math.ceil((new Date(v + 'T00:00:00').getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
                   return (
