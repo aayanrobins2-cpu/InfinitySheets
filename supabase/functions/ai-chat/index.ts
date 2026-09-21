@@ -119,9 +119,10 @@ function envLike(canonical: string): string | undefined {
 //              search, writing new exam-quality questions: reasoning matters.
 //   BALANCED — plans, worked solutions, syllabus reading.
 //   FAST     — chat, cached overviews, flashcards, transcription, blurting.
-const SMART_CHAIN = ["gemini-3.5-pro", "gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"];
-const BALANCED_CHAIN = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"];
-const FAST_CHAIN = ["gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
+// Model IDs verified against this key's ListModels (mode "models" prints it).
+const SMART_CHAIN = ["gemini-3.1-pro-preview", "gemini-pro-latest", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
+const BALANCED_CHAIN = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-lite-latest"];
+const FAST_CHAIN = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
 const TIER: Record<string, string[]> = {
   extract: SMART_CHAIN, assess: SMART_CHAIN, mark: SMART_CHAIN, diagnose: SMART_CHAIN, "course-search": SMART_CHAIN, multiply: SMART_CHAIN,
   plan: BALANCED_CHAIN, solution: BALANCED_CHAIN, syllabus: BALANCED_CHAIN, generate: BALANCED_CHAIN,
@@ -224,6 +225,13 @@ Deno.serve(async (req: Request) => {
 
   let body: { mode?: string; context?: Record<string, unknown>; messages?: Msg[]; force?: boolean; images?: FileIn[]; files?: FileIn[] };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
+  // Diagnostic: which Gemini models this key can call (names only, no data).
+  if (body.mode === "models") {
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=100", { headers: { "x-goog-api-key": key } });
+    const d = await r.json().catch(() => ({}));
+    const names = (d?.models || []).filter((m: { supportedGenerationMethods?: string[] }) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m: { name: string }) => String(m.name).replace(/^models\//, ""));
+    return json({ models: names, status: r.status });
+  }
   const mode = MODES.has(String(body.mode)) ? String(body.mode) : "chat";
   const chain = chainFor(mode);
   const models = preferred ? [preferred, ...chain.filter((m) => m !== preferred)] : [...chain];
@@ -278,7 +286,9 @@ Deno.serve(async (req: Request) => {
 
   outer:
   for (const candidate of models) {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // One quick retry on 503, then move down the chain — a busy model should
+    // not hold the student for 30 s when the next one answers in 5.
+    for (let attempt = 0; attempt < 2; attempt++) {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": key },
@@ -289,7 +299,7 @@ Deno.serve(async (req: Request) => {
       lastDetail = await r.text().catch(() => "");
       console.error("gemini", candidate, r.status, lastDetail.slice(0, 300));
       if (r.status === 429) { everQuotaExhausted = true; continue outer; }
-      if (r.status === 503 && attempt < 2) { await new Promise((x) => setTimeout(x, 700 * (attempt + 1))); continue; }
+      if (r.status === 503 && attempt < 1) { await new Promise((x) => setTimeout(x, 600)); continue; }
       break;
     }
   }
