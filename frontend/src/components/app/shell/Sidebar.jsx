@@ -18,7 +18,7 @@ export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose,
         </span>
         <div className="leading-tight min-w-0 flex-1">
           <div className="font-semibold text-[14.5px] tracking-tight whitespace-nowrap">
-            InfinitySheets{plus && <span className="brand-plus-text ml-1" data-testid="brand-plus">Plus</span>}
+            InfinitySheets{plus && <span className="brand-plus-text ml-0.5" data-testid="brand-plus">+</span>}
           </div>
           <div className="text-[10px] text-slate-500">Adaptive study</div>
         </div>

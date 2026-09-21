@@ -1012,15 +1012,15 @@ html.no-glass .tile-violet, html.no-glass .tile-royal, html.no-glass .tile-emera
   content: ''; position: absolute; inset: -40% -60%;
   background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.55) 50%, transparent 60%);
   transform: translateX(-120%);
-  animation: brand-shine 3.2s ease-in-out infinite;
+  animation: brand-shine 12s ease-in-out infinite;
   pointer-events: none;
 }
-@keyframes brand-shine { 0%, 65% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes brand-shine { 0%, 88% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 .brand-plus-text {
   background: linear-gradient(90deg, #2563eb 0%, #60a5fa 35%, #ffffff 50%, #60a5fa 65%, #2563eb 100%);
   background-size: 220% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: brand-plus-sheen 3.2s linear infinite;
+  animation: brand-plus-sheen 12s linear infinite;
   font-weight: 800;
 }
 @keyframes brand-plus-sheen { from { background-position: 220% 0; } to { background-position: -20% 0; } }
