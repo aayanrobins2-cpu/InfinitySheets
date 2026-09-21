@@ -1001,3 +1001,7 @@ html.dark .tile-orange .tile-accent  { color: #fdba74 !important; }
 html.dark .tile-royal .tile-bar { background: #5b7cf0; }
 html.dark .tile-track { background: rgba(255, 255, 255, 0.1) !important; }
 html.no-glass .tile-violet, html.no-glass .tile-royal, html.no-glass .tile-emerald, html.no-glass .tile-orange { background: var(--color-card); }
+
+/* Dashboard card grip: only touchscreens need to see where to long-press. */
+.card-grip { display: none; }
+@media (pointer: coarse) { .card-grip { display: block; } }

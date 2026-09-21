@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, Mail, SlidersHorizontal, GripVertical, Upload, FileText } from 'lucide-react';
+import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, Mail, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { haptic } from '../../lib/haptics';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
@@ -640,8 +640,6 @@ export default function Dashboard({ go }) {
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardPrefs, CARDS.map((c) => c.id).join('|')]);
-  const [manageOpen, setManageOpen] = useState(false);
-  const [dragId, setDragId] = useState(null);   // card being dragged in the manager
   // Long-press a card on the dashboard itself to lift it, then drag it over
   // another card and let go to drop it there. Pointer events so it works
   // with a mouse and with touch (a normal tap / scroll is untouched).
@@ -657,6 +655,14 @@ export default function Dashboard({ go }) {
     // so a press on a tile must still be able to arm the long-press. A click
     // that follows a completed lift is swallowed (see suppressClick).
     if (e.target.closest('a, input, select, textarea')) return;
+    // Touchscreens: the press must start on one of the card's side strips
+    // (the grip zone) so a finger in the middle still scrolls and taps. A
+    // mouse can long-press anywhere.
+    if (e.pointerType === 'touch') {
+      const box = e.currentTarget.getBoundingClientRect();
+      const inStrip = e.clientX - box.left <= 36 || box.right - e.clientX <= 36;
+      if (!inStrip) return;
+    }
     const r = pressRef.current;
     r.id = id; r.x = e.clientX; r.y = e.clientY; r.active = false;
     clearTimeout(r.timer);
@@ -707,7 +713,6 @@ export default function Dashboard({ go }) {
     return () => { document.body.style.touchAction = prev; window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); window.removeEventListener('touchmove', block); window.removeEventListener('click', clickTrap, true); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liftId, liftOver]);
-  const [overId, setOverId] = useState(null);   // card the pointer is currently over
   const prefsList = (() => {
     const byId = new Map(CARDS.map((c) => [c.id, c]));
     const base = cardPrefs ? cardPrefs.filter((p) => byId.has(p.id)) : CARDS.map((c) => ({ id: c.id, on: true }));
@@ -715,12 +720,6 @@ export default function Dashboard({ go }) {
     return base;
   })();
   const savePrefs = (list) => updateSettings({ dashboardCards: list });
-  const toggleCard = (id) => savePrefs(prefsList.map((p) => (p.id === id ? { ...p, on: p.on === false } : p)));
-  const moveCard = (id, dir) => {
-    const i = prefsList.findIndex((p) => p.id === id); const j = i + dir;
-    if (i < 0 || j < 0 || j >= prefsList.length) return;
-    const next = [...prefsList]; [next[i], next[j]] = [next[j], next[i]]; savePrefs(next);
-  };
   // Drag a card and drop it onto another to reorder — the dragged card lands
   // just before the one it was dropped on.
   const reorderCard = (fromId, toId) => {
@@ -741,59 +740,8 @@ export default function Dashboard({ go }) {
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-[28px] font-semibold tracking-tight text-slate-900">{greeting}</h2>
-        <p className="text-[14px] text-slate-500 mt-1">Here is your study overview. <span className="text-slate-400">Long-press a card to move it.</span></p>
+        <p className="text-[14px] text-slate-500 mt-1">Here is your study overview. <span className="text-slate-400">Long-press a card to move it (on touch, press and hold its edge).</span></p>
       </div>
-      <div className="-mt-3 flex items-center justify-end">
-        <button type="button" onClick={() => setManageOpen((v) => !v)} className="btn-outline-dark inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-medium" data-testid="manage-cards">
-          <SlidersHorizontal className="w-4 h-4" /> Manage cards
-        </button>
-      </div>
-      {manageOpen && (
-        <div className="rounded-xl border border-[color:var(--color-border)] bg-white p-4" data-testid="manage-cards-panel">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <div className="text-[14px] font-semibold text-slate-900">Dashboard cards</div>
-              <div className="text-[12px] text-slate-500">Drag the handle to reorder; toggle to show or hide. Or use ↑/↓ when a handle is focused.</div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={() => savePrefs(null)} className="text-[12px] text-slate-500 hover:text-slate-800">Reset</button>
-              <button type="button" onClick={() => setManageOpen(false)} className="btn-outline-dark px-3 py-1.5 rounded-lg text-[12.5px] font-medium">Done</button>
-            </div>
-          </div>
-          <ul className="divide-y divide-[color:var(--color-border)]">
-            {prefsList.map((p, i) => {
-              const c = CARDS.find((x) => x.id === p.id);
-              const on = p.on !== false;
-              return (
-                <li
-                  key={p.id}
-                  onDragOver={(e) => { if (dragId) { e.preventDefault(); if (overId !== p.id) setOverId(p.id); } }}
-                  onDrop={(e) => { e.preventDefault(); reorderCard(dragId, p.id); setDragId(null); setOverId(null); }}
-                  className={`py-2 flex items-center gap-2.5 transition-colors ${dragId === p.id ? 'opacity-40' : ''} ${overId === p.id && dragId !== p.id ? 'bg-blue-50/70 rounded-lg' : ''}`}
-                  data-testid={`card-row-${p.id}`}
-                >
-                  <button
-                    type="button"
-                    aria-label={`Reorder ${c?.label}`}
-                    draggable
-                    onDragStart={(e) => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', p.id); } catch (_) {} }}
-                    onDragEnd={() => { setDragId(null); setOverId(null); }}
-                    onKeyDown={(e) => { if (e.key === 'ArrowUp') { e.preventDefault(); moveCard(p.id, -1); } else if (e.key === 'ArrowDown') { e.preventDefault(); moveCard(p.id, 1); } }}
-                    className="w-7 h-7 shrink-0 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
-                    data-testid={`card-drag-${p.id}`}
-                  >
-                    <GripVertical className="w-4 h-4" />
-                  </button>
-                  <button type="button" role="switch" aria-checked={on} aria-label={`Show ${c?.label}`} onClick={() => toggleCard(p.id)} className={`w-9 h-5 rounded-full relative shrink-0 transition-colors ${on ? 'bg-blue-600' : 'bg-slate-300'}`} data-testid={`card-toggle-${p.id}`}>
-                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
-                  </button>
-                  <span className={`flex-1 text-[13px] ${on ? 'text-slate-800' : 'text-slate-400'}`}>{c?.label}</span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
 
       {draft && (draft.questions || []).length > 0 && (
         <div
@@ -849,6 +797,8 @@ export default function Dashboard({ go }) {
             data-testid={`dash-card-${c.id}`}
           >
             {c.node}
+            {/* Touch grip zone: a faint handle on the right edge (only shown on touchscreens). */}
+            <span aria-hidden="true" className="card-grip pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 h-8 w-1.5 rounded-full bg-slate-400/40" />
           </div>
           {c.id === 'subjects' && (
       <AdSlot slot="dashboard-bottom" />
