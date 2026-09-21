@@ -13,7 +13,7 @@ export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose,
   return (
     <aside className="border border-[color:var(--color-border)] flex flex-col bg-white relative overflow-hidden rounded-2xl shadow-sm h-full">
       <div className="relative px-5 pt-5 pb-6 flex items-center gap-2 shrink-0">
-        <span className={`w-9 h-9 rounded-xl flex items-center justify-center bg-[color:var(--color-primary)] relative overflow-hidden ${plus ? 'brand-shine' : ''}`} data-testid="brand-mark">
+        <span className={`w-9 h-9 rounded-xl flex items-center justify-center bg-[color:var(--color-primary)]`} data-testid="brand-mark">
           <Infinity className="w-6 h-6 text-white relative" strokeWidth={2.6} />
         </span>
         <div className="leading-tight min-w-0 flex-1">
