@@ -21,7 +21,7 @@ export function isPlus(state) {
 // Short labels used in the "InfinitySheets+ only" prompts.
 export const PLUS_FEATURES = {
   reviewDue: 'Spaced review reminders',
-  flashcards: 'Flashcards',
+  flashcards: 'Notes & Flashcards',
   aiPlan: 'AI study plan & coach',
   askDoubt: 'Ask a doubt',
   diagnosis: 'AI worksheet diagnosis',

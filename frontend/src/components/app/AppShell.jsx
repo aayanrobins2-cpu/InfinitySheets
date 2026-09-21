@@ -20,7 +20,7 @@ import TopicOverview from './TopicOverview';
 import ResourcesPage from '../landing/ResourcesPage';
 import Sidebar from './shell/Sidebar';
 import TopHeader from './shell/TopHeader';
-import Flashcards from './Flashcards';
+import NotesFlashcards from './NotesFlashcards';
 import Groups from './Groups';
 import ConsentGate from './ConsentGate';
 import CommandPalette from './CommandPalette';
@@ -39,7 +39,7 @@ const BASE_NAV = [
   { key: 'progress', label: 'Performance', Icon: TrendingUp },
   { key: 'strengths', label: 'Strengths & Weaknesses', Icon: Dumbbell },
   { key: 'recommendations', label: 'Smart Learning', Icon: Sparkles },
-  { key: 'flashcards', label: 'Flashcards', Icon: Layers },
+  { key: 'flashcards', label: 'Notes & Flashcards', Icon: Layers },
   { key: 'groups', label: 'Study Groups', Icon: Users },
   { key: 'settings', label: 'Settings', Icon: Settings },
 ];
@@ -101,7 +101,7 @@ function renderRoute(activeKey, params, go, isAdmin) {
     case 'recommendations': return <Recommendations go={go} />;
     case 'mistakes': return <Mistakes />;
     case 'settings': return <SettingsView />;
-    case 'flashcards': return <Flashcards go={go} />;
+    case 'flashcards': return <NotesFlashcards go={go} />;
     case 'groups': return <Groups />;
     case 'resources': return <ResourcesPage embedded />;
     case 'admin': return isAdmin ? <AdminPlaceholder /> : <Dashboard go={go} />;

@@ -122,7 +122,7 @@ export function settingsToRow(state, userId) {
     onboarding_done: state.onboardingDone ?? false,
     tutorial_done: state.tutorialDone ?? false,
     // Small per-user blobs that do not deserve their own table.
-    data: { flashcards: state.flashcards || null, studyPlan: state.studyPlan || null, badges: state.badges || null, reminderHour: s.reminderHour ?? 18, askMistakeReason: s.askMistakeReason !== false, glass: typeof s.glass === 'number' ? s.glass : 50, glassOff: !!s.glassOff, haptics: s.haptics !== false, plan: s.plan === 'plus' ? 'plus' : 'free', dashboardCards: s.dashboardCards || null, aiEnabled: s.aiEnabled !== false, consent: state.consent || null, focusSessions: state.focusSessions || [], pendingSubmissions: (state.pendingSubmissions || []).slice(-20) },
+    data: { flashcards: state.flashcards || null, studyPlan: state.studyPlan || null, badges: state.badges || null, reminderHour: s.reminderHour ?? 18, askMistakeReason: s.askMistakeReason !== false, glass: typeof s.glass === 'number' ? s.glass : 50, glassOff: !!s.glassOff, haptics: s.haptics !== false, plan: s.plan === 'plus' ? 'plus' : 'free', dashboardCards: s.dashboardCards || null, aiEnabled: s.aiEnabled !== false, consent: state.consent || null, focusSessions: state.focusSessions || [], pendingSubmissions: (state.pendingSubmissions || []).slice(-20), notes: (state.notes || []).slice(0, 200) },
     updated_at: nowISO(),
   };
 }
@@ -136,6 +136,7 @@ export function rowToSettingsState(row) {
     consent: extra.consent || null,
     focusSessions: Array.isArray(extra.focusSessions) ? extra.focusSessions : [],
     pendingSubmissions: Array.isArray(extra.pendingSubmissions) ? extra.pendingSubmissions : [],
+    notes: Array.isArray(extra.notes) ? extra.notes : [],
     settings: {
       reminderHour: typeof extra.reminderHour === 'number' ? extra.reminderHour : 18,
       askMistakeReason: extra.askMistakeReason !== false,
@@ -298,7 +299,7 @@ function ppToRow(pp) {
     exam_answer: pp.examAnswer ?? null,
     exam_keywords: pp.examKeywords ?? null,
     source: 'past-paper',
-    data: { ...pp, source: 'past-paper' },
+    data: { ...pp, source: 'past-paper', multiplied: pp.source === 'multiplied' || pp.multiplied === true || undefined },
   };
   if (pp.id) row.id = pp.id;
   return row;
@@ -377,5 +378,32 @@ export async function updateNotificationPrefs({ digestEmail, pushReminders }, us
   if (typeof digestEmail === 'boolean') row.digest_email = digestEmail;
   if (typeof pushReminders === 'boolean') row.push_reminders = pushReminders;
   const { error } = await supabase.from('user_settings').upsert(row, { onConflict: 'user_id' });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Study notes (PDF + audio) live in the private `notes` storage bucket under
+// <uid>/<id>.<ext>; RLS limits every user to their own folder. Metadata is
+// kept in the settings blob (state.notes).
+// ---------------------------------------------------------------------------
+const NOTES_BUCKET = 'notes';
+export async function uploadNoteFile(userId, id, file, ext) {
+  const path = `${userId}/${id}.${ext}`;
+  const { error } = await supabase.storage.from(NOTES_BUCKET).upload(path, file, { contentType: file.type || undefined, upsert: false });
+  if (error) throw error;
+  return path;
+}
+export async function noteFileUrl(path, seconds = 3600) {
+  const { data, error } = await supabase.storage.from(NOTES_BUCKET).createSignedUrl(path, seconds);
+  if (error) throw error;
+  return data.signedUrl;
+}
+export async function downloadNoteFile(path) {
+  const { data, error } = await supabase.storage.from(NOTES_BUCKET).download(path);
+  if (error) throw error;
+  return data; // Blob
+}
+export async function deleteNoteFile(path) {
+  const { error } = await supabase.storage.from(NOTES_BUCKET).remove([path]);
   if (error) throw error;
 }

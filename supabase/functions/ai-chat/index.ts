@@ -74,6 +74,12 @@ function systemPrompt(mode: string, ctx: Record<string, unknown>) {
   if (mode === "diagnose") {
     return `${base}\n\nYou are running a post-worksheet diagnosis. The message contains the worksheet the student just finished. Write a diagnosis with exactly these Markdown sections:\n\n## Where you went wrong\nGo through the incorrect questions (reference them by number). Name the actual misconception and give the one-line correct reasoning. If everything was correct, say so and identify where answers were fragile.\n\n## What you could have done better\n3-5 bullets on technique, each tied to a real question from this worksheet.\n\n## Next steps\nExactly 3 bullets: the most valuable things to practise next, in priority order, each with why.\n\nBe direct and encouraging, never padded. Under 350 words.`;
   }
+  if (mode === "blurt") {
+    return `${base}\n\nYou build a BLURTING exercise: a compact set of revision notes for the topic, written the way the mark scheme phrases things, with the key terms, values, laws and steps blanked out for the student to recall from memory. Use the student's own notes when they are supplied; otherwise write the notes from the syllabus. Reply with ONE JSON object and nothing else: {"title": string, "passage": "the notes with each blank written as [[n]] where n is 1-based", "blanks": [{"n": integer, "answer": "the exact missing words", "aliases": ["accepted alternatives"]}]}. 8-16 blanks, each a short phrase (1-4 words), covering the most examinable facts.`;
+  }
+  if (mode === "multiply") {
+    return `${base}\n\nYou MULTIPLY a past-paper question bank: given real past questions, write NEW questions that test the same concepts in the same examiner style — change the numbers/context, swap the quantity asked for, or combine two of the concepts into one question. Never copy a given question; every new one must be original and fully answerable from the syllabus with a precise answer and mark points. Reply with a single JSON object and nothing else.`;
+  }
   if (mode === "course-search") {
     return `You help a student identify the exact official course / specification / syllabus they are studying, so InfinitySheets can pull the right material. Use Google Search to find real, official courses that match what they describe (exam boards, universities, national curricula, professional bodies). Ask at most a FEW short clarifying questions ONE at a time (e.g. the official course or exam name, the exam board or institution, the level/year, the country) — but only when you genuinely need them to search well. As soon as you can, search and return real candidate courses.\n\nReply with ONE JSON object and nothing else, no markdown fences:\n{"question": "a single short clarifying question, or null when you are ready to show matches", "candidates": [{"name": "official course name", "org": "board / institution", "level": "level or year if any", "url": "official page URL you actually found", "why": "one line on why it matches"}], "note": "one short line of context"}\nOnly include candidates you actually found via search with real official URLs — never invent a course or URL. Return an empty candidates array while you are still asking questions.`;
   }
@@ -107,7 +113,20 @@ function envLike(canonical: string): string | undefined {
   return undefined;
 }
 
-const MODEL_CHAIN = ["gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
+// Model tiers. Each mode gets the smartest model it needs, falling through
+// the chain on 404 (model not available to this key) or 429 (daily quota):
+//   SMART    — reading a whole paper, marking handwriting, diagnosing, web
+//              search, writing new exam-quality questions: reasoning matters.
+//   BALANCED — plans, worked solutions, syllabus reading.
+//   FAST     — chat, cached overviews, flashcards, transcription, blurting.
+const SMART_CHAIN = ["gemini-3.5-pro", "gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"];
+const BALANCED_CHAIN = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"];
+const FAST_CHAIN = ["gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
+const TIER: Record<string, string[]> = {
+  extract: SMART_CHAIN, assess: SMART_CHAIN, mark: SMART_CHAIN, diagnose: SMART_CHAIN, "course-search": SMART_CHAIN, multiply: SMART_CHAIN,
+  plan: BALANCED_CHAIN, solution: BALANCED_CHAIN, syllabus: BALANCED_CHAIN, generate: BALANCED_CHAIN,
+};
+function chainFor(mode: string) { return TIER[mode] || FAST_CHAIN; }
 
 const DB_URL = Deno.env.get("SUPABASE_URL");
 const DB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -157,9 +176,11 @@ async function cacheBumpHit(id: string) {
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
-const MODES = new Set(["overview", "chat", "recommend", "diagnose", "transcribe", "mark", "generate", "extract", "assess", "solution", "plan", "syllabus", "flashcards", "course-search"]);
-const JSON_MODES = new Set(["mark", "generate", "extract", "assess", "plan", "syllabus", "flashcards"]);
+const MODES = new Set(["overview", "chat", "recommend", "diagnose", "transcribe", "mark", "generate", "extract", "assess", "solution", "plan", "syllabus", "flashcards", "course-search", "blurt", "multiply"]);
+const JSON_MODES = new Set(["mark", "generate", "extract", "assess", "plan", "syllabus", "flashcards", "blurt", "multiply"]);
 const FILE_MODES = new Set(["transcribe", "extract", "assess", "syllabus"]);
+// Modes that read an attached file when one is sent (blurting from PDF notes).
+const OPTIONAL_FILE_MODES = new Set(["blurt"]);
 type FileIn = { mimeType: string; data: string; label?: string };
 function cleanFiles(list: unknown, max = 6): FileIn[] {
   return (Array.isArray(list) ? list : []).slice(0, max)
@@ -200,11 +221,12 @@ Deno.serve(async (req: Request) => {
   const key = envLike("GEMINI_API_KEY");
   if (!key) return json({ error: "AI is not configured yet — add the GEMINI_API_KEY secret to the Supabase project." }, 503);
   const preferred = envLike("GEMINI_MODEL");
-  const models = preferred ? [preferred, ...MODEL_CHAIN.filter((m) => m !== preferred)] : [...MODEL_CHAIN];
 
   let body: { mode?: string; context?: Record<string, unknown>; messages?: Msg[]; force?: boolean; images?: FileIn[]; files?: FileIn[] };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
   const mode = MODES.has(String(body.mode)) ? String(body.mode) : "chat";
+  const chain = chainFor(mode);
+  const models = preferred ? [preferred, ...chain.filter((m) => m !== preferred)] : [...chain];
   const ctx = body.context || {};
   const cachedOverview = mode === "overview" && !body.force ? await cacheGet(cacheKey(ctx)) : null;
   if (cachedOverview) { cacheBumpHit(cacheKey(ctx)); return json({ text: cachedOverview.body, model: cachedOverview.model, cached: true }); }
@@ -216,7 +238,7 @@ Deno.serve(async (req: Request) => {
   let contents: Array<{ role: string; parts: Part[] }>;
   if (mode === "overview") {
     contents = [{ role: "user", parts: [{ text: overviewPrompt(ctx) }] }];
-  } else if (FILE_MODES.has(mode)) {
+  } else if (FILE_MODES.has(mode) || (OPTIONAL_FILE_MODES.has(mode) && cleanFiles(body.files).length)) {
     const files = cleanFiles(Array.isArray(body.files) && body.files.length ? body.files : body.images);
     if (!files.length) return json({ error: "No file was attached" }, 400);
     const note = (Array.isArray(body.messages) ? body.messages : []).map((m) => m?.content || "").join("\n").slice(0, 60000);
@@ -242,7 +264,7 @@ Deno.serve(async (req: Request) => {
     contents,
     ...(grounded ? { tools: [{ google_search: {} }] } : {}),
     generationConfig: {
-      temperature: mode === "generate" ? 0.9 : grounded ? 0.2 : mode === "transcribe" || JSON_MODES.has(mode) ? 0.1 : 0.4,
+      temperature: mode === "generate" || mode === "multiply" ? 0.9 : grounded ? 0.2 : mode === "transcribe" || JSON_MODES.has(mode) ? 0.1 : 0.4,
       maxOutputTokens: mode === "extract" ? 16000 : grounded ? 2000 : JSON_MODES.has(mode) ? 8000 : mode === "transcribe" ? 2500 : 1500,
       ...(JSON_MODES.has(mode) && !grounded ? { responseMimeType: "application/json" } : {}),
     },

@@ -89,9 +89,9 @@ const STEPS = [
     route: 'flashcards',
     target: 'flashcards',
     eyebrow: 'Step 10',
-    title: 'Flashcards',
-    body: 'Every missed question becomes a card. Flip it, rate how well you knew it, and it comes back just before you would forget. Badges on the dashboard track goals like streaks and perfect sheets.',
-    bullets: ['Again / Hard / Good / Easy', 'Filter by subject', 'Only what is due today'],
+    title: 'Notes & Flashcards',
+    body: 'Keep your PDF and audio notes per subject, work through concept flashcards, and blurt: your notes come back with the key facts blanked out for you to fill in from memory.',
+    bullets: ['Upload PDF notes or record audio notes', 'Flashcards by subject and topic', 'Blurting: fill the blanks from memory'],
   },
   {
     route: 'groups',

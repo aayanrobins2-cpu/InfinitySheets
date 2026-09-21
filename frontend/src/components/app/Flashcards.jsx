@@ -15,11 +15,11 @@ const EMPTY = {};
 // Flashcards the SaveMyExams way: subject → topic → a deck of concept cards.
 // Read the front, reveal, then "I knew it" or "I didn't know it". Cards you
 // didn't know come back at the end of the session.
-export default function Flashcards({ go }) {
+export default function Flashcards({ go, subject: forcedSubject }) {
   const { state, markFlashcard, saveFlashcardDeck, saveFlashcardExplanation } = useApp();
   const subjects = useMemo(() => enrolledSubjects(state.courses, state.user?.subjects, state.user?.examTrack), [state.courses, state.user?.subjects, state.user?.examTrack]);
   const [subject, setSubject] = useState(subjects[0] || '');
-  const activeSubject = subjects.includes(subject) ? subject : subjects[0] || '';
+  const activeSubject = forcedSubject && subjects.includes(forcedSubject) ? forcedSubject : subjects.includes(subject) ? subject : subjects[0] || '';
   const board = boardFor(activeSubject, state.courses, state.user?.examTrack);
   const topics = useMemo(() => resolvedTopics(state.syllabusTopics, board, activeSubject), [state.syllabusTopics, board, activeSubject]);
   const [topic, setTopic] = useState(null);
@@ -53,12 +53,14 @@ export default function Flashcards({ go }) {
   return (
     <div className="max-w-[900px]">
       <p className="text-[14px] text-zinc-500 mb-5">Pick a topic and work through its cards: read, reveal, then say whether you knew it. No scores — the ones you didn't know just come round again.</p>
-      <div className="flex flex-wrap items-center gap-2 mb-5">
-        {subjects.map((s) => (
-          <button key={s} type="button" onClick={() => setSubject(s)} data-testid={`fc-subject-${s.replace(/\s+/g, '-')}`} className={`px-3.5 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${activeSubject === s ? 'border-violet-500 bg-violet-50 text-violet-800' : 'border-zinc-200 bg-white text-slate-700 hover:bg-slate-50'}`}>{s}</button>
-        ))}
-        <span className="text-[12px] text-slate-500 ml-auto">{board}</span>
-      </div>
+      {!forcedSubject && (
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          {subjects.map((s) => (
+            <button key={s} type="button" onClick={() => setSubject(s)} data-testid={`fc-subject-${s.replace(/\s+/g, '-')}`} className={`px-3.5 py-1.5 rounded-md text-[13px] font-medium border transition-colors ${activeSubject === s ? 'border-violet-500 bg-violet-50 text-violet-800' : 'border-zinc-200 bg-white text-slate-700 hover:bg-slate-50'}`}>{s}</button>
+          ))}
+          <span className="text-[12px] text-slate-500 ml-auto">{board}</span>
+        </div>
+      )}
       <div className="grid sm:grid-cols-2 gap-2.5" data-testid="fc-topics">
         {topicDecks.map((t) => (
           <button key={t.topic} type="button" onClick={() => setTopic(t.topic)} data-testid={`fc-topic-${t.topic.replace(/\W+/g, '-')}`} className="text-left rounded-xl border border-[color:var(--color-border)] bg-white px-4 py-3 hover:border-violet-300 transition-colors">

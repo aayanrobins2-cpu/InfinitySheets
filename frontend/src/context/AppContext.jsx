@@ -68,6 +68,9 @@ const defaultState = {
   // answerType, difficulty, duration, questions, board, ibLevel, createdAt,
   // dueDate }.
   pendingSubmissions: [],
+  // Study notes metadata (files live in Supabase Storage). { id, subject,
+  // topic, kind: 'pdf' | 'audio', name, path, size, mime, createdAt, durationSec }.
+  notes: [],
   // Test-mode only: which tier an admin is previewing ('free' | 'plus').
   testPlan: 'free',
   questionsToday: 0,
@@ -735,6 +738,17 @@ export function AppProvider({ children }) {
     bg(() => store.upsertSettings(stateRef.current, uid()), 'flashcards/deck');
   }, []);
 
+  const addNote = useCallback((note) => {
+    const next = { ...stateRef.current, notes: [note, ...(stateRef.current.notes || [])].slice(0, 200) };
+    setState((s) => ({ ...s, notes: next.notes }));
+    bg(() => store.upsertSettings(next, uid()), 'notes/add');
+  }, []);
+  const removeNote = useCallback((id) => {
+    const next = { ...stateRef.current, notes: (stateRef.current.notes || []).filter((n) => n.id !== id) };
+    setState((s) => ({ ...s, notes: (s.notes || []).filter((n) => n.id !== id) }));
+    bg(() => store.upsertSettings(next, uid()), 'notes/remove');
+  }, []);
+
   const setStudyPlan = useCallback((plan) => {
     setState((s) => ({ ...s, studyPlan: plan }));
     bg(() => store.upsertSettings({ ...stateRef.current, studyPlan: plan }, uid()), 'studyPlan');
@@ -827,7 +841,7 @@ export function AppProvider({ children }) {
     addCourse, removeCourse, updateCourse,
     addPastPaper, removePastPaper, refreshPastPapers,
     toggleTheme, completeOnboarding, restartOnboarding,
-    markFlashcard, saveFlashcardDeck, setStudyPlan, togglePlanTask, setSyllabusTopics, tagMistakeReason, recordConsent, logFocusSession, setThemeMode, saveFlashcardExplanation, addPendingSubmission, removePendingSubmission, setSubmissionDue, setTestPlan,
+    markFlashcard, saveFlashcardDeck, setStudyPlan, togglePlanTask, setSyllabusTopics, tagMistakeReason, recordConsent, logFocusSession, setThemeMode, saveFlashcardExplanation, addPendingSubmission, removePendingSubmission, setSubmissionDue, setTestPlan, addNote, removeNote,
   }), [
     state, loaded, syncStatus,
     signup, login, logout,
@@ -839,7 +853,7 @@ export function AppProvider({ children }) {
     addCourse, removeCourse, updateCourse,
     addPastPaper, removePastPaper, refreshPastPapers,
     toggleTheme, completeOnboarding, restartOnboarding,
-    markFlashcard, saveFlashcardDeck, setStudyPlan, togglePlanTask, setSyllabusTopics, tagMistakeReason, recordConsent, logFocusSession, setThemeMode, saveFlashcardExplanation, addPendingSubmission, removePendingSubmission, setSubmissionDue, setTestPlan,
+    markFlashcard, saveFlashcardDeck, setStudyPlan, togglePlanTask, setSyllabusTopics, tagMistakeReason, recordConsent, logFocusSession, setThemeMode, saveFlashcardExplanation, addPendingSubmission, removePendingSubmission, setSubmissionDue, setTestPlan, addNote, removeNote,
   ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

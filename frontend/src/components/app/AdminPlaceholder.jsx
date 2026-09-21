@@ -3,11 +3,11 @@ import { papersFor } from '../../lib/paperTypes';
 import { findDuplicates } from '../../lib/duplicates';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool, Copy } from 'lucide-react';
+import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool, Copy, Layers } from 'lucide-react';
 import { SUBJECTS, EXAM_TRACKS } from '../../data/mock';
 import { FULL_PAPER_TYPE } from '../../data/pastPapers';
 import { toast } from 'sonner';
-import { extractFromPdf, isAiEnabled } from '../../lib/ai';
+import { extractFromPdf, multiplyQuestions, isAiEnabled } from '../../lib/ai';
 import { filesToAiParts } from '../../lib/images';
 import { SyllabusImport, FlagQueue } from './AdminNextWave';
 
@@ -181,6 +181,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
   const dupGroups = useMemo(() => findDuplicates(scopedPastPapers), [scopedPastPapers]);
   const dupExtras = dupGroups.reduce((n, g) => n + g.items.length - 1, 0);
   const [showDups, setShowDups] = useState(false);
+  const [showMultiply, setShowMultiply] = useState(false);
 
   const validate = () => {
     const isPaper = form.answerType === FULL_PAPER_TYPE;
@@ -388,9 +389,15 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
             <button type="button" onClick={() => setShowDups((v) => !v)} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border transition-colors ${dupExtras ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'border-[color:var(--color-border)] text-slate-500 hover:bg-slate-50'}`} data-testid="admin-dup-toggle" title="Find duplicate questions">
               <Copy className="w-3.5 h-3.5" /> Duplicates{dupExtras ? <span className="ml-0.5 rounded-full bg-amber-600 text-white px-1.5 text-[10.5px]">{dupExtras}</span> : null}
             </button>
+            <button type="button" onClick={() => setShowMultiply((v) => !v)} disabled={scopedPastPapers.length === 0} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border transition-colors disabled:opacity-40 ${showMultiply ? 'border-blue-300 bg-blue-50 text-blue-800' : 'border-[color:var(--color-border)] text-slate-600 hover:bg-slate-50'}`} data-testid="admin-multiply-toggle" title="Write new questions on the same concepts">
+              <Layers className="w-3.5 h-3.5" /> Multiply
+            </button>
             <Filter className="w-5 h-5 text-slate-400" />
           </div>
         </div>
+        {showMultiply && (
+          <MultiplyPanel syllabus={syllabus} subject={subject} questions={filteredPastPapers} topicsList={topicsList} filterTopic={filterTopic} addPastPaper={addPastPaper} onClose={() => setShowMultiply(false)} />
+        )}
         {showDups && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/40 p-3" data-testid="admin-dup-panel">
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -461,6 +468,117 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
 }
 
 // --------------------------------------------------------------------------
+// Multiply: new questions on the same concepts as the ones in the library
+// --------------------------------------------------------------------------
+
+function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopic, addPastPaper, onClose }) {
+  const { state } = useApp();
+  const addedBy = state.user?.email || 'unknown';
+  const [count, setCount] = useState(6);
+  const [busy, setBusy] = useState(false);
+  const [drafts, setDrafts] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const pool = questions.filter((q) => q.answerType !== FULL_PAPER_TYPE && q.q);
+
+  const run = async () => {
+    if (!isAiEnabled(state)) { toast.error('AI is turned off in Settings'); return; }
+    if (!pool.length) { toast.error('No questions to multiply in this view'); return; }
+    setBusy(true);
+    try {
+      // Seed with a random sample so repeated presses explore the library.
+      const seeds = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
+      const ibLevel = seeds.every((q) => q.ibLevel === seeds[0].ibLevel) ? seeds[0].ibLevel : null;
+      const list = await multiplyQuestions({ board: syllabus, ibLevel, subject, questions: seeds, count, topics: filterTopic ? [filterTopic] : topicsList });
+      setDrafts((d) => [...list.map((q) => ({ ...q, _key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, ibLevel })), ...d]);
+      toast.success(`${list.length} new question${list.length === 1 ? '' : 's'} drafted`);
+    } catch (e) {
+      toast.error(e?.message || 'Could not multiply questions');
+    } finally { setBusy(false); }
+  };
+
+  const payloadFor = (d) => ({
+    subject, board: syllabus, topic: d.topic || filterTopic || topicsList[0] || '',
+    ibLevel: syllabus === 'IB' && d.ibLevel ? d.ibLevel : null,
+    year: null, difficulty: d.difficulty || 'Exam level', answerType: d.answerType, marks: d.marks || null, link: null, addedBy,
+    q: d.q, source: 'multiplied',
+    options: d.options, a: d.a, typedAnswer: d.typedAnswer, typedAliases: d.typedAliases,
+    examAnswer: d.examAnswer, examKeywords: d.examKeywords, markScheme: d.markScheme,
+    hasDiagram: d.hasDiagram, diagramNote: d.diagramNote,
+  });
+
+  const saveOne = async (d) => {
+    try { await addPastPaper(payloadFor(d)); setDrafts((x) => x.filter((y) => y._key !== d._key)); toast.success('Added to the library'); }
+    catch (e) { toast.error(e?.message || 'Could not save'); }
+  };
+  const saveAll = async () => {
+    setSaving(true);
+    let ok = 0;
+    for (const d of drafts) { try { await addPastPaper(payloadFor(d)); ok += 1; } catch (_) { /* counted */ } }
+    setDrafts([]); setSaving(false);
+    toast.success(`Added ${ok} of ${drafts.length} question${drafts.length === 1 ? '' : 's'}`);
+  };
+
+  return (
+    <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50/40 p-3" data-testid="admin-multiply-panel">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div className="min-w-0">
+          <div className="text-[12.5px] font-semibold text-blue-900 inline-flex items-center gap-1.5"><Layers className="w-4 h-4" /> Multiply</div>
+          <div className="text-[11.5px] text-slate-600">Reads the {pool.length} question{pool.length === 1 ? '' : 's'} {filterTopic ? `in ${filterTopic}` : 'in this category'} and writes new ones on the same concepts — changed values, a different quantity asked for, or two concepts combined.</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-[11.5px] text-slate-600 inline-flex items-center gap-1.5">Make
+            <select className="input-base !py-1 !px-2 !w-auto text-[12px]" value={count} onChange={(e) => setCount(parseInt(e.target.value, 10))} data-testid="admin-multiply-count">
+              {[3, 6, 10, 15, 20].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </label>
+          <button type="button" onClick={run} disabled={busy || !pool.length} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50" data-testid="admin-multiply-run">
+            {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} {busy ? 'Writing…' : 'Multiply'}
+          </button>
+          <button type="button" onClick={onClose} className="w-7 h-7 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white flex items-center justify-center" aria-label="Close"><X className="w-4 h-4" /></button>
+        </div>
+      </div>
+      {drafts.length > 0 && (
+        <>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="text-[11.5px] font-semibold text-slate-700">{drafts.length} draft{drafts.length === 1 ? '' : 's'} — review, then add</div>
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={() => setDrafts([])} className="text-[11.5px] font-semibold text-slate-500 hover:text-slate-800">Discard all</button>
+              <button type="button" onClick={saveAll} disabled={saving} className="text-[11.5px] font-semibold text-blue-700 hover:text-blue-900 inline-flex items-center gap-1 disabled:opacity-50" data-testid="admin-multiply-save-all">{saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Add all to library</button>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 max-h-[420px] overflow-auto pr-1">
+            {drafts.map((d) => (
+              <div key={d._key} className="rounded-lg border border-[color:var(--color-border)] bg-white p-2.5" data-testid="admin-multiply-draft">
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1 mb-1">
+                      {d.topic && <span className="px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 text-[10px] font-semibold">{d.topic}</span>}
+                      <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-semibold">{d.answerType}</span>
+                      {d.marks ? <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-semibold">{d.marks} marks</span> : null}
+                      <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-semibold">Multiplied</span>
+                    </div>
+                    <div className="text-[12.5px] text-slate-900">{d.q}</div>
+                    <div className="text-[11.5px] text-slate-600 mt-0.5">
+                      {d.answerType === 'Multiple choice' ? <>Options: {(d.options || []).join(' · ')} — correct: <span className="font-medium text-emerald-700">{(d.options || [])[d.a]}</span></>
+                        : d.answerType === 'Typed response' ? <>Expected: <span className="font-medium text-emerald-700">{d.typedAnswer}</span></>
+                        : <>Answer: <span className="font-medium text-slate-800">{d.examAnswer || '\u2014'}</span></>}
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button type="button" onClick={() => saveOne(d)} className="px-2 py-1 rounded-md text-[11.5px] font-semibold bg-emerald-600 text-white hover:bg-emerald-700" data-testid="admin-multiply-add">Add</button>
+                    <button type="button" onClick={() => setDrafts((x) => x.filter((y) => y._key !== d._key))} className="px-2 py-1 rounded-md text-[11.5px] font-semibold text-slate-500 hover:bg-slate-100">Drop</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
 // Library row
 // --------------------------------------------------------------------------
 
@@ -477,6 +595,7 @@ function LibraryRow({ p, onRemove }) {
             {p.paper && <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10.5px] font-semibold">{p.paper}</span>}
             {p.ibLevel && <span className="px-2 py-0.5 rounded-md bg-violet-100 text-violet-800 text-[10.5px] font-semibold">{p.ibLevel}</span>}
             {(p.hasDiagram || p.answerType === 'Drawing') && <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10.5px] font-semibold">Diagram</span>}
+            {p.multiplied && <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10.5px] font-semibold">Multiplied</span>}
             {p.marks && <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10.5px] font-semibold">{p.marks} marks</span>}
           </div>
           <div className="text-[13.5px] font-medium text-slate-900 leading-snug">{p.q}</div>

@@ -501,3 +501,48 @@ export async function generateFlashcards({ board, subject, topic, count = 12 }) 
   if (!cards.length) throw new Error('The AI returned no cards');
   return cards;
 }
+
+/**
+ * Admin "Multiply": from a handful of real past-paper questions, write NEW
+ * questions on the same concepts (changed values / swapped quantity / two
+ * concepts combined). Resolves to shaped drafts (source: 'multiplied').
+ */
+export async function multiplyQuestions({ board, ibLevel, subject, questions, count = 6, topics = [] }) {
+  const seeds = (questions || []).slice(0, 12);
+  if (!seeds.length) throw new Error('Pick at least one question to multiply');
+  const n = Math.max(1, Math.min(20, count));
+  const describe = (q, i) => {
+    const ans = q.answerType === 'Multiple choice' ? `Options: ${(q.options || []).join(' | ')}; correct: ${(q.options || [])[q.a]}` : (q.typedAnswer || q.examAnswer || '');
+    return `[${i + 1}] (${q.topic || 'untagged'}; ${q.answerType}; ${q.marks || '?'} marks) ${q.q}\n    Answer: ${ans}`;
+  };
+  const content = [
+    `Here are ${seeds.length} real past-paper questions for ${subject} (${board}${ibLevel ? ` ${ibLevel}` : ''}):`,
+    seeds.map(describe).join('\n'),
+    `Write ${n} NEW questions that test the same concepts. For each: keep the examiner style and answer type of a seed but change the numbers or context, or ask for a different quantity, or combine two seeds' concepts into one question. Never reuse a seed's wording. Every question needs a correct answer and a marking scheme.`,
+    `Tag each with one of these topics: ${(topics.length ? topics : [...new Set(seeds.map((q) => q.topic).filter(Boolean))]).join('; ') || '(free choice)'}.`,
+    `Reply as {"questions": [...]}. ${QUESTION_SHAPE}.`,
+  ].join('\n');
+  const text = await askAi({ mode: 'multiply', context: { board, ibLevel, subject }, messages: [{ role: 'user', content }] });
+  let parsed;
+  try { parsed = parseJsonReply(text); } catch (_) { parsed = { questions: recoverQuestions(text) }; }
+  const fallbackType = seeds[0].answerType || 'Exam style';
+  const list = (parsed.questions || []).map((r) => shapeQuestion(r, { answerType: fallbackType, difficulty: 'Exam level', topics, subject })).filter(Boolean);
+  if (!list.length) throw new Error('The AI returned no usable questions');
+  return list.map((q) => ({ ...q, source: 'multiplied' }));
+}
+
+/**
+ * Blurting: a passage of revision notes with the key facts blanked out.
+ * `notes` (optional) is the student's own notes text; otherwise the AI writes
+ * notes from the syllabus. Resolves to { title, passage, blanks:[{n, answer, aliases}] }.
+ */
+export async function buildBlurt({ board, ibLevel, subject, topic, notes = '', files = [] }) {
+  const own = files.length ? 'Use ONLY the attached notes as the source material (rewrite them tidily, keep the facts). Stay on the requested topic if the notes cover more.' : notes ? `Use ONLY these notes from the student as the source material (rewrite them tidily, keep the facts):\n"""\n${String(notes).slice(0, 12000)}\n"""` : 'No notes were supplied — write them from the syllabus for this exam.';
+  const content = `Build a blurting exercise for the topic "${topic}" in ${subject} (${board}${ibLevel ? ` ${ibLevel}` : ''}).\n${own}\nReply as {"title", "passage", "blanks"} exactly as instructed. Number the blanks [[1]], [[2]]… in order of appearance.`;
+  const text = await askAi({ mode: 'blurt', context: { board, ibLevel, subject, topic }, messages: [{ role: 'user', content }], files });
+  const parsed = parseJsonReply(text);
+  const passage = String(parsed.passage || '');
+  const blanks = (parsed.blanks || []).map((b) => ({ n: parseInt(b.n, 10), answer: String(b.answer || '').trim(), aliases: Array.isArray(b.aliases) ? b.aliases.map(String) : [] })).filter((b) => b.n > 0 && b.answer);
+  if (!passage || !blanks.length) throw new Error('The AI returned no usable exercise');
+  return { title: String(parsed.title || topic), passage, blanks };
+}
