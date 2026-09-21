@@ -793,20 +793,27 @@ export function AppProvider({ children }) {
   }, []);
 
   // ---- Worksheet submissions due ------------------------------------------
+  // These save the *computed* next state: stateRef only catches up after the
+  // re-render, so saving stateRef.current here would write the old list back
+  // to the server and the change would reappear on the next sync.
   const addPendingSubmission = useCallback((sub) => {
     const entry = { id: `sub_${Date.now()}`, createdAt: new Date().toISOString(), ...sub };
-    setState((s) => ({ ...s, pendingSubmissions: [entry, ...(s.pendingSubmissions || [])].slice(0, 20) }));
-    bg(() => store.upsertSettings(stateRef.current, uid()), 'submissions/add');
+    const next = { ...stateRef.current, pendingSubmissions: [entry, ...(stateRef.current.pendingSubmissions || [])].slice(0, 20) };
+    setState((s) => ({ ...s, pendingSubmissions: next.pendingSubmissions }));
+    bg(() => store.upsertSettings(next, uid()), 'submissions/add');
     return entry;
   }, []);
   const removePendingSubmission = useCallback((id) => {
+    const next = { ...stateRef.current, pendingSubmissions: (stateRef.current.pendingSubmissions || []).filter((x) => x.id !== id) };
     setState((s) => ({ ...s, pendingSubmissions: (s.pendingSubmissions || []).filter((x) => x.id !== id) }));
-    bg(() => store.upsertSettings(stateRef.current, uid()), 'submissions/remove');
+    bg(() => store.upsertSettings(next, uid()), 'submissions/remove');
   }, []);
   // Clear just the deadline but keep the worksheet available to scan.
   const setSubmissionDue = useCallback((id, dueDate) => {
-    setState((s) => ({ ...s, pendingSubmissions: (s.pendingSubmissions || []).map((x) => (x.id === id ? { ...x, dueDate: dueDate || null } : x)) }));
-    bg(() => store.upsertSettings(stateRef.current, uid()), 'submissions/due');
+    const apply = (list) => (list || []).map((x) => (x.id === id ? { ...x, dueDate: dueDate || null } : x));
+    const next = { ...stateRef.current, pendingSubmissions: apply(stateRef.current.pendingSubmissions) };
+    setState((s) => ({ ...s, pendingSubmissions: apply(s.pendingSubmissions) }));
+    bg(() => store.upsertSettings(next, uid()), 'submissions/due');
   }, []);
 
   const value = useMemo(() => ({

@@ -122,7 +122,7 @@ export function settingsToRow(state, userId) {
     onboarding_done: state.onboardingDone ?? false,
     tutorial_done: state.tutorialDone ?? false,
     // Small per-user blobs that do not deserve their own table.
-    data: { flashcards: state.flashcards || null, studyPlan: state.studyPlan || null, badges: state.badges || null, reminderHour: s.reminderHour ?? 18, askMistakeReason: s.askMistakeReason !== false, glass: typeof s.glass === 'number' ? s.glass : 50, glassOff: !!s.glassOff, haptics: s.haptics !== false, dashboardCards: s.dashboardCards || null, aiEnabled: s.aiEnabled !== false, consent: state.consent || null, focusSessions: state.focusSessions || [], pendingSubmissions: (state.pendingSubmissions || []).slice(-20) },
+    data: { flashcards: state.flashcards || null, studyPlan: state.studyPlan || null, badges: state.badges || null, reminderHour: s.reminderHour ?? 18, askMistakeReason: s.askMistakeReason !== false, glass: typeof s.glass === 'number' ? s.glass : 50, glassOff: !!s.glassOff, haptics: s.haptics !== false, plan: s.plan === 'plus' ? 'plus' : 'free', dashboardCards: s.dashboardCards || null, aiEnabled: s.aiEnabled !== false, consent: state.consent || null, focusSessions: state.focusSessions || [], pendingSubmissions: (state.pendingSubmissions || []).slice(-20) },
     updated_at: nowISO(),
   };
 }
@@ -142,6 +142,7 @@ export function rowToSettingsState(row) {
       glass: typeof extra.glass === 'number' ? extra.glass : 50,
       glassOff: !!extra.glassOff,
       haptics: extra.haptics !== false,
+      plan: extra.plan === 'plus' ? 'plus' : 'free',
       dashboardCards: extra.dashboardCards || null,
       aiEnabled: extra.aiEnabled !== false,
       dailyGoal: row.daily_goal ?? 10,

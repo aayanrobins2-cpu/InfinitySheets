@@ -1005,3 +1005,23 @@ html.no-glass .tile-violet, html.no-glass .tile-royal, html.no-glass .tile-emera
 /* Dashboard card grip: only touchscreens need to see where to long-press. */
 .card-grip { display: none; }
 @media (pointer: coarse) { .card-grip { display: block; } }
+
+/* InfinitySheets Plus brand: the same blue mark with a slow shine sweep, and a
+   shimmering "Plus" wordmark. */
+.brand-shine::after {
+  content: ''; position: absolute; inset: -40% -60%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.55) 50%, transparent 60%);
+  transform: translateX(-120%);
+  animation: brand-shine 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes brand-shine { 0%, 65% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+.brand-plus-text {
+  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 35%, #ffffff 50%, #60a5fa 65%, #2563eb 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: brand-plus-sheen 3.2s linear infinite;
+  font-weight: 800;
+}
+@keyframes brand-plus-sheen { from { background-position: 220% 0; } to { background-position: -20% 0; } }
+@media (prefers-reduced-motion: reduce) { .brand-shine::after, .brand-plus-text { animation: none; } }

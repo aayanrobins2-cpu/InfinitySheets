@@ -630,16 +630,21 @@ export default function Dashboard({ go }) {
     ) },
   ];
   const cardPrefs = Array.isArray(state.settings?.dashboardCards) ? state.settings.dashboardCards : null;
-  const orderedCards = useMemo(() => {
-    if (!cardPrefs) return CARDS;
-    const byId = new Map(CARDS.map((c) => [c.id, c]));
+  // Only the ORDER is memoised. The card elements themselves are rebuilt every
+  // render — memoising them froze each card's content at the moment the order
+  // was last computed (e.g. a removed submission stayed on screen until a
+  // reload).
+  const cardIds = CARDS.map((c) => c.id).join('|');
+  const orderedIds = useMemo(() => {
+    const ids = cardIds.split('|');
+    if (!cardPrefs) return ids;
     const seen = new Set();
     const out = [];
-    cardPrefs.forEach((p) => { const c = byId.get(p.id); if (c && !seen.has(p.id)) { seen.add(p.id); if (p.on !== false) out.push(c); } });
-    CARDS.forEach((c) => { if (!seen.has(c.id)) out.push(c); });   // cards added since the prefs were saved
+    cardPrefs.forEach((p) => { if (ids.includes(p.id) && !seen.has(p.id)) { seen.add(p.id); if (p.on !== false) out.push(p.id); } });
+    ids.forEach((id) => { if (!seen.has(id)) out.push(id); });   // cards added since the prefs were saved
     return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardPrefs, CARDS.map((c) => c.id).join('|')]);
+  }, [cardPrefs, cardIds]);
+  const orderedCards = orderedIds.map((id) => CARDS.find((c) => c.id === id)).filter(Boolean);
   // Long-press a card on the dashboard itself to lift it, then drag it over
   // another card and let go to drop it there. Pointer events so it works
   // with a mouse and with touch (a normal tap / scroll is untouched).
