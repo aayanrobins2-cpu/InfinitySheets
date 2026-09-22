@@ -15,7 +15,16 @@ import LSAT from './LSAT';
 import NEET from './NEET';
 import SAT from './SAT';
 
-export const BOARD_SYLLABI = { AP, ASA, CBSE10, CBSE, IB, ICSE, IGCSE, ISC, JEE, LSAT, NEET, SAT };
+// AS Level is a separate qualification (own papers, own a–e grades) but the
+// Cambridge syllabus file covers both years, so AS reuses it minus the
+// topics the file marks as A Level / A2 only.
+const AS = {
+  ...ASA,
+  name: 'Cambridge International AS Level',
+  subjects: ASA.subjects.map((s) => ({ ...s, topics: (s.topics || []).filter((t) => !/\(A Level\)|\bA2\b/.test(t)) })),
+};
+
+export const BOARD_SYLLABI = { AP, AS, ASA, CBSE10, CBSE, IB, ICSE, IGCSE, ISC, JEE, LSAT, NEET, SAT };
 
 // { board: [subject names] } — drives every subject picker.
 export const SUBJECTS_BY_BOARD = Object.fromEntries(

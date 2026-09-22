@@ -17,7 +17,8 @@ const json = (body: unknown, status = 200) =>
 
 const BOARD_NOTES: Record<string, string> = {
   IGCSE: "Cambridge IGCSE. Mark schemes award one mark per required point; use Cambridge command words precisely (state, describe, explain, calculate, compare, evaluate, suggest). Quote the exact phrasing examiners accept. Mention typical marks per question part and the assessment objectives (AO1, AO2, AO3).",
-  ASA: "Cambridge International AS & A Level. Answers are marked against detailed mark schemes with specific creditworthy points; level-of-response marking for extended answers. Use command words exactly and be explicit about required working, units, significant figures, and evaluation for the top band.",
+  AS: "Cambridge International AS Level (first year of the A Level course; graded a-e). AS papers only: shorter structured papers marked against detailed mark schemes with specific creditworthy points. Use command words exactly and be explicit about required working, units and significant figures.",
+  ASA: "Cambridge International A Level. Answers are marked against detailed mark schemes with specific creditworthy points; level-of-response marking for extended answers. Use command words exactly and be explicit about required working, units, significant figures, and evaluation for the top band.",
   IB: "IB Diploma Programme. Refer to the subject guide's assessment objectives and markbands, IB command terms, paper structure (Paper 1/2/3), and HL vs SL differences. Be explicit about what a 7 looks like versus a 5.",
   CBSE10: "CBSE Class 10 board examination (India), NCERT-aligned. Step marking with NCERT keywords; competency-based and case-study questions are a large share. Note the paper pattern and the exact NCERT phrasing examiners expect.",
   ISC: "ISC Class 12 (CISCE, India). Marking rewards precise definitions, complete derivations and labelled diagrams in the prescribed textbook terminology; answers are marked per scheme point with internal choice.",
@@ -32,7 +33,7 @@ const BOARD_NOTES: Record<string, string> = {
 
 function boardLabel(board: string) {
   const b = (board || "").toUpperCase();
-  return b === "ASA" ? "Cambridge AS & A Level" : b === "CBSE10" ? "CBSE Class 10" : b === "CBSE" ? "CBSE Class 12" : b === "ISC" ? "ISC Class 12" : b;
+  return b === "ASA" ? "Cambridge A Level" : b === "AS" ? "Cambridge AS Level" : b === "CBSE10" ? "CBSE Class 10" : b === "CBSE" ? "CBSE Class 12" : b === "ISC" ? "ISC Class 12" : b;
 }
 
 function systemPrompt(mode: string, ctx: Record<string, unknown>) {

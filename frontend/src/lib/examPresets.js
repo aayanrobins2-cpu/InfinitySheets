@@ -37,7 +37,11 @@ export const EXAM_PRESETS = {
     { name: 'Paper 2 · multiple choice', type: MCQ, count: 12, marksEach: 1 },
     { name: 'Paper 4 · structured', type: EXAM, count: 5, marksEach: 4 },
   ] },
-  ASA: { name: 'AS & A Level structured paper', minutes: 90, sections: [
+  AS: { name: 'AS Level structured paper', minutes: 75, sections: [
+    { name: 'Section A · short structured', type: TYPED, count: 6, marksEach: 2 },
+    { name: 'Section B · extended', type: EXAM, count: 3, marksEach: 5 },
+  ] },
+  ASA: { name: 'A Level structured paper', minutes: 90, sections: [
     { name: 'Section A · short structured', type: TYPED, count: 6, marksEach: 2 },
     { name: 'Section B · extended', type: EXAM, count: 4, marksEach: 5 },
   ] },

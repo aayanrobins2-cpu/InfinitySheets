@@ -4,7 +4,7 @@
 // cadence and improvement of the last two weeks going. Deliberately
 // conservative: improvement per sheet is measured from the student's own
 // recent sheets, capped, and decays as the score approaches 100.
-import { predictedScore, formatGrade, scoreToIBGrade, scoreToLetterGrade } from './predictedGrade';
+import { predictedScore, formatGrade, scoreToIBGrade, scoreToLetterGrade, scoreToASGrade } from './predictedGrade';
 
 const DAY = 24 * 60 * 60 * 1000;
 const WINDOW_DAYS = 14;
@@ -17,6 +17,11 @@ function nextBoundary(score, board) {
     for (let i = cuts.length - 1; i >= 0; i--) if (score < cuts[i][0]) { /* keep going up */ }
     const above = cuts.filter(([s]) => s > score).sort((a, b2) => a[0] - b2[0])[0];
     return above ? { label: `${above[1]}/7`, score: above[0] } : null;
+  }
+  if (b === 'AS') {
+    const cuts = [[80, 'a'], [70, 'b'], [60, 'c'], [50, 'd'], [40, 'e']];
+    const above = cuts.filter(([s]) => s > score).sort((a, b2) => a[0] - b2[0])[0];
+    return above ? { label: above[1], score: above[0] } : null;
   }
   if (b === 'IGCSE' || b === 'ASA') {
     const cuts = [[90, 'A*'], [80, 'A'], [70, 'B'], [60, 'C'], [50, 'D'], [40, 'E']];
@@ -31,6 +36,7 @@ function nextBoundary(score, board) {
 function gradeLabel(score, board) {
   const b = (board || '').toUpperCase();
   if (b === 'IB') return `${scoreToIBGrade(score)}/7`;
+  if (b === 'AS') return scoreToASGrade(score);
   if (b === 'IGCSE' || b === 'ASA') return scoreToLetterGrade(score);
   return `${Math.round(score)}%`;
 }
@@ -64,7 +70,7 @@ export function projectStreak(worksheets = [], { subject, board, streak = 0, now
   // effect; a steep trend is capped.
   gainPerSheet = Math.max(0.75, Math.min(6, gainPerSheet));
 
-  const current = predictedScore(ws);
+  const current = predictedScore(ws, { board });
   const futureSheets = Math.max(1, Math.round(sheetsPerWeek * weeks));
   let projected = current;
   for (let i = 0; i < futureSheets; i++) projected += gainPerSheet * (1 - projected / 100);

@@ -5,7 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { activeWorksheets, primaryTrack, boardFor } from '../../lib/subjects';
 import EmptyStateScene from '../decor/EmptyStateScene';
 import { useStrengthsWeaknesses } from '../../hooks/useStrengthsWeaknesses';
-import { predictedScore, formatGrade, TONE_CLASSES } from '../../lib/predictedGrade';
+import { predictedBreakdown, formatGrade, TONE_CLASSES } from '../../lib/predictedGrade';
 
 const PREFS_KEY = 'infinitysheets_sw_prefs_v1';
 
@@ -130,8 +130,10 @@ export default function Strengths() {
   const subjectBoard = useMemo(() => (isSubjectMode ? boardFor(subject, state.courses, state.user?.examTrack) : examTrack), [isSubjectMode, subject, state.courses, state.user?.examTrack, examTrack]);
   const predicted = useMemo(() => {
     if (!isSubjectMode || subjectWs.length === 0) return null;
-    const score = predictedScore(subjectWs);
-    return { score, ...formatGrade(score, subjectBoard) };
+    const bd = predictedBreakdown(subjectWs, { board: subjectBoard });
+    const g = formatGrade(bd.score, subjectBoard);
+    // Locked until a full-length exam-level sheet has been sat in the subject.
+    return bd.ready ? { score: bd.score, ...g } : { score: bd.score, label: '—', tone: 'ok', sub: `Sit one exam-level sheet of ${bd.examMinutes} min or more to unlock` };
   }, [isSubjectMode, subjectWs, subjectBoard]);
 
   // If subject filter references a subject that no longer exists (e.g., after

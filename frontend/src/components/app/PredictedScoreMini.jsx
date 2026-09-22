@@ -58,12 +58,12 @@ function BoardSummary({ track, scored, compact }) {
     const avg = Math.round(scored.reduce((s, p) => s + p.predicted, 0) / scored.length);
     value = <div className={`${compact ? 'text-[20px]' : 'text-[26px]'} font-semibold text-slate-900 tabular-nums leading-none`}>{avg}%</div>;
     sub = `Average across ${scored.length} subject${scored.length === 1 ? '' : 's'}.`;
-  } else if (t === 'IGCSE' || t === 'ASA') {
+  } else if (t === 'IGCSE' || t === 'ASA' || t === 'AS') {
     const counts = {};
     scored.forEach((p) => { const g = p.grade?.label || '\u2014'; counts[g] = (counts[g] || 0) + 1; });
     const entries = IGCSE_GRADE_ORDER.filter((g) => counts[g]).map((g) => ({ key: g, count: counts[g], label: g }));
     value = <CountRow entries={entries} />;
-    sub = `Across ${scored.length} subject${scored.length === 1 ? '' : 's'} \u00b7 predicted ${t === 'ASA' ? 'A Level' : 'IGCSE'} grade.`;
+    sub = `Across ${scored.length} subject${scored.length === 1 ? '' : 's'} \u00b7 predicted ${t === 'ASA' ? 'A Level' : t === 'AS' ? 'AS Level' : 'IGCSE'} grade.`;
   } else if (t === 'IB') {
     const counts = {};
     scored.forEach((p) => { const g = p.grade?.label ? parseInt(p.grade.label, 10) : null; if (g && !Number.isNaN(g)) counts[g] = (counts[g] || 0) + 1; });
@@ -89,16 +89,21 @@ function BoardSummary({ track, scored, compact }) {
 export default function PredictedScoreMini({ predictedBySubject, visibleSubjects, examTrack, subjectBoards, label = 'Predicted score', footer = null }) {
   const boardOf = (s) => (subjectBoards?.[s]?.board || examTrack || '').toString();
 
-  const scored = (visibleSubjects || [])
+  const all = (visibleSubjects || [])
     .map((s) => { const p = predictedBySubject?.[s]; return p && p.count > 0 ? { ...p, subject: s, board: boardOf(s) } : null; })
     .filter(Boolean);
+  // A grade only counts once the student has sat a sheet at least as hard
+  // and as long as the real exam for that subject.
+  const scored = all.filter((p) => p.ready !== false);
+  const pending = all.filter((p) => p.ready === false);
 
   if (scored.length === 0) {
+    const first = pending[0];
     return (
-      <div className="tile tile-royal">
+      <div className="tile tile-royal" data-testid="predicted-grade-locked">
         <div className="eyebrow-muted tile-accent">{label}</div>
         <div className="text-[20px] font-semibold mt-1 text-slate-400">&mdash;</div>
-        <div className="text-[11px] text-slate-500 mt-1">Complete a worksheet in any subject to unlock.</div>
+        <div className="text-[11px] text-slate-500 mt-1">{first ? `Sit one exam-level sheet of ${first.examMinutes || 90} min or more in ${first.label || first.subject} to unlock.` : 'Complete a worksheet in any subject to unlock.'}</div>
         {footer}
       </div>
     );
@@ -128,6 +133,7 @@ export default function PredictedScoreMini({ predictedBySubject, visibleSubjects
           ))}
         </div>
       )}
+      {pending.length > 0 && <div className="text-[10.5px] text-slate-500 mt-1.5" data-testid="predicted-pending">{pending.length} more {pending.length === 1 ? 'subject unlocks' : 'subjects unlock'} after a full exam-level sheet.</div>}
       {footer}
     </div>
   );

@@ -4,9 +4,9 @@ import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope,
 import { toast } from 'sonner';
 import { haptic } from '../../lib/haptics';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
-import { predictedScore, formatGrade, scoreToIBGrade } from '../../lib/predictedGrade';
+import { predictedBreakdown, formatGrade, scoreToIBGrade } from '../../lib/predictedGrade';
 import { SUBJECT_INFO } from '../../data/mock';
-import { enrolledSubjects, subjectBoards, boardName, activeWorksheets, primaryTrack, resolvedTopics, subjectMark } from '../../lib/subjects';
+import { enrolledSubjects, subjectBoards, boardName, activeWorksheets, primaryTrack, resolvedTopics, subjectMark, subjectEntries, sheetBelongs } from '../../lib/subjects';
 import PredictedScoreMini from './PredictedScoreMini';
 import CreateWorksheetButton from './CreateWorksheetButton';
 import { diagnosisSnippet } from './ai/DiagnosisPanel';
@@ -211,36 +211,41 @@ export default function Dashboard({ go }) {
   // Each subject's board comes from the course it belongs to (falling back to
   // the student's exam track). Predicted grades are then computed and shown
   // per board, never mixed across boards.
-  const subjBoards = useMemo(() => subjectBoards(state.courses, examTrack), [state.courses, examTrack]);
-  const boardOf = (s) => subjBoards[s]?.board || examTrack;
+  // One grade per (subject, board, level) entry in the student's courses —
+  // "Physics · IGCSE" and "Physics · IB HL" are separate rows, never merged.
+  const entries = useMemo(() => subjectEntries(state.courses, examTrack), [state.courses, examTrack]);
   const perSubjectGrades = useMemo(() => {
-    const subjects = Array.from(new Set(ws.map((w) => w.subject))).sort();
-    return subjects.map((s) => {
-      const list = ws.filter((w) => w.subject === s);
-      const score = predictedScore(list);
-      const board = subjBoards[s]?.board || examTrack;
+    return entries.map((e) => {
+      const list = ws.filter((w) => sheetBelongs(w, e, entries));
+      if (!list.length) return null;
+      const bd = predictedBreakdown(list, { board: e.board });
       return {
-        subject: s,
-        score,
-        board,
+        key: e.key,
+        subject: e.subject,
+        label: e.label,
+        ibLevel: e.ibLevel,
+        score: bd.score,
+        ready: bd.ready,
+        examMinutes: bd.examMinutes,
+        board: e.board,
         count: list.length,
-        grade: formatGrade(score, board),
-        ibGrade: scoreToIBGrade(score), // handy for the IB total
+        grade: formatGrade(bd.score, e.board),
+        ibGrade: scoreToIBGrade(bd.score), // handy for the IB total
       };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ws, subjBoards, examTrack]);
+    }).filter(Boolean);
+  }, [ws, entries]);
 
   // Shape the same map the Performance tab's PredictedScoreMini expects,
-  // so the tile renders identically in both places.
+  // so the tile renders identically in both places. Keyed by entry key.
   const predictedBySubject = useMemo(() => {
     const map = {};
     perSubjectGrades.forEach((g) => {
-      map[g.subject] = { predicted: g.score, count: g.count, grade: g.grade };
+      map[g.key] = { predicted: g.score, count: g.count, grade: g.grade, ready: g.ready, label: g.label, examMinutes: g.examMinutes };
     });
     return map;
   }, [perSubjectGrades]);
-  const visibleSubjects = useMemo(() => perSubjectGrades.map((g) => g.subject), [perSubjectGrades]);
+  const entryBoards = useMemo(() => Object.fromEntries(perSubjectGrades.map((g) => [g.key, { board: g.board }])), [perSubjectGrades]);
+  const visibleSubjects = useMemo(() => perSubjectGrades.map((g) => g.key), [perSubjectGrades]);
 
   // Accuracy — a plus/minus margin of uncertainty on the predicted grade.
   // The predicted grade is essentially the mean of your worksheet scores, so
@@ -284,7 +289,7 @@ export default function Dashboard({ go }) {
   // IB diploma-style total (sum of 1-7 grades) — computed from IB-board
   // subjects only, so it appears for a mixed CBSE+IB student too.
   const ibTotal = useMemo(() => {
-    const ibSubs = perSubjectGrades.filter((g) => (g.board || '').toUpperCase() === 'IB');
+    const ibSubs = perSubjectGrades.filter((g) => g.ready && (g.board || '').toUpperCase() === 'IB');
     if (ibSubs.length === 0) return null;
     const sum = ibSubs.reduce((acc, g) => acc + g.ibGrade, 0);
     const max = ibSubs.length * 7;
@@ -363,7 +368,7 @@ export default function Dashboard({ go }) {
           predictedBySubject={predictedBySubject}
           visibleSubjects={visibleSubjects}
           examTrack={examTrack}
-          subjectBoards={subjBoards}
+          subjectBoards={entryBoards}
           label="Predicted grade"
           footer={
             overallAccuracy !== null && (

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TOPICS, QUESTION_BANK, EXAM_DURATIONS } from '../../data/mock';
-import { enrolledSubjects, questionsForSubject, resolvedTopics, topicGroups, primaryTrack } from '../../lib/subjects';
+import { enrolledSubjects, questionsForSubject, resolvedTopics, topicGroups, primaryTrack, subjectEntries } from '../../lib/subjects';
 import { Check, X, Clock, ChevronLeft, ChevronRight, Sparkles, FileText, AlertCircle, Download, Flag, Lock, Maximize2, Gauge, RotateCcw, Loader2, ClipboardCheck, Printer, Play, Upload, Trash2, ChevronDown, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import { haptic } from '../../lib/haptics';
@@ -447,8 +447,18 @@ export default function Worksheets({ go }) {
     [state.courses, state.user?.subjects, track],
   );
   const hasCourses = (state.courses || []).length > 0;
+  // One option per (subject, board, level): "Physics · IGCSE" and
+  // "Physics · IB HL" are different courses with different papers and topics.
+  const subjectOptions = useMemo(() => subjectEntries(state.courses, track), [state.courses, track]);
+  const [entryKey, setEntryKey] = useState(() => {
+    let pre = null;
+    try { const want = window.sessionStorage.getItem('preselect_subject'); pre = want ? subjectOptions.find((e) => e.subject === want) : null; } catch (_) { /* ignore */ }
+    return (pre || subjectOptions[0])?.key || '';
+  });
+  const activeEntry = useMemo(() => subjectOptions.find((e) => e.key === entryKey) || subjectOptions[0] || null, [subjectOptions, entryKey]);
+  const entryBoardOf = (s) => (activeEntry && activeEntry.subject === s ? activeEntry.board : subjectBoards(state.courses, track)[s]?.board || track);
 
-  const topicsForSubject = (s) => (customSubjectTopics[s] || resolvedTopics(state.syllabusTopics, subjectBoards(state.courses, track)[s]?.board || track, s) || pastPaperTopicsBySubject[s] || []);
+  const topicsForSubject = (s) => (customSubjectTopics[s] || resolvedTopics(state.syllabusTopics, entryBoardOf(s), s) || pastPaperTopicsBySubject[s] || []);
 
   const preselect = typeof window !== 'undefined' ? window.sessionStorage.getItem('preselect_subject') : null;
   const preselectTopic = typeof window !== 'undefined' ? window.sessionStorage.getItem('preselect_topic') : null;
@@ -487,7 +497,7 @@ export default function Worksheets({ go }) {
   const pastPaperPool = useMemo(
     () => {
       const hidden = new Set(state.flaggedQuestionIds || []);
-      const all = questionsForSubject(state.pastPapers, subject, state.courses, track).filter((p) => !hidden.has(p.id));
+      const all = questionsForSubject(state.pastPapers, subject, state.courses, track, activeEntry && activeEntry.subject === subject ? { board: activeEntry.board, ibLevel: activeEntry.ibLevel || undefined } : undefined).filter((p) => !hidden.has(p.id));
       const fresh = all.filter((p) => !masteredIds.has(p.id));
       const mastered = all.filter((p) => masteredIds.has(p.id));
       // Let a mastered question slip back in only occasionally (about 1 in 6,
@@ -496,7 +506,7 @@ export default function Worksheets({ go }) {
       return [...fresh, ...revisit];
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.pastPapers, subject, state.courses, track, state.flaggedQuestionIds, masteredIds],
+    [state.pastPapers, subject, state.courses, track, state.flaggedQuestionIds, masteredIds, activeEntry],
   );
   const [difficulty, setDifficulty] = useState('Medium');
   const [duration, setDuration] = useState(challengePick ? 15 : examMinutes);
@@ -547,8 +557,8 @@ export default function Worksheets({ go }) {
     const id = setInterval(() => setPaperNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [paper?.startedAt, paper?.submittedAt]);
-  const ibLevelForSubject = useMemo(() => subjectBoards(state.courses, track)[subject]?.ibLevel, [state.courses, track, subject]);
-  const boardForSubject = useMemo(() => subjectBoards(state.courses, track)[subject]?.board || track, [state.courses, track, subject]);
+  const ibLevelForSubject = useMemo(() => (activeEntry && activeEntry.subject === subject ? activeEntry.ibLevel || undefined : subjectBoards(state.courses, track)[subject]?.ibLevel), [activeEntry, state.courses, track, subject]);
+  const boardForSubject = useMemo(() => (activeEntry && activeEntry.subject === subject ? activeEntry.board : subjectBoards(state.courses, track)[subject]?.board || track), [activeEntry, state.courses, track, subject]);
   // The real papers for this subject's board (Paper 1, Paper 2, Section A …).
   // Picking one sets the answer format the builder generates.
   const papers = useMemo(() => papersFor(boardForSubject, subject), [boardForSubject, subject]);
@@ -1300,7 +1310,10 @@ export default function Worksheets({ go }) {
           <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden mb-5">
             <div className="h-full bg-blue-500 transition-all" style={{ width: `${((current + 1) / questions.length) * 100}%` }} />
           </div>
-          <h3 className="text-[18px] font-semibold mb-5 leading-snug">{q.q}</h3>
+          <h3 className="text-[18px] font-semibold mb-3 leading-snug">{q.q}</h3>
+          {q.diagramUrl && <img src={q.diagramUrl} alt={q.diagramNote || 'Diagram'} className="max-h-72 rounded-xl border border-zinc-200 object-contain bg-white mb-4" data-testid="ws-diagram" />}
+          {!q.diagramUrl && q.hasDiagram && q.diagramNote && <div className="text-[13px] text-slate-600 italic mb-4">Figure: {q.diagramNote}</div>}
+          <div className="mb-2" />
 
           {isMCQ && (
             <>
@@ -1593,8 +1606,8 @@ export default function Worksheets({ go }) {
       <div className="rounded-2xl border border-zinc-200 p-6 flex flex-col gap-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="Subject">
-            <select className="input-base" value={subject} onChange={(e) => setSubject(e.target.value)} data-testid="ws-subject">
-              {chosenSubjects.map((s) => <option key={s} value={s}>{s}</option>)}
+            <select className="input-base" value={activeEntry?.key || subject} onChange={(e) => { const en = subjectOptions.find((x) => x.key === e.target.value); if (en) { setEntryKey(en.key); setSubject(en.subject); } else setSubject(e.target.value); }} data-testid="ws-subject">
+              {subjectOptions.length ? subjectOptions.map((en) => <option key={en.key} value={en.key}>{en.label}</option>) : chosenSubjects.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
             {hasCourses && (
               <div className="text-[11px] text-slate-500 mt-1">Showing the subjects from your courses.</div>

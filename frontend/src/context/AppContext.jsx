@@ -677,6 +677,24 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  const updatePastPaper = useCallback(async (id, patch) => {
+    const before = stateRef.current.pastPapers || [];
+    const cur = before.find((p) => p.id === id);
+    if (!cur) throw new Error('Question not found');
+    const next = { ...cur, ...patch, id };
+    setState((s) => ({ ...s, pastPapers: (s.pastPapers || []).map((p) => (p.id === id ? next : p)) }));
+    if (!canSync()) return next;
+    try {
+      const saved = await store.updatePastPaper(id, next);
+      setState((s) => ({ ...s, pastPapers: (s.pastPapers || []).map((p) => (p.id === id ? { ...next, ...saved, id } : p)) }));
+      return saved;
+    } catch (err) {
+      logError('past-papers/update', err);
+      setState((s) => ({ ...s, pastPapers: before }));
+      throw err;
+    }
+  }, []);
+
   const removePastPaper = useCallback(async (id) => {
     const before = stateRef.current.pastPapers || [];
     setState((s) => ({ ...s, pastPapers: (s.pastPapers || []).filter((p) => p.id !== id) }));
@@ -839,7 +857,7 @@ export function AppProvider({ children }) {
     saveDraftWorksheet, clearDraftWorksheet, updateWorksheet,
     finishTutorial, restartTutorial,
     addCourse, removeCourse, updateCourse,
-    addPastPaper, removePastPaper, refreshPastPapers,
+    addPastPaper, updatePastPaper, removePastPaper, refreshPastPapers,
     toggleTheme, completeOnboarding, restartOnboarding,
     markFlashcard, saveFlashcardDeck, setStudyPlan, togglePlanTask, setSyllabusTopics, tagMistakeReason, recordConsent, logFocusSession, setThemeMode, saveFlashcardExplanation, addPendingSubmission, removePendingSubmission, setSubmissionDue, setTestPlan, addNote, removeNote,
   }), [
@@ -851,7 +869,7 @@ export function AppProvider({ children }) {
     saveDraftWorksheet, clearDraftWorksheet, updateWorksheet,
     finishTutorial, restartTutorial,
     addCourse, removeCourse, updateCourse,
-    addPastPaper, removePastPaper, refreshPastPapers,
+    addPastPaper, updatePastPaper, removePastPaper, refreshPastPapers,
     toggleTheme, completeOnboarding, restartOnboarding,
     markFlashcard, saveFlashcardDeck, setStudyPlan, togglePlanTask, setSyllabusTopics, tagMistakeReason, recordConsent, logFocusSession, setThemeMode, saveFlashcardExplanation, addPendingSubmission, removePendingSubmission, setSubmissionDue, setTestPlan, addNote, removeNote,
   ]);

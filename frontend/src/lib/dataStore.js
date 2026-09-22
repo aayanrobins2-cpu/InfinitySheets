@@ -309,6 +309,21 @@ export async function createPastPaper(pp) {
   if (error) throw error;
   return data.data && typeof data.data === 'object' ? { ...data.data, id: data.id } : data;
 }
+export async function updatePastPaper(id, pp) {
+  const row = ppToRow({ ...pp, id });
+  delete row.id;
+  const { data, error } = await supabase.from('past_papers').update(row).eq('id', id).select().single();
+  if (error) throw error;
+  return data.data && typeof data.data === 'object' ? { ...data.data, id: data.id } : data;
+}
+// Diagram image for a library question → public URL.
+export async function uploadDiagram(id, file) {
+  const ext = /png/.test(file.type) ? 'png' : /webp/.test(file.type) ? 'webp' : /gif/.test(file.type) ? 'gif' : 'jpg';
+  const path = `${id}-${Date.now().toString(36)}.${ext}`;
+  const { error } = await supabase.storage.from('diagrams').upload(path, file, { contentType: file.type || 'image/png', upsert: true });
+  if (error) throw error;
+  return supabase.storage.from('diagrams').getPublicUrl(path).data.publicUrl;
+}
 export async function deletePastPaper(id) {
   const { error } = await supabase.from('past_papers').delete().eq('id', id);
   if (error) throw error;

@@ -1,14 +1,15 @@
 import { primaryTrack, topicsFor } from '../../lib/subjects';
 import { papersFor } from '../../lib/paperTypes';
 import { findDuplicates } from '../../lib/duplicates';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool, Copy, Layers } from 'lucide-react';
+import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool, Copy, Layers, Pencil, ImagePlus, Save } from 'lucide-react';
 import { SUBJECTS, EXAM_TRACKS } from '../../data/mock';
 import { FULL_PAPER_TYPE } from '../../data/pastPapers';
 import { toast } from 'sonner';
 import { extractFromPdf, multiplyQuestions, isAiEnabled } from '../../lib/ai';
 import { filesToAiParts } from '../../lib/images';
+import { uploadDiagram } from '../../lib/dataStore';
 import { SyllabusImport, FlagQueue } from './AdminNextWave';
 
 const ANSWER_TYPES = ['Multiple choice', 'Typed response', 'Exam style', 'Drawing', FULL_PAPER_TYPE];
@@ -56,7 +57,7 @@ const cleanScheme = (scheme) => (Array.isArray(scheme) ? scheme : [])
 // --------------------------------------------------------------------------
 
 export default function AdminPlaceholder() {
-  const { state, addPastPaper, removePastPaper, seedTestPerformance } = useApp();
+  const { state, addPastPaper, updatePastPaper, removePastPaper, seedTestPerformance } = useApp();
   const defaultSyllabus = primaryTrack(state.courses, state.user?.examTrack);
   const [syllabus, setSyllabus] = useState(defaultSyllabus);
   // A science subject by default, never whatever happens to be first in the list.
@@ -141,6 +142,7 @@ export default function AdminPlaceholder() {
           subject={subject}
           pastPapers={state.pastPapers || []}
           addPastPaper={addPastPaper}
+          updatePastPaper={updatePastPaper}
           removePastPaper={removePastPaper}
         />
       )}
@@ -154,7 +156,7 @@ export default function AdminPlaceholder() {
 // CategoryPanel — everything scoped to (syllabus, subject)
 // --------------------------------------------------------------------------
 
-function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePastPaper }) {
+function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePastPaper, removePastPaper }) {
   const { state } = useApp();
   const addedBy = state.user?.email || 'unknown';
   const [form, setForm] = useState(() => emptyForm({ syllabus, subject }));
@@ -438,25 +440,25 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, removePast
         ) : (
           <div className="flex flex-col gap-2 max-h-[640px] overflow-auto pr-1">
             {(() => {
-              // Diagram-based questions (a figure to read, or a drawing to
-              // make) are kept in their own section so they are easy to find.
+              // Three shelves: diagram-based questions (a figure to read or a
+              // drawing to make), then the seed questions typed or scanned in
+              // from real papers, then the ones the Multiply AI generated.
               const isDiagram = (p) => !!p.hasDiagram || p.answerType === 'Drawing';
               const diagram = filteredPastPapers.filter(isDiagram);
               const rest = filteredPastPapers.filter((p) => !isDiagram(p));
+              const seed = rest.filter((p) => !p.multiplied);
+              const generated = rest.filter((p) => !!p.multiplied);
+              const Shelf = ({ id, title, tone, items, top }) => items.length > 0 && (
+                <div data-testid={id}>
+                  <div className={`sticky top-0 z-[1] bg-white/95 backdrop-blur text-[10.5px] tracking-[0.14em] uppercase font-semibold ${tone} py-1.5 ${top ? '' : 'mt-3'} mb-1 border-b border-[color:var(--color-border)]`}>{title} · {items.length}</div>
+                  <div className="flex flex-col gap-2">{items.map((p) => <LibraryRow key={p.id} p={p} onRemove={removePastPaper} onSave={updatePastPaper} topicsList={topicsList} syllabus={syllabus} />)}</div>
+                </div>
+              );
               return (
                 <>
-                  {diagram.length > 0 && (
-                    <div data-testid="library-diagram-section">
-                      <div className="sticky top-0 z-[1] bg-white/95 backdrop-blur text-[10.5px] tracking-[0.14em] uppercase font-semibold text-violet-700 py-1.5 mb-1 border-b border-violet-100">Diagram-based questions · {diagram.length}</div>
-                      <div className="flex flex-col gap-2">{diagram.map((p) => <LibraryRow key={p.id} p={p} onRemove={removePastPaper} />)}</div>
-                    </div>
-                  )}
-                  {rest.length > 0 && (
-                    <div>
-                      {diagram.length > 0 && <div className="sticky top-0 z-[1] bg-white/95 backdrop-blur text-[10.5px] tracking-[0.14em] uppercase font-semibold text-slate-500 py-1.5 mt-3 mb-1 border-b border-[color:var(--color-border)]">Other questions · {rest.length}</div>}
-                      <div className="flex flex-col gap-2">{rest.map((p) => <LibraryRow key={p.id} p={p} onRemove={removePastPaper} />)}</div>
-                    </div>
-                  )}
+                  <Shelf id="library-diagram-section" title="Diagram-based questions" tone="text-violet-700" items={diagram} top />
+                  <Shelf id="library-seed-section" title="Seed questions" tone="text-slate-600" items={seed} top={diagram.length === 0} />
+                  <Shelf id="library-generated-section" title="Generated by Multiply" tone="text-blue-700" items={generated} top={diagram.length === 0 && seed.length === 0} />
                 </>
               );
             })()}
@@ -582,9 +584,11 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopic, 
 // Library row
 // --------------------------------------------------------------------------
 
-function LibraryRow({ p, onRemove }) {
+function LibraryRow({ p, onRemove, onSave, topicsList = [], syllabus }) {
+  const [editing, setEditing] = useState(false);
+  if (editing) return <QuestionEditor p={p} topicsList={topicsList} syllabus={syllabus} onSave={onSave} onClose={() => setEditing(false)} />;
   return (
-    <div className="rounded-xl border border-[color:var(--color-border)] p-3.5 bg-white">
+    <div className="rounded-xl border border-[color:var(--color-border)] p-3.5 bg-white" data-testid={`library-row-${p.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
@@ -623,6 +627,10 @@ function LibraryRow({ p, onRemove }) {
               <ul className="list-disc pl-4 space-y-0.5">{p.markScheme.map((pt, k) => <li key={k}><span className="font-semibold">{pt.marks}</span> — {pt.point}</li>)}</ul>
             </div>
           )}
+          {p.diagramUrl && (
+            <a href={p.diagramUrl} target="_blank" rel="noopener noreferrer" className="block mt-2"><img src={p.diagramUrl} alt={p.diagramNote || 'Diagram'} className="max-h-40 rounded-lg border border-[color:var(--color-border)] object-contain bg-slate-50" /></a>
+          )}
+          {!p.diagramUrl && p.diagramNote && <div className="text-[12px] text-slate-500 mt-1 italic">Figure: {p.diagramNote}</div>}
           {p.link && (
             <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-[12px] text-blue-700 hover:text-blue-900 mt-1.5 inline-flex items-center gap-1 max-w-full">
               <Link2 className="w-4 h-4 shrink-0" />
@@ -630,16 +638,174 @@ function LibraryRow({ p, onRemove }) {
             </a>
           )}
         </div>
-        <button
-          onClick={async () => {
-            try { await onRemove(p.id); toast.success('Question removed'); }
-            catch (e) { toast.error(e?.message || 'Could not remove question'); }
-          }}
-          className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center shrink-0"
-          aria-label="Remove"
-        >
-          <Trash2 className="w-5 h-5" />
-        </button>
+        <div className="flex flex-col gap-1 shrink-0">
+          {onSave && (
+            <button type="button" onClick={() => setEditing(true)} className="w-8 h-8 rounded-md text-slate-400 hover:text-blue-700 hover:bg-blue-50 flex items-center justify-center" aria-label="Edit" data-testid={`library-edit-${p.id}`}>
+              <Pencil className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={async () => {
+              try { await onRemove(p.id); toast.success('Question removed'); }
+              catch (e) { toast.error(e?.message || 'Could not remove question'); }
+            }}
+            className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center"
+            aria-label="Remove"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+// In-place editor for one library question (any answer type), with a
+// diagram image that can be uploaded, dropped or pasted from the clipboard.
+// --------------------------------------------------------------------------
+
+function QuestionEditor({ p, topicsList, syllabus, onSave, onClose }) {
+  const [f, setF] = useState(() => ({
+    q: p.q || '', topic: p.topic || '', answerType: p.answerType || 'Exam style', difficulty: p.difficulty || 'Medium',
+    marks: p.marks || '', year: p.year || '', paper: p.paper || '', ibLevel: p.ibLevel || '', link: p.link || '',
+    options: Array.isArray(p.options) && p.options.length ? [...p.options] : ['', '', '', ''], a: Number.isInteger(p.a) ? p.a : 0,
+    typedAnswer: p.typedAnswer || '', typedAliases: (p.typedAliases || []).join(', '),
+    examAnswer: p.examAnswer || '', examKeywords: (p.examKeywords || []).join(', '),
+    markScheme: Array.isArray(p.markScheme) ? p.markScheme.map((x) => ({ ...x })) : [],
+    hasDiagram: !!p.hasDiagram, diagramNote: p.diagramNote || '', diagramUrl: p.diagramUrl || '',
+  }));
+  const set = (patch) => setF((x) => ({ ...x, ...patch }));
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInput = useRef(null);
+
+  const putImage = async (file) => {
+    if (!file || !/^image\//.test(file.type)) { toast.error('Drop or paste an image'); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error('Image is over 5 MB'); return; }
+    setUploading(true);
+    try { const url = await uploadDiagram(p.id, file); set({ diagramUrl: url, hasDiagram: true }); toast.success('Diagram attached'); }
+    catch (e) { toast.error(e?.message || 'Could not upload the image'); }
+    finally { setUploading(false); }
+  };
+  const onPaste = (e) => {
+    const item = Array.from(e.clipboardData?.items || []).find((i) => i.type.startsWith('image/'));
+    if (item) { e.preventDefault(); putImage(item.getAsFile()); }
+  };
+  const onDrop = (e) => { e.preventDefault(); putImage(e.dataTransfer?.files?.[0]); };
+
+  const save = async () => {
+    if (!f.q.trim()) { toast.error('The question cannot be empty'); return; }
+    const patch = {
+      q: f.q.trim(), topic: f.topic, answerType: f.answerType, difficulty: f.difficulty,
+      marks: f.marks ? parseInt(f.marks, 10) : null, year: f.year ? parseInt(f.year, 10) : null, paper: f.paper || null,
+      ibLevel: syllabus === 'IB' && f.ibLevel ? f.ibLevel : null, link: f.link.trim() || null,
+      hasDiagram: f.hasDiagram || !!f.diagramUrl || f.answerType === 'Drawing' ? true : undefined,
+      diagramNote: f.diagramNote.trim() || undefined, diagramUrl: f.diagramUrl || undefined,
+      options: undefined, a: undefined, typedAnswer: undefined, typedAliases: undefined, examAnswer: undefined, examKeywords: undefined,
+    };
+    if (f.answerType === 'Multiple choice') {
+      const opts = f.options.map((o) => o.trim());
+      if (opts.filter(Boolean).length < 2) { toast.error('Add at least two options'); return; }
+      patch.options = opts; patch.a = f.a;
+    } else if (f.answerType === 'Typed response') {
+      if (!f.typedAnswer.trim()) { toast.error('Enter the expected answer'); return; }
+      patch.typedAnswer = f.typedAnswer.trim(); patch.typedAliases = f.typedAliases.split(',').map((x) => x.trim()).filter(Boolean);
+    } else {
+      patch.examAnswer = f.examAnswer.trim(); patch.examKeywords = f.examKeywords.split(',').map((x) => x.trim()).filter(Boolean);
+    }
+    const scheme = cleanScheme(f.markScheme);
+    patch.markScheme = scheme.length ? scheme : undefined;
+    if (!patch.marks && scheme.length) patch.marks = schemeTotal(scheme);
+    setBusy(true);
+    try { await onSave(p.id, patch); toast.success('Question updated'); onClose(); }
+    catch (e) { toast.error(e?.message || 'Could not save'); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div className="rounded-xl border border-blue-300 p-3.5 bg-blue-50/30" onPaste={onPaste} onDrop={onDrop} onDragOver={(e) => e.preventDefault()} data-testid={`library-editor-${p.id}`}>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="text-[11px] tracking-[0.14em] uppercase font-semibold text-blue-700 inline-flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" /> Edit question</div>
+        <button type="button" onClick={onClose} className="w-7 h-7 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white flex items-center justify-center" aria-label="Cancel"><X className="w-4 h-4" /></button>
+      </div>
+      <textarea className="input-base min-h-[80px] text-[13px]" value={f.q} onChange={(e) => set({ q: e.target.value })} data-testid="editor-q" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+        <select className="input-base !py-1.5 text-[12.5px]" value={f.topic} onChange={(e) => set({ topic: e.target.value })} data-testid="editor-topic">
+          <option value="">Topic…</option>
+          {(topicsList.includes(f.topic) || !f.topic ? topicsList : [f.topic, ...topicsList]).map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select className="input-base !py-1.5 text-[12.5px]" value={f.answerType} onChange={(e) => set({ answerType: e.target.value })} data-testid="editor-type">
+          {['Multiple choice', 'Typed response', 'Exam style', 'Drawing'].map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select className="input-base !py-1.5 text-[12.5px]" value={f.difficulty} onChange={(e) => set({ difficulty: e.target.value })}>
+          {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <input className="input-base !py-1.5 text-[12.5px]" type="number" min="1" max="30" placeholder="Marks" value={f.marks} onChange={(e) => set({ marks: e.target.value })} />
+        <input className="input-base !py-1.5 text-[12.5px]" type="number" min="1990" max="2099" placeholder="Year" value={f.year} onChange={(e) => set({ year: e.target.value })} />
+        <input className="input-base !py-1.5 text-[12.5px]" placeholder="Paper (e.g. Paper 2)" value={f.paper} onChange={(e) => set({ paper: e.target.value })} />
+        {syllabus === 'IB' && (
+          <select className="input-base !py-1.5 text-[12.5px]" value={f.ibLevel} onChange={(e) => set({ ibLevel: e.target.value })}>
+            <option value="">Both HL & SL</option><option value="HL">HL only</option><option value="SL">SL only</option>
+          </select>
+        )}
+        <input className="input-base !py-1.5 text-[12.5px] md:col-span-2" type="url" placeholder="Reference link" value={f.link} onChange={(e) => set({ link: e.target.value })} />
+      </div>
+
+      {f.answerType === 'Multiple choice' && (
+        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {f.options.map((o, i) => (
+            <label key={i} className="flex items-center gap-2 text-[12.5px]">
+              <input type="radio" name={`ed-a-${p.id}`} checked={f.a === i} onChange={() => set({ a: i })} />
+              <input className="input-base !py-1.5 text-[12.5px] flex-1" value={o} placeholder={`Option ${String.fromCharCode(65 + i)}`} onChange={(e) => { const options = [...f.options]; options[i] = e.target.value; set({ options }); }} />
+            </label>
+          ))}
+        </div>
+      )}
+      {f.answerType === 'Typed response' && (
+        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <input className="input-base !py-1.5 text-[12.5px]" placeholder="Expected answer" value={f.typedAnswer} onChange={(e) => set({ typedAnswer: e.target.value })} data-testid="editor-typed" />
+          <input className="input-base !py-1.5 text-[12.5px]" placeholder="Accepted alternatives, comma-separated" value={f.typedAliases} onChange={(e) => set({ typedAliases: e.target.value })} />
+        </div>
+      )}
+      {(f.answerType === 'Exam style' || f.answerType === 'Drawing') && (
+        <div className="mt-2 flex flex-col gap-1.5">
+          <textarea className="input-base min-h-[60px] text-[12.5px]" placeholder={f.answerType === 'Drawing' ? 'What the drawing must show' : 'Model answer'} value={f.examAnswer} onChange={(e) => set({ examAnswer: e.target.value })} />
+          {f.answerType === 'Exam style' && <input className="input-base !py-1.5 text-[12.5px]" placeholder="Key ideas, comma-separated" value={f.examKeywords} onChange={(e) => set({ examKeywords: e.target.value })} />}
+        </div>
+      )}
+
+      <div className="mt-2">
+        <div className="flex items-center justify-between">
+          <div className="text-[10.5px] uppercase tracking-wide text-slate-500 font-semibold">Marking scheme</div>
+          <button type="button" onClick={() => set({ markScheme: [...f.markScheme, { point: '', marks: 1 }] })} className="text-[11.5px] font-semibold text-blue-700 hover:text-blue-900">+ point</button>
+        </div>
+        {f.markScheme.map((pt, i) => (
+          <div key={i} className="flex items-center gap-1.5 mt-1">
+            <input className="input-base !py-1 text-[12px] flex-1" value={pt.point} placeholder="Mark point" onChange={(e) => { const markScheme = f.markScheme.map((x, k) => (k === i ? { ...x, point: e.target.value } : x)); set({ markScheme }); }} />
+            <input className="input-base !py-1 text-[12px] !w-16" type="number" min="1" value={pt.marks} onChange={(e) => { const markScheme = f.markScheme.map((x, k) => (k === i ? { ...x, marks: e.target.value } : x)); set({ markScheme }); }} />
+            <button type="button" onClick={() => set({ markScheme: f.markScheme.filter((_, k) => k !== i) })} className="w-7 h-7 rounded-md text-slate-400 hover:text-rose-600 flex items-center justify-center" aria-label="Remove point"><X className="w-3.5 h-3.5" /></button>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-2 rounded-lg border border-dashed border-violet-300 bg-white p-2.5" data-testid="editor-diagram">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <label className="inline-flex items-center gap-1.5 text-[12px] text-slate-700"><input type="checkbox" checked={f.hasDiagram || !!f.diagramUrl} onChange={(e) => set({ hasDiagram: e.target.checked })} /> Diagram-based question</label>
+          <div className="flex items-center gap-2">
+            <input ref={fileInput} type="file" accept="image/*" className="hidden" onChange={(e) => { putImage(e.target.files?.[0]); e.target.value = ''; }} data-testid="editor-diagram-input" />
+            <button type="button" onClick={() => fileInput.current?.click()} disabled={uploading} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12px] font-semibold border border-violet-300 text-violet-800 bg-violet-50 hover:bg-violet-100 disabled:opacity-50">{uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />} {f.diagramUrl ? 'Replace image' : 'Add image'}</button>
+            {f.diagramUrl && <button type="button" onClick={() => set({ diagramUrl: '' })} className="text-[12px] font-semibold text-rose-700 hover:text-rose-900">Remove image</button>}
+          </div>
+        </div>
+        <div className="text-[11px] text-slate-500 mt-1">Click Add image, or paste a screenshot (Ctrl/⌘+V) or drop a file anywhere on this card.</div>
+        {f.diagramUrl && <img src={f.diagramUrl} alt="Diagram" className="mt-2 max-h-48 rounded-lg border border-[color:var(--color-border)] object-contain bg-slate-50" />}
+        <input className="input-base !py-1.5 text-[12.5px] mt-2" placeholder="What the figure shows (shown to the student)" value={f.diagramNote} onChange={(e) => set({ diagramNote: e.target.value })} />
+      </div>
+
+      <div className="flex items-center justify-end gap-2 mt-3">
+        <button type="button" onClick={onClose} className="px-3 py-1.5 rounded-lg text-[12.5px] font-semibold text-slate-600 hover:bg-white">Cancel</button>
+        <button type="button" onClick={save} disabled={busy} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50" data-testid="editor-save">{busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save</button>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { SUBJECT_INFO } from '../../data/mock';
 import { TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react';
 import EmptyStateScene from '../decor/EmptyStateScene';
 import { predictedScore, predictedBreakdown, formatGrade, TONE_CLASSES, isGradedTrack } from '../../lib/predictedGrade';
-import { subjectBoards, activeWorksheets, primaryTrack, subjectMark } from '../../lib/subjects';
+import { activeWorksheets, primaryTrack, subjectMark, keyedWorksheets } from '../../lib/subjects';
 import { useStrengthsWeaknesses, useSavedSwOverridesFor, useSavedSwPrefs, computeSw, pickOverridesFor } from '../../hooks/useStrengthsWeaknesses';
 import PredictedScoreMini from './PredictedScoreMini';
 import { TimingTrendsCard } from './StudyInsights';
@@ -26,14 +26,17 @@ export default function ProgressView() {
   const { state } = useApp();
   // Memoised: a fresh `[]` fallback each render would invalidate every useMemo below.
   // Removed subjects leave Performance entirely (history keeps their sheets).
-  const ws = useMemo(() => activeWorksheets(state.worksheets, state.courses, state.user?.subjects, primaryTrack(state.courses, state.user?.examTrack)), [state.worksheets, state.courses, state.user?.subjects, state.user?.examTrack]);
   const examTrack = primaryTrack(state.courses, state.user?.examTrack);
-  // A subject's grade format follows the board of the course it belongs to
-  // (a CBSE + IB student gets a % for one and a 1-7 grade for the other).
-  const subjBoards = useMemo(() => subjectBoards(state.courses, examTrack), [state.courses, examTrack]);
-  const boardOf = useCallback((sub) => subjBoards[sub]?.board || examTrack, [subjBoards, examTrack]);
+  // Every sheet is tagged with its (subject, board, level) entry key, so
+  // "Physics · IGCSE" and "Physics · IB HL" are separate lines and grades.
+  const keyed = useMemo(() => keyedWorksheets(activeWorksheets(state.worksheets, state.courses, state.user?.subjects, primaryTrack(state.courses, state.user?.examTrack)), state.courses, primaryTrack(state.courses, state.user?.examTrack)), [state.worksheets, state.courses, state.user?.subjects, state.user?.examTrack]);
+  const ws = keyed.list;
+  const entryOf = useCallback((k) => keyed.entries[k] || { subject: k, board: examTrack, label: k }, [keyed, examTrack]);
+  const boardOf = useCallback((k) => entryOf(k).board || examTrack, [entryOf, examTrack]);
+  const nameOf = useCallback((k) => entryOf(k).subject, [entryOf]);
+  const labelOf = useCallback((k) => entryOf(k).label, [entryOf]);
 
-  const allSubjects = useMemo(() => Array.from(new Set(ws.map((w) => w.subject))), [ws]);
+  const allSubjects = useMemo(() => Array.from(new Set(ws.map((w) => w._k))), [ws]);
   const boardsInPlay = useMemo(() => Array.from(new Set(allSubjects.map(boardOf))), [allSubjects, boardOf]);
   // Clicking a subject isolates it: that line alone stays on the chart.
   // Clicking the same subject again (or "Show all") brings the rest back.
@@ -54,7 +57,7 @@ export default function ProgressView() {
   // Chronological order (oldest first)
   const chronological = useMemo(() => [...ws].slice().reverse(), [ws]);
   const visibleWS = useMemo(
-    () => chronological.filter((w) => visibleSubjects.includes(w.subject)),
+    () => chronological.filter((w) => visibleSubjects.includes(w._k)),
     [chronological, visibleSubjects]
   );
 
@@ -63,8 +66,8 @@ export default function ProgressView() {
     const m = {};
     visibleSubjects.forEach((s) => { m[s] = []; });
     chronological.forEach((w, i) => {
-      if (!visibleSubjects.includes(w.subject)) return;
-      m[w.subject].push({ x: i, score: w.score, date: w.date, topic: w.topic, difficulty: w.difficulty });
+      if (!visibleSubjects.includes(w._k)) return;
+      m[w._k].push({ x: i, score: w.score, date: w.date, topic: w.topic, difficulty: w.difficulty });
     });
     return m;
   }, [chronological, visibleSubjects]);
@@ -88,12 +91,12 @@ export default function ProgressView() {
   const subjectDetails = useMemo(() => {
     const map = {};
     allSubjects.forEach((s) => {
-      const list = ws.filter((w) => w.subject === s);
+      const list = ws.filter((w) => w._k === s);
       if (list.length === 0) {
         map[s] = null; return;
       }
-      const bd = predictedBreakdown(list);
       const board = boardOf(s);
+      const bd = predictedBreakdown(list, { board });
       const grade = formatGrade(bd.score, board);
       // Best (max score) and latest (most recent) worksheet.
       const best = list.reduce((m, w) => (w.score > m.score ? w : m), list[0]);
@@ -114,11 +117,11 @@ export default function ProgressView() {
     visibleSubjects.forEach((s) => {
       const d = subjectDetails[s];
       map[s] = d
-        ? { predicted: d.bd.score, count: d.count, grade: d.grade }
+        ? { predicted: d.bd.score, count: d.count, grade: d.grade, ready: d.bd.ready, examMinutes: d.bd.examMinutes, label: labelOf(s) }
         : { predicted: 0, count: 0, grade: formatGrade(0, boardOf(s)) };
     });
     return map;
-  }, [visibleSubjects, subjectDetails, boardOf]);
+  }, [visibleSubjects, subjectDetails, boardOf, labelOf]);
 
   // Click a subject line/label → scroll to the cards section and briefly
   // highlight the matching subject card.
@@ -146,7 +149,7 @@ export default function ProgressView() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <PredictedScoreMini predictedBySubject={predictedBySubject} visibleSubjects={visibleSubjects} examTrack={examTrack} subjectBoards={subjBoards} />
+        <PredictedScoreMini predictedBySubject={predictedBySubject} visibleSubjects={visibleSubjects} examTrack={examTrack} subjectBoards={Object.fromEntries(visibleSubjects.map((k) => [k, { board: boardOf(k) }]))} />
         <Mini label="Worksheets" value={visibleWS.length} />
         <Mini label="Questions" value={visibleWS.reduce((s, x) => s + x.total, 0)} />
       </div>
@@ -174,7 +177,7 @@ export default function ProgressView() {
           {allSubjects.map((s, i) => {
             const color = SUBJECT_COLORS[i % SUBJECT_COLORS.length];
             const off = isHidden(s);
-            const info = SUBJECT_INFO[s] || { emoji: subjectMark(s) };
+            const info = SUBJECT_INFO[nameOf(s)] || { emoji: subjectMark(nameOf(s)) };
             const d = deltas[s] || {};
             const isHovered = hoveredSubject === s;
             const dimmed = !!hoveredSubject && !isHovered && !off;
@@ -200,7 +203,7 @@ export default function ProgressView() {
               >
                 <span className="w-2.5 h-2.5 rounded-full" style={{ background: off ? '#cbd5e1' : color }} />
                 <span className="text-[14px] leading-none">{info.emoji}</span>
-                <span>{s}</span>
+                <span>{labelOf(s)}</span>
                 {!off && d.hasEnough && <DeltaPill delta={d.delta} small />}
               </button>
             );
@@ -234,6 +237,7 @@ export default function ProgressView() {
           onHoverSubject={setHoveredSubject}
           onSubjectClick={scrollToSubject}
           examTrack={examTrack}
+          labelOf={labelOf}
         />
       </div>
 
@@ -267,7 +271,10 @@ export default function ProgressView() {
                 key={s}
                 s={s}
                 color={SUBJECT_COLORS[allSubjects.indexOf(s) % SUBJECT_COLORS.length]}
-                info={SUBJECT_INFO[s] || { emoji: subjectMark(s) }}
+                info={SUBJECT_INFO[nameOf(s)] || { emoji: subjectMark(nameOf(s)) }}
+                label={labelOf(s)}
+                name={nameOf(s)}
+                board={boardOf(s)}
                 p={predictedBySubject[s] || { predicted: 0, count: 0, grade: null }}
                 d={deltas[s] || {}}
                 ws={ws}
@@ -288,8 +295,8 @@ export default function ProgressView() {
 // Row rendering a single subject's predicted grade + progress bar + S/W counts
 // and richer stats (best, latest, improvement bonus). Split out so we can
 // call the useStrengthsWeaknesses hook per subject (hooks can't be conditional).
-function SubjectPredictedRow({ s, color, info, p, d, ws, isHovered, dimmed, onHover }) {
-  const subjectWs = useMemo(() => ws.filter((w) => w.subject === s), [ws, s]);
+function SubjectPredictedRow({ s, color, info, label, name, board, p, d, ws, isHovered, dimmed, onHover }) {
+  const subjectWs = useMemo(() => ws.filter((w) => w._k === s), [ws, s]);
   const subjOverrides = useSavedSwOverridesFor(s);
   const { strengths, weaknesses, strengthMin, weaknessMax, isCustom } = useStrengthsWeaknesses(subjectWs, subjOverrides);
 
@@ -303,16 +310,16 @@ function SubjectPredictedRow({ s, color, info, p, d, ws, isHovered, dimmed, onHo
       return tb - ta;
     });
     const latest = sortedByDate[0];
-    const bd = predictedBreakdown(subjectWs);
+    const bd = predictedBreakdown(subjectWs, { board });
     return { best, latest, bd };
-  }, [subjectWs]);
+  }, [subjectWs, board]);
 
   const noPred = p.count === 0;
   const tone = TONE_CLASSES[p.grade?.tone] || TONE_CLASSES.ok;
 
   // The whole card opens that subject's overview.
   const openSubject = () => {
-    window.location.hash = `#study?subject=${encodeURIComponent(s)}`;
+    window.location.hash = `#study?subject=${encodeURIComponent(name)}`;
   };
 
   return (
@@ -320,7 +327,7 @@ function SubjectPredictedRow({ s, color, info, p, d, ws, isHovered, dimmed, onHo
       type="button"
       onClick={openSubject}
       data-testid={`predicted-row-${s}`}
-      aria-label={`Open ${s} subject overview`}
+      aria-label={`Open ${name} subject overview`}
       className={`w-full text-left rounded-xl border px-4 py-3 transition-all cursor-pointer hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
         isHovered
           ? `${tone.border} ring-2 ring-blue-100 bg-white`
@@ -335,7 +342,7 @@ function SubjectPredictedRow({ s, color, info, p, d, ws, isHovered, dimmed, onHo
         <div className="flex items-center gap-2 min-w-0">
           <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
           <span className="text-[14.5px]">{info.emoji}</span>
-          <span className="text-[14px] font-semibold text-slate-900">{s}</span>
+          <span className="text-[14px] font-semibold text-slate-900">{label || name}</span>
           <span className="text-[11px] text-slate-500">· {p.count} {p.count === 1 ? 'attempt' : 'attempts'}</span>
         </div>
         <div className="flex items-center gap-3">
@@ -343,9 +350,10 @@ function SubjectPredictedRow({ s, color, info, p, d, ws, isHovered, dimmed, onHo
             <div className="text-[10px] tracking-[0.14em] uppercase font-semibold text-slate-500">
               {p.grade?.sub || 'Predicted'}
             </div>
-            <div className={`text-[18px] font-semibold ${tone.text} tabular-nums leading-tight`}>
-              {noPred ? '\u2014' : (p.grade?.label ?? `${p.predicted}%`)}
+            <div className={`text-[18px] font-semibold ${p.ready === false ? 'text-slate-400' : tone.text} tabular-nums leading-tight`} title={p.ready === false ? `Unlocks after one exam-level sheet of ${p.examMinutes || 90} min or more` : undefined}>
+              {noPred || p.ready === false ? '\u2014' : (p.grade?.label ?? `${p.predicted}%`)}
             </div>
+            {p.ready === false && <div className="text-[10px] text-amber-700 font-medium" data-testid="predicted-locked">Sit a {p.examMinutes || 90}-min exam-level sheet to unlock</div>}
           </div>
           {d.hasEnough ? <DeltaPill delta={d.delta} /> : <span className="text-[11.5px] text-slate-400">2+ needed</span>}
         </div>
@@ -402,7 +410,7 @@ function SubjectPredictedRow({ s, color, info, p, d, ws, isHovered, dimmed, onHo
   );
 }
 
-function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectDetails, hoveredSubject, onHoverSubject, onSubjectClick, examTrack }) {
+function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectDetails, hoveredSubject, onHoverSubject, onSubjectClick, examTrack, labelOf }) {
   const w = 780, h = 300, padL = 36, padR = 90, padT = 16, padB = 30; // extra right padding for end-labels
   const innerW = w - padL - padR;
   const innerH = h - padT - padB;
@@ -570,7 +578,7 @@ function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectD
         >
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full" style={{ background: SUBJECT_COLORS[allSubjects.indexOf(pointHover.subject) % SUBJECT_COLORS.length] }} />
-            <span className="font-semibold">{pointHover.subject}</span>
+            <span className="font-semibold">{labelOf ? labelOf(pointHover.subject) : pointHover.subject}</span>
           </div>
           <div className="mt-1 text-slate-200 text-[11.5px] leading-tight">{pointHover.topic}</div>
           <div className="mt-1 flex items-center gap-2 tabular-nums">
@@ -589,7 +597,7 @@ function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectD
       {/* Line-hover subject info card (predicted grade, latest, best, improvement, thresholds) */}
       {activeLineSubject && subjectDetails?.[activeLineSubject] && (
         <SubjectHoverCard
-          subject={activeLineSubject}
+          subject={labelOf ? labelOf(activeLineSubject) : activeLineSubject}
           color={SUBJECT_COLORS[allSubjects.indexOf(activeLineSubject) % SUBJECT_COLORS.length]}
           details={subjectDetails[activeLineSubject]}
           examTrack={examTrack}

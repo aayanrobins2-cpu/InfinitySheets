@@ -65,6 +65,14 @@ const CATALOGUE = {
     language: [P('p1', 'Paper 1', EXAM, 'Reading and writing'), P('p2', 'Paper 2', EXAM, 'Essay / extended writing'), P('p3', 'Paper 3', TYPED, 'Listening'), P('p4', 'Paper 4', EXAM, 'Speaking')],
     humanities: [P('p1', 'Paper 1', EXAM, 'AS paper — structured / source questions'), P('p2', 'Paper 2', EXAM, 'AS paper — essays'), P('p3', 'Paper 3', EXAM, 'A Level paper — structured'), P('p4', 'Paper 4', EXAM, 'A Level paper — essays')],
   },
+  AS: {
+    science: [P('p1', 'Paper 1', MCQ, 'AS multiple choice'), P('p2', 'Paper 2', EXAM, 'AS structured questions'), P('p3', 'Paper 3', EXAM, 'Advanced practical skills')],
+    maths: [P('p1', 'Paper 1', EXAM, 'Pure Mathematics 1'), P('p2', 'Paper 2', EXAM, 'Pure Mathematics 2'), P('p4', 'Paper 4', EXAM, 'Mechanics'), P('p5', 'Paper 5', EXAM, 'Probability & Statistics 1')],
+    business: [P('p1', 'Paper 1', MCQ, 'AS multiple choice'), P('p2', 'Paper 2', EXAM, 'AS data response / essay')],
+    computing: [P('p1', 'Paper 1', EXAM, 'Theory fundamentals'), P('p2', 'Paper 2', EXAM, 'Fundamental problem-solving and programming')],
+    language: [P('p1', 'Paper 1', EXAM, 'Reading and writing'), P('p2', 'Paper 2', EXAM, 'Essay / extended writing'), P('p3', 'Paper 3', TYPED, 'Listening'), P('p4', 'Paper 4', EXAM, 'Speaking')],
+    humanities: [P('p1', 'Paper 1', EXAM, 'AS paper — structured / source questions'), P('p2', 'Paper 2', EXAM, 'AS paper — essays')],
+  },
   IB: {
     science: [
       P('p1a', 'Paper 1A', MCQ, 'Multiple choice'),

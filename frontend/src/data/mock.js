@@ -6,7 +6,8 @@ import { SUBJECTS_BY_BOARD } from './syllabi';
 // everywhere tracks are listed (hero chips, onboarding, pickers).
 export const EXAM_TRACKS = [
   { id: 'AP', name: 'AP', title: 'College-level depth', desc: 'Advanced Placement practice across calculus, sciences, and English with free-response technique.' },
-  { id: 'ASA', name: 'AS & A Level', title: 'Advanced subject depth', desc: 'Focused preparation for Cambridge advanced-level mathematics, sciences, and economics.' },
+  { id: 'ASA', name: 'A Level', title: 'Advanced subject depth', desc: 'Cambridge International A Level: the full two-year course, graded A*–E.' },
+  { id: 'AS', name: 'AS Level', title: 'First-year advanced study', desc: 'Cambridge International AS Level: the first year of the A Level course, graded a–e.' },
   { id: 'CBSE10', name: 'CBSE Class 10', title: 'NCERT-aligned board revision', desc: 'Mathematics, Science, Social Science and languages for the Class 10 board exam.' },
   { id: 'CBSE', name: 'CBSE Class 12', title: 'NCERT-aligned senior secondary', desc: 'Science, commerce and humanities streams for the Class 12 board exam.' },
   { id: 'IB', name: 'IB', title: 'Concept and analysis practice', desc: 'Practice for IB mathematics, sciences, economics, and English coursework.' },
@@ -29,6 +30,7 @@ export const EXAM_DURATIONS = {
   ICSE: 150,
   IGCSE: 120,
   ASA: 90,
+  AS: 75,
   IB: 90,
   SAT: 134,
   JEE: 180,

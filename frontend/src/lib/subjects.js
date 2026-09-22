@@ -35,6 +35,67 @@ export function enrolledSubjects(courses, userSubjects, track) {
   return fromUser;
 }
 
+// Short board tag for labels: "IB HL", "A Level", "IGCSE", "CBSE 12".
+export function boardTag(board, ibLevel) {
+  const b = (board || '').toUpperCase();
+  const short = { ASA: 'A Level', AS: 'AS Level', CBSE10: 'CBSE 10', CBSE: 'CBSE 12', ISC: 'ISC 12' }[b] || b;
+  return b === 'IB' && ibLevel ? `IB ${ibLevel}` : short;
+}
+
+export const subjectKey = (subject, board, ibLevel) => `${subject}|${(board || '').toUpperCase()}|${ibLevel || ''}`;
+
+// One entry per (subject, board, level) across the student's courses — the
+// identity a predicted grade is computed for. "Physics" in an IGCSE course
+// and "Physics" in an IB HL course are two different entries with two
+// different grades. `label` is what the UI shows: "Physics · IB HL".
+export function subjectEntries(courses, fallbackTrack) {
+  const out = [];
+  const seen = new Set();
+  (courses || []).forEach((c) => {
+    const board = c.exam || fallbackTrack;
+    const subs = Array.isArray(c.subjects) ? c.subjects : (c.subject ? [c.subject] : []);
+    subs.forEach((entry) => {
+      const subject = typeof entry === 'string' ? entry : entry?.subject;
+      if (!subject) return;
+      const ibLevel = board === 'IB' && typeof entry === 'object' ? entry?.ibLevel || null : null;
+      const key = subjectKey(subject, board, ibLevel);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ key, subject, board, ibLevel, label: `${subject} · ${boardTag(board, ibLevel)}` });
+    });
+  });
+  return out;
+}
+
+// Does this worksheet belong to this entry? Sheets carry board + ibLevel;
+// older sheets without a board match on name only when the subject exists
+// once in the student's courses.
+export function sheetBelongs(w, entry, entries) {
+  if (!w || w.subject !== entry.subject) return false;
+  if (!w.board) return !entries || entries.filter((e) => e.subject === entry.subject).length === 1;
+  if ((w.board || '').toUpperCase() !== (entry.board || '').toUpperCase()) return false;
+  if (entry.board === 'IB' && entry.ibLevel && w.ibLevel && w.ibLevel !== entry.ibLevel) return false;
+  return true;
+}
+
+// Tag every sheet with the (subject, board, level) entry it belongs to, so
+// pages can group by `_k` instead of by bare subject name. Sheets whose
+// course is gone get a key of their own from what they recorded.
+export function keyedWorksheets(worksheets, courses, fallbackTrack) {
+  const entries = subjectEntries(courses, fallbackTrack);
+  const labels = {};
+  entries.forEach((e) => { labels[e.key] = e; });
+  const list = (worksheets || []).map((w) => {
+    const e = entries.find((x) => sheetBelongs(w, x, entries));
+    const board = e ? e.board : (w.board || fallbackTrack);
+    const ibLevel = e ? e.ibLevel : (board === 'IB' ? w.ibLevel || null : null);
+    const key = e ? e.key : subjectKey(w.subject, board, ibLevel);
+    if (!labels[key]) labels[key] = { key, subject: w.subject, board, ibLevel, label: `${w.subject} · ${boardTag(board, ibLevel)}` };
+    return { ...w, _k: key };
+  });
+  return { list, entries: labels };
+}
+
 // The board that best describes the student right now: the most common
 // board across their courses (first course wins a tie), else what they
 // picked at onboarding. Used for every "fallback" so a student whose courses
@@ -78,9 +139,9 @@ export function subjectBoards(courses, fallbackTrack) {
 // subject, and either carries no board or matches the board of the course this
 // subject belongs to. The builder then narrows by topic / answer type on top.
 // ---------------------------------------------------------------------------
-export function questionsForSubject(pastPapers, subject, courses, fallbackTrack) {
+export function questionsForSubject(pastPapers, subject, courses, fallbackTrack, override) {
   if (!subject) return [];
-  const info = subjectBoards(courses, fallbackTrack)[subject] || {};
+  const info = override || subjectBoards(courses, fallbackTrack)[subject] || {};
   const board = info.board || fallbackTrack;
   const level = info.ibLevel; // IB: 'HL' | 'SL' when the student chose one
   return (pastPapers || []).filter((p) =>
