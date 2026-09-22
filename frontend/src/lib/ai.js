@@ -507,7 +507,7 @@ export async function generateFlashcards({ board, subject, topic, count = 12 }) 
  * questions on the same concepts (changed values / swapped quantity / two
  * concepts combined). Resolves to shaped drafts (source: 'multiplied').
  */
-export async function multiplyQuestions({ board, ibLevel, subject, questions, count = 6, topics = [] }) {
+export async function multiplyQuestions({ board, ibLevel, subject, questions, count = 6, topics = [], syllabus = [] }) {
   const seeds = (questions || []).slice(0, 12);
   if (!seeds.length) throw new Error('Pick at least one question to multiply');
   const n = Math.max(1, Math.min(20, count));
@@ -519,9 +519,10 @@ export async function multiplyQuestions({ board, ibLevel, subject, questions, co
     `Here are ${seeds.length} real past-paper questions for ${subject} (${board}${ibLevel ? ` ${ibLevel}` : ''}):`,
     seeds.map(describe).join('\n'),
     `Write ${n} NEW questions that test the same concepts. For each: keep the examiner style and answer type of a seed but change the numbers or context, or ask for a different quantity, or combine two seeds' concepts into one question. Never reuse a seed's wording. Every question needs a correct answer and a marking scheme.`,
+    syllabus.length ? `The current ${board} ${subject} syllabus is:\n${syllabus.map((t) => `- ${t}`).join('\n')}\nEvery new question must sit inside this syllabus. When you combine concepts you may pair a seed's concept with another syllabus point above, and you may draw on the syllabus for context the seeds do not cover.` : '',
     `Tag each with one of these topics: ${(topics.length ? topics : [...new Set(seeds.map((q) => q.topic).filter(Boolean))]).join('; ') || '(free choice)'}.`,
     `Reply as {"questions": [...]}. ${QUESTION_SHAPE}.`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
   const text = await askAi({ mode: 'multiply', context: { board, ibLevel, subject }, messages: [{ role: 'user', content }] });
   let parsed;
   try { parsed = parseJsonReply(text); } catch (_) { parsed = { questions: recoverQuestions(text) }; }

@@ -48,10 +48,21 @@ export function textbook(text) {
 }
 
 // Apply to a question object without mutating it.
+// Every question carries a mark value on the sheet: the examiner's, else the
+// marking scheme's total, else a sensible default for its format.
+export function marksFor(q) {
+  const own = Number(q?.marks);
+  if (own > 0) return own;
+  const scheme = (Array.isArray(q?.markScheme) ? q.markScheme : []).reduce((s, p) => s + (Number(p.marks) || 0), 0);
+  if (scheme > 0) return scheme;
+  return q?.answerType === 'Multiple choice' ? 1 : q?.answerType === 'Typed response' ? 2 : q?.answerType === 'Drawing' ? 3 : 4;
+}
+
 export function textbookQuestion(q) {
   if (!q) return q;
   return {
     ...q,
+    marks: marksFor(q),
     q: textbook(q.q),
     options: Array.isArray(q.options) ? q.options.map(textbook) : q.options,
     typedAnswer: q.typedAnswer ? textbook(q.typedAnswer) : q.typedAnswer,

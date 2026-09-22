@@ -1,4 +1,4 @@
-import { primaryTrack, topicsFor, rankByPopularity } from '../../lib/subjects';
+import { primaryTrack, topicsFor, rankByPopularity, resolvedTopics } from '../../lib/subjects';
 import { papersFor } from '../../lib/paperTypes';
 import { findDuplicates } from '../../lib/duplicates';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -507,7 +507,7 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopic, 
       // Seed with a random sample so repeated presses explore the library.
       const seeds = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
       const ibLevel = seeds.every((q) => q.ibLevel === seeds[0].ibLevel) ? seeds[0].ibLevel : null;
-      const list = await multiplyQuestions({ board: syllabus, ibLevel, subject, questions: seeds, count, topics: filterTopic ? [filterTopic] : topicsList });
+      const list = await multiplyQuestions({ board: syllabus, ibLevel, subject, questions: seeds, count, topics: filterTopic ? [filterTopic] : topicsList, syllabus: resolvedTopics(state.syllabusTopics, syllabus, subject) });
       setDrafts((d) => [...list.map((q) => ({ ...q, _key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, ibLevel })), ...d]);
       toast.success(`${list.length} new question${list.length === 1 ? '' : 's'} drafted`);
     } catch (e) {
@@ -542,7 +542,7 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopic, 
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <div className="min-w-0">
           <div className="text-[12.5px] font-semibold text-blue-900 inline-flex items-center gap-1.5"><Layers className="w-4 h-4" /> Multiply</div>
-          <div className="text-[11.5px] text-slate-600">Reads the {pool.length} question{pool.length === 1 ? '' : 's'} {filterTopic ? `in ${filterTopic}` : 'in this category'} and writes new ones on the same concepts — changed values, a different quantity asked for, or two concepts combined.</div>
+          <div className="text-[11.5px] text-slate-600">Reads the {pool.length} question{pool.length === 1 ? '' : 's'} {filterTopic ? `in ${filterTopic}` : 'in this category'} together with the {syllabus} {subject} syllabus and writes new ones on the same concepts — changed values, a different quantity asked for, or two concepts combined.</div>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-[11.5px] text-slate-600 inline-flex items-center gap-1.5">Make

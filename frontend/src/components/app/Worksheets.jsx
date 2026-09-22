@@ -312,7 +312,7 @@ function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerTy
   const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
   questions.forEach((q, idx) => {
     ensureRoom(80);
-    writeWrapped(`${idx + 1}. ${q.q}`, { size: 12, style: 'bold', after: 4 });
+    writeWrapped(`${idx + 1}. ${q.q}${q.marks ? `   [${q.marks} mark${q.marks === 1 ? '' : 's'}]` : ''}`, { size: 12, style: 'bold', after: 4 });
 
     if (q.answerType === 'Multiple choice' && Array.isArray(q.options)) {
       q.options.forEach((opt, oi) => {
@@ -1514,7 +1514,7 @@ export default function Worksheets({ go }) {
                     {ok ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[14px] font-medium text-zinc-900">{i + 1}. {q.q}</div>
+                    <div className="text-[14px] font-medium text-zinc-900">{i + 1}. {q.q} {q.marks ? <span className="text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">[{q.marks} mark{q.marks === 1 ? '' : 's'}]</span> : null}</div>
                     {isMCQ && (
                       <>
                         <div className="text-[13px] text-zinc-600 mt-1">Correct: <span className="font-medium text-zinc-800">{q.options[q.a]}</span></div>
