@@ -9,7 +9,7 @@ import { FULL_PAPER_TYPE } from '../../data/pastPapers';
 import { toast } from 'sonner';
 import { extractFromPdf, multiplyQuestions, isAiEnabled } from '../../lib/ai';
 import { filesToAiParts } from '../../lib/images';
-import { uploadDiagram } from '../../lib/dataStore';
+import { uploadDiagram, subjectPopularity } from '../../lib/dataStore';
 import { SyllabusImport, FlagQueue } from './AdminNextWave';
 
 const ANSWER_TYPES = ['Multiple choice', 'Typed response', 'Exam style', 'Drawing', FULL_PAPER_TYPE];
@@ -70,8 +70,24 @@ export default function AdminPlaceholder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syllabus]);
 
-  // Most-taken subjects first, for every board.
-  const subjectsForSyllabus = useMemo(() => rankByPopularity(SUBJECTS[syllabus] || []), [syllabus]);
+  // Ordered by how many students actually take each subject on this board
+  // (live enrolment counts), then by worldwide popularity for the rest.
+  const [enrol, setEnrol] = useState({});
+  useEffect(() => {
+    let live = true;
+    subjectPopularity().then((rows) => {
+      if (!live) return;
+      const m = {};
+      rows.forEach((r) => { m[`${r.board}|${r.subject}`] = Number(r.students) || 0; });
+      setEnrol(m);
+    }).catch(() => { /* counts are a nicety */ });
+    return () => { live = false; };
+  }, []);
+  const countFor = (s) => enrol[`${syllabus}|${s}`] || 0;
+  const subjectsForSyllabus = useMemo(() => {
+    const base = rankByPopularity(SUBJECTS[syllabus] || []);
+    return base.map((name, i) => ({ name, i, n: enrol[`${syllabus}|${name}`] || 0 })).sort((a, b) => b.n - a.n || a.i - b.i).map((x) => x.name);
+  }, [syllabus, enrol]);
 
   const handleSeed = () => {
     if (!window.confirm('Replace your worksheet history with 9 randomized attempts per subject? This overwrites current progress.')) return;
@@ -127,7 +143,7 @@ export default function AdminPlaceholder() {
               data-testid={`admin-subject-${s.replace(/\s+/g, '-')}`}
               className={`px-3 py-1.5 rounded-md border text-[12.5px] font-semibold transition-colors ${subject === s ? 'border-blue-500 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
             >
-              {s}
+              {s}{countFor(s) > 0 && <span className="ml-1.5 rounded-full bg-blue-600 text-white px-1.5 text-[10px] tabular-nums" title={`${countFor(s)} student${countFor(s) === 1 ? '' : 's'} take this`}>{countFor(s)}</span>}
             </button>
           ))}
         </div>

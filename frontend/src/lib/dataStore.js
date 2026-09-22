@@ -422,3 +422,10 @@ export async function deleteNoteFile(path) {
   const { error } = await supabase.storage.from(NOTES_BUCKET).remove([path]);
   if (error) throw error;
 }
+
+// Admin-only: distinct students per (board, subject) across every course.
+export async function subjectPopularity() {
+  const { data, error } = await supabase.rpc('subject_popularity');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
