@@ -35,7 +35,10 @@ export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose,
       </div>
       <nav className="relative flex-1 px-3 flex flex-col gap-0.5 overflow-y-auto" data-testid="sidebar-nav">
         {nav.map((n) => {
-          const isActive = activeKey === n.key;
+          // Hidden routes light up their parent entry (the worksheet builder
+          // and topic pages live under Start Studying; mistakes under History).
+          const PARENT = { worksheets: 'study', topic: 'study', mistakes: 'history', 'course-overview': 'courses' };
+          const isActive = activeKey === n.key || PARENT[activeKey] === n.key;
           const Icon = n.Icon;
           return (
             <button

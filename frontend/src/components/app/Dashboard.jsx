@@ -408,7 +408,7 @@ export default function Dashboard({ go }) {
               Browse all &rarr;
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {mySubjects.map((s) => {
               const info = SUBJECT_INFO[s] || { emoji: subjectMark(s), tone: 'primary' };
               const b = mySubjectBoards[s];
@@ -418,7 +418,7 @@ export default function Dashboard({ go }) {
                   key={s}
                   onClick={() => openSubject(s)}
                   data-testid={`dashboard-subject-${s}`}
-                  className="group text-left rounded-xl border border-[color:var(--color-border)] bg-white p-4 hover:border-blue-300 hover:shadow-md transition-all"
+                  className="group text-left rounded-xl border border-[color:var(--color-border)] bg-white p-4 hover:border-blue-300 hover:shadow-md transition-all self-start"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-[18px] font-semibold ${SUBJECT_TONE_BADGE[info.tone] || SUBJECT_TONE_BADGE.primary}`}>

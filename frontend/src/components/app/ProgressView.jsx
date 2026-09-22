@@ -541,7 +541,9 @@ function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectD
           const predX = w - padR + 6;
           const predY = yFor(p.predicted);
           const op = opacityFor(s);
-          const gradeLabel = p.grade?.label ?? `${p.predicted}%`;
+          const name = labelOf ? labelOf(s) : s;
+          const locked = p.ready === false;
+          const gradeLabel = locked ? 'locked' : (p.grade?.label ?? `${p.predicted}%`);
           return (
             <g
               key={`pred-${s}`}
@@ -563,7 +565,7 @@ function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectD
                 {gradeLabel}
               </text>
               <text x={predX + 8} y={predY + 10} fontSize="8.5" fill="#64748b">
-                {s.length > 12 ? s.slice(0, 12) + '\u2026' : s}
+                {name.length > 18 ? name.slice(0, 18) + '\u2026' : name}
               </text>
             </g>
           );

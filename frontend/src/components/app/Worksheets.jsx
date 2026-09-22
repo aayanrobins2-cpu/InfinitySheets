@@ -710,10 +710,15 @@ export default function Worksheets({ go }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The clock is wall-time based (deadline = start + allowed minutes), not a
+  // tick counter: browsers throttle timers in background tabs, so a counter
+  // would drift and a sheet could show 88 min left after two real hours.
+  const deadlineRef = useRef(0);
   useEffect(() => {
     if (stage !== 'take') return;
     if (timeLeft <= 0) { haptic('warning'); finalize(); return; }
-    const id = setInterval(() => setTimeLeft((s) => s - 1), 1000);
+    if (!deadlineRef.current || Math.abs(deadlineRef.current - (Date.now() + timeLeft * 1000)) > 5000) deadlineRef.current = Date.now() + timeLeft * 1000;
+    const id = setInterval(() => setTimeLeft(Math.max(0, Math.round((deadlineRef.current - Date.now()) / 1000))), 1000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage, timeLeft]);
@@ -2000,13 +2005,13 @@ function CheckboxCard({ label, icon, checked, onChange, testid }) {
       type="button"
       onClick={() => onChange(!checked)}
       data-testid={testid}
-      className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg border text-[13px] font-medium transition-colors flex-1 min-w-0 ${checked ? 'border-blue-500 bg-blue-50 text-blue-800' : 'border-zinc-200 bg-white text-slate-700 hover:bg-slate-100'}`}
+      className={`flex items-start gap-2 px-3.5 py-2.5 rounded-lg border text-[13px] font-medium transition-colors flex-1 min-w-0 text-left ${checked ? 'border-blue-500 bg-blue-50 text-blue-800' : 'border-zinc-200 bg-white text-slate-700 hover:bg-slate-100'}`}
     >
-      <span className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${checked ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-300'}`}>
+      <span className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 ${checked ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-300'}`}>
         {checked && <Check className="w-4 h-4" />}
       </span>
-      {icon}
-      <span className="truncate">{label}</span>
+      <span className="shrink-0 mt-0.5">{icon}</span>
+      <span className="min-w-0 leading-snug">{label}</span>
     </button>
   );
 }
