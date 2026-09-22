@@ -91,7 +91,11 @@ export function keyedWorksheets(worksheets, courses, fallbackTrack) {
   entries.forEach((e) => { labels[e.key] = e; });
   const list = (worksheets || []).map((w) => {
     const e = entries.find((x) => sheetBelongs(w, x, entries));
-    const board = e ? e.board : (w.board || fallbackTrack);
+    // An orphaned sheet (its course was removed) keeps the board it recorded;
+    // one with no board goes to a curriculum that actually teaches the
+    // subject — never the account's most common board, which is how an IB
+    // Business Management sheet ended up labelled "SAT".
+    const board = e ? e.board : (w.board || (w.ibLevel ? 'IB' : defaultBoardFor(w.subject, fallbackTrack)));
     const ibLevel = e ? e.ibLevel : (board === 'IB' ? w.ibLevel || null : null);
     const key = e ? e.key : subjectKey(w.subject, board, ibLevel);
     if (!labels[key]) labels[key] = { key, subject: w.subject, board, ibLevel, label: `${w.subject} · ${boardTag(board, ibLevel)}` };
