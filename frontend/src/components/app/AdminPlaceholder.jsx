@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool, Copy, Layers, Pencil, ImagePlus, Save } from 'lucide-react';
 import { SUBJECTS, EXAM_TRACKS } from '../../data/mock';
+import { subjectDemand, formatDemand } from '../../data/subjectDemand';
 import { FULL_PAPER_TYPE } from '../../data/pastPapers';
 import { toast } from 'sonner';
 import { extractFromPdf, multiplyQuestions, isAiEnabled } from '../../lib/ai';
@@ -70,8 +71,9 @@ export default function AdminPlaceholder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syllabus]);
 
-  // Ordered by how many students actually take each subject on this board
-  // (live enrolment counts), then by worldwide popularity for the rest.
+  // Ordered by how many candidates sit each subject's exam worldwide each
+  // year (data/subjectDemand.js) — so the most-taken subjects get content
+  // first — with our own enrolment count shown beside each as a badge.
   const [enrol, setEnrol] = useState({});
   useEffect(() => {
     let live = true;
@@ -86,8 +88,8 @@ export default function AdminPlaceholder() {
   const countFor = (s) => enrol[`${syllabus}|${s}`] || 0;
   const subjectsForSyllabus = useMemo(() => {
     const base = rankByPopularity(SUBJECTS[syllabus] || []);
-    return base.map((name, i) => ({ name, i, n: enrol[`${syllabus}|${name}`] || 0 })).sort((a, b) => b.n - a.n || a.i - b.i).map((x) => x.name);
-  }, [syllabus, enrol]);
+    return base.map((name, i) => ({ name, i, d: subjectDemand(syllabus, name) })).sort((a, b) => b.d - a.d || a.i - b.i).map((x) => x.name);
+  }, [syllabus]);
 
   const handleSeed = () => {
     if (!window.confirm('Replace your worksheet history with 9 randomized attempts per subject? This overwrites current progress.')) return;
@@ -141,6 +143,7 @@ export default function AdminPlaceholder() {
               type="button"
               onClick={() => setSubject(s)}
               data-testid={`admin-subject-${s.replace(/\s+/g, '-')}`}
+              title={subjectDemand(syllabus, s) ? `≈${formatDemand(subjectDemand(syllabus, s))} candidates sit this exam each year${countFor(s) ? ` · ${countFor(s)} on InfinitySheets` : ''}` : undefined}
               className={`px-3 py-1.5 rounded-md border text-[12.5px] font-semibold transition-colors ${subject === s ? 'border-blue-500 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
             >
               {s}{countFor(s) > 0 && <span className="ml-1.5 rounded-full bg-blue-600 text-white px-1.5 text-[10px] tabular-nums" title={`${countFor(s)} student${countFor(s) === 1 ? '' : 's'} take this`}>{countFor(s)}</span>}
