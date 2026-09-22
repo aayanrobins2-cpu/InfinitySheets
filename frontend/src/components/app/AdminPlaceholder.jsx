@@ -1,4 +1,4 @@
-import { primaryTrack, topicsFor } from '../../lib/subjects';
+import { primaryTrack, topicsFor, rankByPopularity } from '../../lib/subjects';
 import { papersFor } from '../../lib/paperTypes';
 import { findDuplicates } from '../../lib/duplicates';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -70,7 +70,8 @@ export default function AdminPlaceholder() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syllabus]);
 
-  const subjectsForSyllabus = SUBJECTS[syllabus] || [];
+  // Most-taken subjects first, for every board.
+  const subjectsForSyllabus = useMemo(() => rankByPopularity(SUBJECTS[syllabus] || []), [syllabus]);
 
   const handleSeed = () => {
     if (!window.confirm('Replace your worksheet history with 9 randomized attempts per subject? This overwrites current progress.')) return;

@@ -72,6 +72,10 @@ export function subjectEntries(courses, fallbackTrack) {
 // once in the student's courses.
 export function sheetBelongs(w, entry, entries) {
   if (!w || w.subject !== entry.subject) return false;
+  // A sheet that recorded an HL/SL level was an IB sitting, whatever else
+  // it says — it must never count towards the same subject on another board.
+  if (w.ibLevel && entry.board !== 'IB') return false;
+  if (!w.board && w.ibLevel) return entry.board === 'IB' && (!entry.ibLevel || entry.ibLevel === w.ibLevel);
   if (!w.board) return !entries || entries.filter((e) => e.subject === entry.subject).length === 1;
   if ((w.board || '').toUpperCase() !== (entry.board || '').toUpperCase()) return false;
   if (entry.board === 'IB' && entry.ibLevel && w.ibLevel && w.ibLevel !== entry.ibLevel) return false;
@@ -244,4 +248,21 @@ export function subjectMark(name) {
   if (!words.length) return '?';
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return words.slice(0, 3).map((w) => w[0].toUpperCase()).join('');
+}
+
+// Subjects ranked by how commonly they are taken worldwide, so pickers show
+// Mathematics / Physics / Chemistry first and "Latin" last. Matching is by
+// prefix on the family name, so "Physics C: Mechanics" ranks with Physics
+// and "Mathematics: Analysis & Approaches" with Mathematics; anything
+// unmatched keeps its original order after the ranked ones.
+const POPULARITY = ['Mathematics', 'Maths', 'Math', 'Calculus', 'Physics', 'Chemistry', 'Biology', 'English', 'Economics', 'Computer Science', 'Business', 'Psychology', 'History', 'Geography', 'Science', 'Accounting', 'Statistics', 'Calculus', 'Further Math', 'Additional Math', 'Environmental', 'Sociology', 'Political', 'Government', 'Philosophy', 'Design', 'Art', 'Music', 'Physical Education', 'Sports', 'Spanish', 'French', 'German', 'Hindi', 'Chinese', 'Mandarin', 'Japanese', 'Arabic', 'Italian'];
+export function rankByPopularity(list) {
+  const rank = (name) => {
+    const n = String(name || '').toLowerCase();
+    const i = POPULARITY.findIndex((k) => n.startsWith(k.toLowerCase()) || (k.length > 3 && n.includes(k.toLowerCase())));
+    return i < 0 ? POPULARITY.length : i;
+  };
+  return (list || []).map((name, i) => ({ name, i, r: rank(name) }))
+    .sort((a, b) => a.r - b.r || a.name.length - b.name.length || a.i - b.i)
+    .map((x) => x.name);
 }
