@@ -1,9 +1,10 @@
 import { primaryTrack, topicsFor, rankByPopularity, resolvedTopics } from '../../lib/subjects';
 import { papersFor } from '../../lib/paperTypes';
 import { findDuplicates } from '../../lib/duplicates';
+import { detectChains, chainGroups } from '../../lib/chains';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool, Copy, Layers, Pencil, ImagePlus, Save } from 'lucide-react';
+import { Shield, Plus, Trash2, FileText, Sparkles, Filter, Upload, Link2, X, Loader2, Check, FlaskConical, ClipboardCheck, PenTool, Copy, Layers, Pencil, ImagePlus, Save, Link as LinkIcon } from 'lucide-react';
 import { SUBJECTS, EXAM_TRACKS } from '../../data/mock';
 import { subjectDemand, formatDemand } from '../../data/subjectDemand';
 import { FULL_PAPER_TYPE } from '../../data/pastPapers';
@@ -196,14 +197,24 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
   }, [pastPapers, subject, syllabus]);
 
   const filteredPastPapers = useMemo(() => {
-    if (!filterTopic) return scopedPastPapers;
-    return scopedPastPapers.filter((p) => p.topic === filterTopic);
-  }, [scopedPastPapers, filterTopic]);
+    if (!filterTopic) return chainedPapers;
+    return chainedPapers.filter((p) => p.topic === filterTopic);
+  }, [chainedPapers, filterTopic]);
   // Duplicate detector: exact + near-duplicate questions in this category.
   const dupGroups = useMemo(() => findDuplicates(scopedPastPapers), [scopedPastPapers]);
   const dupExtras = dupGroups.reduce((n, g) => n + g.items.length - 1, 0);
   const [showDups, setShowDups] = useState(false);
   const [showMultiply, setShowMultiply] = useState(false);
+  // Context chains: parts of one printed question that only make sense in
+  // order. Detected when a paper is scanned; re-detected here so older rows
+  // and hand-typed questions get chained too.
+  const chainMap = useMemo(() => detectChains(scopedPastPapers, { numberOf: (q) => q.number }), [scopedPastPapers]);
+  const chainedPapers = useMemo(() => scopedPastPapers.map((q) => {
+    const c = chainMap.get(q.id);
+    return c ? { ...q, ...c, chainNeeds: q.chainNeeds || c.chainNeeds } : q;
+  }), [scopedPastPapers, chainMap]);
+  const chains = useMemo(() => chainGroups(chainedPapers), [chainedPapers]);
+  const [showChains, setShowChains] = useState(false);
 
   const validate = () => {
     const isPaper = form.answerType === FULL_PAPER_TYPE;
@@ -411,6 +422,9 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
             <button type="button" onClick={() => setShowDups((v) => !v)} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border transition-colors ${dupExtras ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'border-[color:var(--color-border)] text-slate-500 hover:bg-slate-50'}`} data-testid="admin-dup-toggle" title="Find duplicate questions">
               <Copy className="w-3.5 h-3.5" /> Duplicates{dupExtras ? <span className="ml-0.5 rounded-full bg-amber-600 text-white px-1.5 text-[10.5px]">{dupExtras}</span> : null}
             </button>
+            <button type="button" onClick={() => setShowChains((v) => !v)} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border transition-colors ${chains.length ? 'border-teal-300 bg-teal-50 text-teal-800 hover:bg-teal-100' : 'border-[color:var(--color-border)] text-slate-500 hover:bg-slate-50'}`} data-testid="admin-chain-toggle" title="Questions that must be served together, in order">
+              <LinkIcon className="w-3.5 h-3.5" /> Chains{chains.length ? <span className="ml-0.5 rounded-full bg-teal-600 text-white px-1.5 text-[10.5px]">{chains.length}</span> : null}
+            </button>
             <button type="button" onClick={() => setShowMultiply((v) => !v)} disabled={scopedPastPapers.length === 0} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border transition-colors disabled:opacity-40 ${showMultiply ? 'border-blue-300 bg-blue-50 text-blue-800' : 'border-[color:var(--color-border)] text-slate-600 hover:bg-slate-50'}`} data-testid="admin-multiply-toggle" title="Write new questions on the same concepts">
               <Layers className="w-3.5 h-3.5" /> Multiply
             </button>
@@ -419,6 +433,29 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
         </div>
         {showMultiply && (
           <MultiplyPanel syllabus={syllabus} subject={subject} questions={filteredPastPapers} topicsList={topicsList} filterTopic={filterTopic} addPastPaper={addPastPaper} onClose={() => setShowMultiply(false)} />
+        )}
+        {showChains && (
+          <div className="mb-4 rounded-xl border border-teal-200 bg-teal-50/40 p-3" data-testid="admin-chain-panel">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="text-[12.5px] font-semibold text-teal-900">{chains.length ? `${chains.length} context chain${chains.length === 1 ? '' : 's'} — parts of one printed question` : 'No context chains in this category'}</div>
+              <button type="button" onClick={() => setShowChains(false)} className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white flex items-center justify-center" aria-label="Close"><X className="w-3.5 h-3.5" /></button>
+            </div>
+            <div className="text-[11.5px] text-slate-600 mb-2">A part flagged <span className="font-semibold text-teal-800">needs context</span> refers back to an earlier one, so the worksheet builder always serves the parts before it, in order.</div>
+            <div className="flex flex-col gap-2 max-h-[360px] overflow-auto pr-1">
+              {chains.map((g) => (
+                <div key={g.chainId} className="rounded-lg border border-[color:var(--color-border)] bg-white p-2.5">
+                  <div className="text-[10.5px] uppercase tracking-wide font-semibold mb-1.5 text-teal-700">{g.items.length} parts{g.needs ? ` · ${g.needs} need context` : ''}{g.items[0]?.year ? ` · ${g.items[0].year}` : ''}{g.items[0]?.paper ? ` · ${g.items[0].paper}` : ''}</div>
+                  {g.items.map((q) => (
+                    <div key={q.id} className="flex items-start gap-2 py-1 border-t border-[color:var(--color-border)] first:border-t-0 text-[12.5px]">
+                      <span className="shrink-0 w-6 h-5 rounded bg-teal-100 text-teal-800 text-[10.5px] font-semibold flex items-center justify-center">{q.number || q.chainOrder}</span>
+                      <span className="min-w-0 flex-1 text-slate-800">{q.q}</span>
+                      {q.chainNeeds && <span className="shrink-0 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-semibold">needs context</span>}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
         {showDups && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/40 p-3" data-testid="admin-dup-panel">
@@ -639,6 +676,7 @@ function LibraryRow({ p, onRemove, onSave, topicsList = [], syllabus }) {
             {p.ibLevel && <span className="px-2 py-0.5 rounded-md bg-violet-100 text-violet-800 text-[10.5px] font-semibold">{p.ibLevel}</span>}
             {(p.hasDiagram || p.answerType === 'Drawing') && <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10.5px] font-semibold">Diagram</span>}
             {p.multiplied && <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10.5px] font-semibold">Multiplied</span>}
+            {p.chainId && <span className="px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 text-[10.5px] font-semibold inline-flex items-center gap-1" title={p.chainNeeds ? 'Needs the earlier parts of this question' : 'Part of a multi-part question'}><LinkIcon className="w-3 h-3" />{p.number ? `${p.number} · ` : ''}part {p.chainOrder}/{p.chainSize}{p.chainNeeds ? ' · needs context' : ''}</span>}
             {p.marks && <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10.5px] font-semibold">{p.marks} marks</span>}
           </div>
           <div className="text-[13.5px] font-medium text-slate-900 leading-snug">{p.q}</div>

@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from './supabase';
 import { analyticsForPrompt } from './worksheetAnalytics';
 import { dataUrlParts } from './images';
 import { snapTopic, guessTopicFromText } from './topicSnap';
+import { detectChains } from './chains';
 
 export const AI_FUNCTION = 'ai-chat';
 
@@ -274,6 +275,7 @@ export async function extractFromPdf({ paper, scheme, board, subject, topics = [
     `Tag each question with the closest topic from: ${topics.join('; ') || '(free choice)'}.`,
     'Choose "Multiple choice" only when the paper prints options; short numeric / one-line answers are "Typed response"; anything that must be drawn/sketched/plotted/labelled is "Drawing" (it cannot be typed); anything else needing explanation or working is "Exam style". Keep every sub-part (a), (b), (c) as a separate question with the shared stem repeated.',
     'Include a "number" field with the printed question label, e.g. "1", "3(b)", "12 (ii)".',
+    'CONTEXT CHAINS: when a part cannot be answered on its own because it refers back to an earlier part or to a shared stem ("hence", "your answer to (a)", "the graph above", "using this value"), set "dependsOnPrevious": true. A part that stands completely alone gets false. Repeat the shared stem in "q" anyway, but still flag the dependency.',
     'Put the question stem in "q" without the question number and without repeating the options (options go in "options" only). For MCQs set "a" only when the correct option is printed, given in the mark scheme, or unambiguous — otherwise set "a" to null; never guess. Include diagram questions: set "hasDiagram": true with a short "diagramNote". Skip only cover pages, instructions and answer-key commentary. Never invent options or answers you cannot see.',
     `${QUESTION_SHAPE}. Include "year" if it is printed on the paper.`,
   ];
@@ -309,7 +311,7 @@ export async function extractFromPdf({ paper, scheme, board, subject, topics = [
       if (!key || seen.has(key)) continue;
       seen.add(key);
       const q = shapeQuestion(r, { answerType: 'Exam style', difficulty: 'Medium', topics, subject, strict: true });
-      if (q) { all.push({ ...q, _number: num, year: Number(r.year) || undefined }); added += 1; }
+      if (q) { all.push({ ...q, _number: num, _dependsOn: r.dependsOnPrevious === true, year: Number(r.year) || undefined }); added += 1; }
     }
     if (onProgress) { try { onProgress(all.length); } catch (_) { /* ignore */ } }
     // If a truncated reply still gave us questions, there are almost certainly
@@ -318,7 +320,19 @@ export async function extractFromPdf({ paper, scheme, board, subject, topics = [
     if (!added) break;
     if (!more && !wasTruncated) break;
   }
-  return all.map(({ _number, ...q }) => q);
+  // Context chains: group the parts of each printed question so the builder
+  // never serves "(b) Hence find…" without the "(a)" it depends on.
+  const withIds = all.map((q, i) => ({ ...q, id: q.id || `x${i}` }));
+  const chains = detectChains(withIds, { numberOf: (q) => q._number });
+  return withIds.map((q) => {
+    const c = chains.get(q.id);
+    const { _number, _dependsOn, id, ...rest } = q;
+    return {
+      ...rest,
+      number: _number || undefined,
+      ...(c ? { chainId: c.chainId, chainOrder: c.chainOrder, chainSize: c.chainSize, chainNeeds: c.chainNeeds || _dependsOn === true } : {}),
+    };
+  });
 }
 
 /**

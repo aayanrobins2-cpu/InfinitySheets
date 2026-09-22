@@ -16,6 +16,7 @@ import { filesToAiParts } from '../../lib/images';
 import { subjectBoards } from '../../lib/subjects';
 import WorkingCapture from './WorkingCapture';
 import { textbookQuestion, asciiNotation } from '../../lib/notation';
+import { expandChains } from '../../lib/chains';
 import AdSlot from '../ads/AdSlot';
 import ReportQuestion from './ReportQuestion';
 import { adaptiveDifficulty } from '../../lib/adaptive';
@@ -162,7 +163,9 @@ function buildQuestions({ topics, answerType, difficulty, length, pastPapers, ai
     out.push(picked);
   }
   // Textbook notation everywhere the student reads it: 3², √2, H₂O, ×, ≤.
-  return out.map(textbookQuestion);
+  // A question that only makes sense after an earlier part drags that part
+  // in with it, in printed order (context chains).
+  return expandChains(out, pastPaperPool).map(textbookQuestion);
 }
 
 // A printed worksheet the student is doing on paper: questions + timer,
@@ -785,7 +788,7 @@ export default function Worksheets({ go }) {
     // A picked past paper is taken as-is, in its printed order.
     if (paperPick && paperPick.ids?.length) {
       const byId = new Map((state.pastPapers || []).map((p) => [p.id, p]));
-      const qs = paperPick.ids.map((id) => byId.get(id)).filter(Boolean).map((p) => textbookQuestion({ ...p, _topic: p.topic, source: 'past-paper' }));
+      const qs = expandChains(paperPick.ids.map((id) => byId.get(id)).filter(Boolean), pastPaperPool).map((p) => textbookQuestion({ ...p, _topic: p.topic, source: 'past-paper' }));
       if (qs.length) return qs;
     }
     if (simulation) return assembleSimulation();

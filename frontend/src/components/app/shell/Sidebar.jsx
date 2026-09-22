@@ -20,7 +20,7 @@ export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose,
           <div className="font-semibold text-[14.5px] tracking-tight whitespace-nowrap">
             {plus ? <span className="brand-plus-text" data-testid="brand-plus">InfinitySheets+</span> : 'InfinitySheets'}
           </div>
-          {plus ? <div className="text-[10px] font-semibold text-amber-500" data-testid="brand-member">InfinitySheets+ member</div> : <div className="text-[10px] text-slate-500">Adaptive study</div>}
+          {plus ? <div className="text-[10px] font-semibold text-violet-500" data-testid="brand-member">InfinitySheets+ member</div> : <div className="text-[10px] text-slate-500">Adaptive study</div>}
         </div>
         {onClose && (
           <button
