@@ -1012,8 +1012,8 @@ html.no-glass .tile-violet, html.no-glass .tile-royal, html.no-glass .tile-emera
   background: linear-gradient(90deg, #2563eb 0%, #60a5fa 35%, #ffffff 50%, #60a5fa 65%, #2563eb 100%);
   background-size: 220% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: brand-plus-sheen 12s linear infinite;
-  font-weight: 800;
+  animation: brand-plus-sheen 3s linear infinite;
+  font-weight: 700;
 }
 @keyframes brand-plus-sheen { from { background-position: 220% 0; } to { background-position: -20% 0; } }
 @media (prefers-reduced-motion: reduce) { .brand-plus-text { animation: none; } }
