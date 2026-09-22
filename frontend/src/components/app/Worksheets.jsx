@@ -165,7 +165,10 @@ function buildQuestions({ topics, answerType, difficulty, length, pastPapers, ai
   // Textbook notation everywhere the student reads it: 3², √2, H₂O, ×, ≤.
   // A question that only makes sense after an earlier part drags that part
   // in with it, in printed order (context chains).
-  return expandChains(out, pastPaperPool).map(textbookQuestion);
+  // Pulling in a predecessor can push the sheet over the requested length;
+  // trimming from the end is safe because a chain's earlier parts always
+  // come first, so nothing is ever left needing context that was cut.
+  return expandChains(out, pastPaperPool).slice(0, Math.max(1, length)).map(textbookQuestion);
 }
 
 // A printed worksheet the student is doing on paper: questions + timer,
@@ -1016,7 +1019,10 @@ export default function Worksheets({ go }) {
     telemetryClose(current);
     const results = questions.map((q, i) => gradeOne(q, answers[i]));
     const correct = results.filter(Boolean).length;
-    const durationSec = Math.round((Date.now() - startTime) / 1000);
+    // The clock auto-submits at zero, so a longer elapsed time means the tab
+    // was asleep; record what the sheet allowed, not the wall gap.
+    const allowedSec = (simulation ? simPreset.minutes : duration) * 60;
+    const durationSec = Math.min(Math.round((Date.now() - startTime) / 1000), Math.round(allowedSec * 1.1));
     const analytics = computeAnalytics({ questions, answers, results, telemetry: telemetryRef.current.data, gradeOne, durationMin: duration });
     analytics.examMode = examMode ? { exits: examExits } : null;
     analytics.paceCoach = paceCoach;

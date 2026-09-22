@@ -57,29 +57,40 @@ const sameSource = (a, b) =>
  * ("hence…", "your answer to part (a)") is marked chainNeeds, meaning the
  * parts before it must be served with it.
  *
- * `numberOf` reads the printed label; questions without one can still be
- * chained when they sit consecutively in the same paper and refer back.
+ * `numberOf` reads the printed label. With `sequential: true` (extraction,
+ * where the list is in printed order) an unlabelled question that refers
+ * back is also chained to the one before it.
  */
-export function detectChains(questions, { numberOf = (q) => q.number || q._number } = {}) {
+export function detectChains(questions, { numberOf = (q) => q.number || q._number, sequential = false } = {}) {
   const list = (questions || []).filter(Boolean);
   const out = new Map();
   const groups = new Map();
+  const groupOf = new Map(); // question id → group key
+
+  const put = (key, entry) => {
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+    groupOf.set(entry.q.id, key);
+  };
 
   list.forEach((q, i) => {
     const label = numberOf(q);
     const { root, parts } = parseNumber(label);
-    // Group key: same paper + same printed root number. Without a label we
-    // fall back to the previous question's group so a back-referring
-    // question still attaches to what came before it.
-    let key = null;
+    // Group key: same paper + same printed root number.
     if (root) {
-      key = `${q.subject}|${q.board || ''}|${q.year || ''}|${q.paper || ''}|${q.ibLevel || ''}|${root}`;
-    } else if (i > 0 && refersBack(q.q) && sameSource(q, list[i - 1])) {
-      key = out.get(list[i - 1].id)?.chainId || `seq|${list[i - 1].id}`;
+      put(`${q.subject}|${q.board || ''}|${q.year || ''}|${q.paper || ''}|${q.ibLevel || ''}|${root}`, { q, parts, i });
+      return;
     }
-    if (!key) return;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push({ q, parts, i });
+    // No printed label: a question that refers back joins the one before it,
+    // pulling that one into the chain as well (it is the context). Only when
+    // the caller guarantees printed order (extraction) — the library lists
+    // newest first, where "the one before" is the wrong question.
+    if (!sequential) return;
+    const prev = i > 0 ? list[i - 1] : null;
+    if (!prev || !refersBack(q.q) || !sameSource(q, prev)) return;
+    const key = groupOf.get(prev.id) || `seq|${prev.id}`;
+    if (!groupOf.has(prev.id)) put(key, { q: prev, parts: [], i: i - 1 });
+    put(key, { q, parts: [], i });
   });
 
   groups.forEach((items, key) => {

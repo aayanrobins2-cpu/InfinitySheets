@@ -323,7 +323,7 @@ export async function extractFromPdf({ paper, scheme, board, subject, topics = [
   // Context chains: group the parts of each printed question so the builder
   // never serves "(b) Hence find…" without the "(a)" it depends on.
   const withIds = all.map((q, i) => ({ ...q, id: q.id || `x${i}` }));
-  const chains = detectChains(withIds, { numberOf: (q) => q._number });
+  const chains = detectChains(withIds, { numberOf: (q) => q._number, sequential: true });
   return withIds.map((q) => {
     const c = chains.get(q.id);
     const { _number, _dependsOn, id, ...rest } = q;

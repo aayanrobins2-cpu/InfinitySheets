@@ -729,31 +729,31 @@ export function AppProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded, state.worksheets, state.streak, state.flashcards?.reviewed]);
 
+  // These save the state they just computed, never stateRef.current: bg()
+  // runs in a microtask, but stateRef is refreshed in an effect after the
+  // commit, so reading the ref here would persist the PREVIOUS state.
   const saveFlashcardExplanation = useCallback((key, text) => {
-    setState((s) => {
-      const cur = s.flashcards || { cards: {}, reviewed: 0 };
-      return { ...s, flashcards: { ...cur, explanations: { ...(cur.explanations || {}), [key]: text } } };
-    });
-    bg(() => store.upsertSettings(stateRef.current, uid()), 'flashcards/explain');
+    const cur = stateRef.current.flashcards || { cards: {}, reviewed: 0 };
+    const next = { ...stateRef.current, flashcards: { ...cur, explanations: { ...(cur.explanations || {}), [key]: text } } };
+    setState((s) => ({ ...s, flashcards: next.flashcards }));
+    bg(() => store.upsertSettings(next, uid()), 'flashcards/explain');
   }, []);
 
   // "I knew it" / "I didn't know it" on one card.
   const markFlashcard = useCallback((key, knew) => {
-    setState((s) => {
-      const cur = s.flashcards || { cards: {}, reviewed: 0 };
-      const cards = { ...(cur.cards || {}), [key]: markCard(cur.cards?.[key], knew) };
-      return { ...s, flashcards: { ...cur, cards, reviewed: (cur.reviewed || 0) + 1 } };
-    });
-    bg(() => store.upsertSettings(stateRef.current, uid()), 'flashcards');
+    const cur = stateRef.current.flashcards || { cards: {}, reviewed: 0 };
+    const cards = { ...(cur.cards || {}), [key]: markCard(cur.cards?.[key], knew) };
+    const next = { ...stateRef.current, flashcards: { ...cur, cards, reviewed: (cur.reviewed || 0) + 1 } };
+    setState((s) => ({ ...s, flashcards: next.flashcards }));
+    bg(() => store.upsertSettings(next, uid()), 'flashcards');
   }, []);
 
   // Concept deck the AI wrote for a topic — kept for good.
   const saveFlashcardDeck = useCallback((subject, topic, cards) => {
-    setState((s) => {
-      const cur = s.flashcards || { cards: {}, reviewed: 0 };
-      return { ...s, flashcards: { ...cur, decks: { ...(cur.decks || {}), [`${subject}|${topic}`]: { cards, createdAt: new Date().toISOString() } } } };
-    });
-    bg(() => store.upsertSettings(stateRef.current, uid()), 'flashcards/deck');
+    const cur = stateRef.current.flashcards || { cards: {}, reviewed: 0 };
+    const next = { ...stateRef.current, flashcards: { ...cur, decks: { ...(cur.decks || {}), [`${subject}|${topic}`]: { cards, createdAt: new Date().toISOString() } } } };
+    setState((s) => ({ ...s, flashcards: next.flashcards }));
+    bg(() => store.upsertSettings(next, uid()), 'flashcards/deck');
   }, []);
 
   const addNote = useCallback((note) => {
@@ -816,8 +816,9 @@ export function AppProvider({ children }) {
   }, []);
 
   const logFocusSession = useCallback((session) => {
-    setState((s) => ({ ...s, focusSessions: [...(s.focusSessions || []).slice(-199), session] }));
-    bg(() => store.upsertSettings(stateRef.current, uid()), 'focus');
+    const focusSessions = [...(stateRef.current.focusSessions || []).slice(-199), session];
+    setState((s) => ({ ...s, focusSessions }));
+    bg(() => store.upsertSettings({ ...stateRef.current, focusSessions }, uid()), 'focus');
   }, []);
 
   const setSyllabusTopics = useCallback((rows) => {

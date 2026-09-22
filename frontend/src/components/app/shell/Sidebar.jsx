@@ -9,6 +9,10 @@ import { Infinity, LogOut, PanelLeftClose, Lock } from 'lucide-react';
  * `onClose` (optional) toggles the sidebar collapsed state in the shell —
  * a chevron button appears in the header when provided.
  */
+// Hidden routes light up their parent entry (the worksheet builder and topic
+// pages live under Start Studying; mistakes under History).
+const PARENT_ROUTE = { worksheets: 'study', topic: 'study', mistakes: 'history', 'course-overview': 'courses' };
+
 export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose, plus = false }) {
   return (
     <aside className="border border-[color:var(--color-border)] flex flex-col bg-white relative overflow-hidden rounded-2xl shadow-sm h-full">
@@ -35,10 +39,7 @@ export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose,
       </div>
       <nav className="relative flex-1 px-3 flex flex-col gap-0.5 overflow-y-auto" data-testid="sidebar-nav">
         {nav.map((n) => {
-          // Hidden routes light up their parent entry (the worksheet builder
-          // and topic pages live under Start Studying; mistakes under History).
-          const PARENT = { worksheets: 'study', topic: 'study', mistakes: 'history', 'course-overview': 'courses' };
-          const isActive = activeKey === n.key || PARENT[activeKey] === n.key;
+          const isActive = activeKey === n.key || PARENT_ROUTE[activeKey] === n.key;
           const Icon = n.Icon;
           return (
             <button

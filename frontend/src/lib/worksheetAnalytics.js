@@ -48,13 +48,17 @@ const median = (xs) => {
 export function computeAnalytics({ questions = [], answers = [], results = [], telemetry, gradeOne, durationMin }) {
   const n = questions.length;
   const t = telemetry || emptyTelemetry(n);
+  // A segment can never have lasted longer than the sheet itself: a throttled
+  // background tab or a sleeping machine would otherwise report hours on one
+  // question. Clamp to the allowed time (plus a small grace).
+  const capMs = durationMin > 0 ? durationMin * 60 * 1000 * 1.1 : Infinity;
   const per = questions.map((q, i) => {
     const first = t.firstAnswer?.[i];
     const hadFirst = first !== null && first !== undefined && !UNANSWERED(first);
     return {
       i,
       topic: q._topic || q.topic || null,
-      timeMs: Math.max(0, Math.round(t.timeMs?.[i] || 0)),
+      timeMs: Math.min(capMs, Math.max(0, Math.round(t.timeMs?.[i] || 0))),
       visits: t.visits?.[i] || 0,
       changes: t.changes?.[i] || 0,
       firstAnswerMs: t.firstAnswerMs?.[i] ?? null,
