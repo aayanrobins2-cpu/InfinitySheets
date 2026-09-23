@@ -18,8 +18,12 @@ export function usePlus() {
   return { isPlus: plus, requirePlus };
 }
 
-// Small "InfinitySheets+" lock chip shown next to a locked control.
+// Small "InfinitySheets+" lock chip shown next to a locked control. It
+// renders nothing for a + member, so no caller can leave a lock on a
+// feature the student already has.
 export function PlusBadge({ className = '' }) {
+  const { isPlus: plus } = usePlus();
+  if (plus) return null;
   return (
     <span className={`inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-700 px-1.5 py-0.5 text-[10px] font-semibold ${className}`} title="InfinitySheets+ only">
       <Lock className="w-3 h-3" /> +

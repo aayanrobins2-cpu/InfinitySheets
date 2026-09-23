@@ -83,7 +83,7 @@ function CourseCard({ course, onRemove, onUpdate }) {
   );
 }
 
-function EmptyState({ onAdd, onAddCustom }) {
+function EmptyState({ onAdd, onAddCustom, customLocked }) {
   return (
     <div className="relative rounded-2xl border border-dashed border-[color:var(--color-border)] bg-white overflow-hidden">
       <EmptyStateScene variant="book" className="absolute inset-0" />
@@ -98,8 +98,8 @@ function EmptyState({ onAdd, onAddCustom }) {
             <Plus className="w-5 h-5" /> Add your first course
           </button>
           {onAddCustom && (
-            <button onClick={onAddCustom} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13.5px] font-semibold border border-blue-300 text-blue-800 bg-white hover:bg-blue-50">
-              <Sparkles className="w-5 h-5" /> + Custom Course
+            <button onClick={onAddCustom} className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13.5px] font-semibold border ${customLocked ? 'border-[color:var(--color-border)] text-slate-400 bg-white opacity-70 hover:opacity-100' : 'border-blue-300 text-blue-800 bg-white hover:bg-blue-50'}`}>
+              <Sparkles className="w-5 h-5" /> + Custom Course <PlusBadge />
             </button>
           )}
         </div>
@@ -110,7 +110,7 @@ function EmptyState({ onAdd, onAddCustom }) {
 
 export default function MyCourses() {
   const { state, removeCourse, updateCourse } = useApp();
-  const { requirePlus } = usePlus();
+  const { isPlus: plus, requirePlus } = usePlus();
   const courses = state.courses || [];
   const [open, setOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
@@ -123,14 +123,14 @@ export default function MyCourses() {
           <button onClick={() => setOpen(true)} className="btn-violet inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-medium">
             <Plus className="w-5 h-5" /> Add course
           </button>
-          <button onClick={() => { if (requirePlus('customCourse')) setCustomOpen(true); }} data-testid="add-custom-course" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-semibold border border-blue-300 text-blue-800 bg-white hover:bg-blue-50 transition-colors">
+          <button onClick={() => { if (requirePlus('customCourse')) setCustomOpen(true); }} data-testid="add-custom-course" className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-semibold border transition-colors ${plus ? 'border-blue-300 text-blue-800 bg-white hover:bg-blue-50' : 'border-[color:var(--color-border)] text-slate-400 bg-white opacity-70 hover:opacity-100'}`}>
             <Sparkles className="w-5 h-5" /> + Custom Course <PlusBadge />
           </button>
         </div>
       </div>
 
       {courses.length === 0 ? (
-        <EmptyState onAdd={() => setOpen(true)} onAddCustom={() => { if (requirePlus('customCourse')) setCustomOpen(true); }} />
+        <EmptyState onAdd={() => setOpen(true)} onAddCustom={() => { if (requirePlus('customCourse')) setCustomOpen(true); }} customLocked={!plus} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((c) => (
