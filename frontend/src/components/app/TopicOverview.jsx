@@ -1,3 +1,4 @@
+import { openPlusBanner } from './PlusUpgradeBanner';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ExternalLink, Sparkles, RefreshCw, Loader2, FileText, Link2, Settings as SettingsIcon, Lock } from 'lucide-react';
 import { usePlus } from './PlusLock';
@@ -99,7 +100,7 @@ export default function TopicOverview({ subject, topic, go }) {
             testid="topic-chat"
           />
           ) : (
-            <div className="card-soft p-5 text-[13px] text-slate-700 inline-flex items-center gap-2" data-testid="ask-doubt-locked"><Lock className="w-4 h-4 text-violet-600" /> Ask a doubt is an InfinitySheets+ feature.</div>
+            <button type="button" onClick={() => openPlusBanner('askDoubt')} className="card-soft p-5 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:border-violet-300" data-testid="ask-doubt-locked">Ask a doubt is an InfinitySheets<span className="brand-plus-text font-extrabold">+</span> feature.</button>
           )}
         </div>
 

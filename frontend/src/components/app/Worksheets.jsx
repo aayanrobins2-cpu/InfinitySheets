@@ -1,3 +1,4 @@
+import { openPlusBanner } from './PlusUpgradeBanner';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TOPICS, QUESTION_BANK, EXAM_DURATIONS } from '../../data/mock';
@@ -1536,7 +1537,7 @@ export default function Worksheets({ go }) {
               {plus ? (
                 <DiagnosisPanel sheet={result} autoRun testid="worksheet-diagnosis" />
               ) : (
-                <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 text-[13px] text-slate-700 inline-flex items-center gap-2" data-testid="diagnosis-locked"><Lock className="w-4 h-4 text-violet-600" /> AI worksheet diagnosis is an InfinitySheets+ feature.</div>
+                <button type="button" onClick={() => openPlusBanner('diagnosis')} className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:bg-violet-50" data-testid="diagnosis-locked">AI worksheet diagnosis is an InfinitySheets<span className="brand-plus-text font-extrabold">+</span> feature.</button>
               )}
             </div>
             <div className="mb-5">
