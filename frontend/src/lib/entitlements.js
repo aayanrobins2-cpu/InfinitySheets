@@ -18,6 +18,21 @@ export function isPlus(state) {
   return u.plan === 'plus' || (state.settings && state.settings.plan === 'plus');
 }
 
+// Everything InfinitySheets+ unlocks, in the words a student would use.
+// One list, shown in full by the upgrade banner so nobody has to guess what
+// they are paying for.
+export const PLUS_PITCH = [
+  'Notes & Flashcards — PDF and audio notes, decks, and blurting',
+  'AI study plan & coach, rebuilt around every exam date',
+  'AI diagnosis after every worksheet — what went wrong and why',
+  'Ask a doubt on any question, any topic',
+  'Spaced review reminders so nothing slips',
+  'Save any worksheet as a PDF',
+  'Custom courses built from your own material',
+  `More than ${FREE_SUBJECT_LIMIT} subjects`,
+  'No ads, anywhere',
+];
+
 // Short labels used in the "InfinitySheets+ only" prompts.
 export const PLUS_FEATURES = {
   reviewDue: 'Spaced review reminders',

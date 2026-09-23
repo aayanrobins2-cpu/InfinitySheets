@@ -51,7 +51,7 @@ export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose,
             >
               <Icon className={`w-5 h-5 ${isActive ? 'text-blue-700' : 'text-slate-500'} ${n.locked ? 'opacity-60' : ''}`} strokeWidth={2} />
               <span className={`flex-1 ${n.locked ? 'text-slate-400' : ''}`}>{n.label}</span>
-              {n.locked && <Lock className="w-3.5 h-3.5 text-violet-500 shrink-0" />}
+              {n.locked && <span className="brand-plus-text font-extrabold text-[15px] leading-none shrink-0" title="InfinitySheets+">+</span>}
             </button>
           );
         })}

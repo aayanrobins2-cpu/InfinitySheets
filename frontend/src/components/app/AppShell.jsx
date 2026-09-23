@@ -22,6 +22,7 @@ import Sidebar from './shell/Sidebar';
 import TopHeader from './shell/TopHeader';
 import NotesFlashcards from './NotesFlashcards';
 import RouteBoundary from './RouteBoundary';
+import { dayKey, effectiveStreak } from '../../lib/streak';
 import Groups from './Groups';
 import ConsentGate from './ConsentGate';
 import CommandPalette from './CommandPalette';
@@ -168,8 +169,8 @@ export default function AppShell({ hash }) {
       enabled: !!state.settings?.pushReminders,
       hour: state.settings?.reminderHour ?? 18,
       dueCount: dueReviews(state.worksheets || []).length,
-      studiedToday: state.lastStudyDate === new Date().toDateString(),
-      streak: state.streak || 0,
+      studiedToday: dayKey(state.lastStudyDate) === dayKey(new Date()),
+      streak: effectiveStreak({ streak: state.streak, lastStudyDate: state.lastStudyDate }),
     });
     check();
     const id = setInterval(check, 30 * 60 * 1000);

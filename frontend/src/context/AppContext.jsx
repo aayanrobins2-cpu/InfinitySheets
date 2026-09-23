@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { SUBJECTS } from '../data/mock';
 import { SEED_PAST_PAPERS } from '../data/pastPapers';
+import { advanceStreak, effectiveStreak, dayKey } from '../lib/streak';
+import { canUseDevice, rememberDeviceAccount, DEVICE_LIMIT_MESSAGE } from '../lib/deviceAccounts';
 import { enrolledSubjects, primaryTrack, topicsFor } from '../lib/subjects';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import * as store from '../lib/dataStore';
@@ -147,6 +149,14 @@ export function AppProvider({ children }) {
 
     try {
       const loadedState = await store.loadAll(userId, authUser);
+      // A streak is only written when a sheet is submitted, so a stored one
+      // goes stale the moment a day is missed. Expire it here — and write the
+      // reset back, so the group leaderboard shows the truth too.
+      const live = effectiveStreak(loadedState);
+      if (live !== (loadedState.streak || 0)) {
+        loadedState.streak = live;
+        bg(() => store.upsertSettings({ ...loadedState, user: { id: userId } }, userId), 'streak/expire');
+      }
       setState((s) => withTrack({ ...defaultState, theme: s.theme, draftWorksheet: s.draftWorksheet, ...loadedState }, loadedState.courses));
       setSyncStatus('saved');
       setTimeout(syncTrack, 0);
@@ -205,6 +215,15 @@ export function AppProvider({ children }) {
       }
       if (session && session.user) {
         if (bootstrappedRef.current === session.user.id) { setLoaded(true); return; }
+        // Covers Google OAuth and restored sessions, which never go through
+        // apiLogin: a second student account on this device is signed out.
+        const gate = await guardDevice(session.user);
+        if (gate) {
+          setLoaded(true);
+          toast.error(gate.message);
+          await supabase.auth.signOut();
+          return;
+        }
         bootstrappedRef.current = session.user.id;
         await bootstrapCore(session.user);
         setLoaded(true);
@@ -304,6 +323,27 @@ export function AppProvider({ children }) {
   const logout = useCallback(() => setState((s) => ({ ...s, user: null })), []);
 
   // ---- Supabase auth ------------------------------------------------------
+  // One InfinitySheets account per device: a second student account on the
+  // same browser is refused, so streaks, predicted grades and the "already
+  // answered" question pool describe one person. Admins are exempt — they
+  // sign into test accounts to see what students see.
+  const guardDevice = async (authUser) => {
+    let isAdmin = false;
+    try {
+      const { data } = await supabase.from('profiles').select('role').eq('id', authUser.id).maybeSingle();
+      isAdmin = data?.role === 'admin';
+    } catch (_) { /* treat as a student */ }
+    const verdict = canUseDevice({ id: authUser.id, email: authUser.email, isAdmin });
+    if (!verdict.allowed) {
+      const e = new Error(DEVICE_LIMIT_MESSAGE);
+      e.code = 'device_account_limit';
+      e.owner = verdict.owner?.email || null;
+      return e;
+    }
+    rememberDeviceAccount({ id: authUser.id, email: authUser.email, isAdmin });
+    return null;
+  };
+
   const apiRegister = useCallback(async ({ email, password, name, examTrack, subjects }) => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const { data, error } = await supabase.auth.signUp({
@@ -318,6 +358,8 @@ export function AppProvider({ children }) {
       throw e;
     }
     const authUser = data.user;
+    const gate = await guardDevice(authUser);
+    if (gate) { await supabase.auth.signOut(); throw gate; }
     bootstrappedRef.current = authUser.id;
     try {
       // email is owned by auth (a trigger rejects client-side changes), so it is not sent here.
@@ -333,6 +375,8 @@ export function AppProvider({ children }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
     if (error) throw error;
     const authUser = data.user;
+    const gate = await guardDevice(authUser);
+    if (gate) { await supabase.auth.signOut(); throw gate; }
     bootstrappedRef.current = authUser.id;
     await bootstrapCore(authUser);
     setLoaded(true);
@@ -395,20 +439,12 @@ export function AppProvider({ children }) {
 
   // Pure computation of the next state + new mistakes for a finished worksheet.
   const computeWorksheet = (prev, sheet) => {
-    const today = new Date().toDateString();
-    const lastDate = prev.lastStudyDate;
-    let streak = prev.streak || 0;
-    if (lastDate !== today) {
-      if (lastDate) {
-        const diffDays = Math.floor((new Date(today).getTime() - new Date(lastDate).getTime()) / (1000 * 60 * 60 * 24));
-        if (diffDays === 1) streak += 1;
-        else if (diffDays > 1) streak = 1;
-      } else {
-        streak = 1;
-      }
-    }
+    const today = dayKey(new Date());
+    // Count from the streak they actually still have, not the stored one:
+    // finishing a sheet after a two-week gap starts a new run at 1.
+    const streak = advanceStreak({ streak: effectiveStreak(prev), lastStudyDate: prev.lastStudyDate });
     const goalDate = today;
-    const questionsToday = (prev.goalDate === today ? prev.questionsToday : 0) + sheet.total;
+    const questionsToday = (dayKey(prev.goalDate) === today ? prev.questionsToday : 0) + sheet.total;
     const newMistakes = (sheet.questions || []).map((q, i) => {
       const wrong = Array.isArray(sheet.results) ? sheet.results[i] === false : sheet.answers[i] !== q.a;
       if (!wrong) return null;
