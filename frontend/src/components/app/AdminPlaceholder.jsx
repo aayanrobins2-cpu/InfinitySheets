@@ -196,6 +196,15 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
     return pastPapers.filter((p) => p.subject === subject && (!syllabus || !p.board || p.board === syllabus));
   }, [pastPapers, subject, syllabus]);
 
+  // Context chains: parts of one printed question that only make sense in
+  // order. Detected when a paper is scanned; re-detected here so older rows
+  // and hand-typed questions get chained too.
+  const chainMap = useMemo(() => detectChains(scopedPastPapers, { numberOf: (q) => q.number }), [scopedPastPapers]);
+  const chainedPapers = useMemo(() => scopedPastPapers.map((q) => {
+    const c = chainMap.get(q.id);
+    return c ? { ...q, ...c, chainNeeds: q.chainNeeds || c.chainNeeds } : q;
+  }), [scopedPastPapers, chainMap]);
+
   const filteredPastPapers = useMemo(() => {
     if (!filterTopic) return chainedPapers;
     return chainedPapers.filter((p) => p.topic === filterTopic);
@@ -205,14 +214,6 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
   const dupExtras = dupGroups.reduce((n, g) => n + g.items.length - 1, 0);
   const [showDups, setShowDups] = useState(false);
   const [showMultiply, setShowMultiply] = useState(false);
-  // Context chains: parts of one printed question that only make sense in
-  // order. Detected when a paper is scanned; re-detected here so older rows
-  // and hand-typed questions get chained too.
-  const chainMap = useMemo(() => detectChains(scopedPastPapers, { numberOf: (q) => q.number }), [scopedPastPapers]);
-  const chainedPapers = useMemo(() => scopedPastPapers.map((q) => {
-    const c = chainMap.get(q.id);
-    return c ? { ...q, ...c, chainNeeds: q.chainNeeds || c.chainNeeds } : q;
-  }), [scopedPastPapers, chainMap]);
   const chains = useMemo(() => chainGroups(chainedPapers), [chainedPapers]);
   const [showChains, setShowChains] = useState(false);
 
@@ -679,6 +680,11 @@ function LibraryRow({ p, onRemove, onSave, topicsList = [], syllabus }) {
             {p.chainId && <span className="px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 text-[10.5px] font-semibold inline-flex items-center gap-1" title={p.chainNeeds ? 'Needs the earlier parts of this question' : 'Part of a multi-part question'}><LinkIcon className="w-3 h-3" />{p.number ? `${p.number} · ` : ''}part {p.chainOrder}/{p.chainSize}{p.chainNeeds ? ' · needs context' : ''}</span>}
             {p.marks && <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 text-[10.5px] font-semibold">{p.marks} marks</span>}
           </div>
+          {p.extract && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 mb-1.5 text-[12px] text-slate-700 whitespace-pre-wrap max-h-24 overflow-auto" data-testid="library-extract">
+              <span className="text-[9.5px] uppercase tracking-wide font-semibold text-slate-500">Extract · </span>{p.extract}
+            </div>
+          )}
           <div className="text-[13.5px] font-medium text-slate-900 leading-snug">{p.q}</div>
           {p.answerType === 'Multiple choice' && Array.isArray(p.options) && (
             <div className="text-[12.5px] text-slate-600 mt-1">Correct: <span className="font-medium text-emerald-700">{p.options[p.a]}</span></div>
@@ -750,7 +756,7 @@ function QuestionEditor({ p, topicsList, syllabus, onSave, onClose }) {
     typedAnswer: p.typedAnswer || '', typedAliases: (p.typedAliases || []).join(', '),
     examAnswer: p.examAnswer || '', examKeywords: (p.examKeywords || []).join(', '),
     markScheme: Array.isArray(p.markScheme) ? p.markScheme.map((x) => ({ ...x })) : [],
-    hasDiagram: !!p.hasDiagram, diagramNote: p.diagramNote || '', diagramUrl: p.diagramUrl || '',
+    hasDiagram: !!p.hasDiagram, diagramNote: p.diagramNote || '', diagramUrl: p.diagramUrl || '', extract: p.extract || '',
   }));
   const set = (patch) => setF((x) => ({ ...x, ...patch }));
   const [busy, setBusy] = useState(false);
@@ -777,6 +783,7 @@ function QuestionEditor({ p, topicsList, syllabus, onSave, onClose }) {
       q: f.q.trim(), topic: f.topic, answerType: f.answerType, difficulty: f.difficulty,
       marks: f.marks ? parseInt(f.marks, 10) : null, year: f.year ? parseInt(f.year, 10) : null, paper: f.paper || null,
       ibLevel: syllabus === 'IB' && f.ibLevel ? f.ibLevel : null, link: f.link.trim() || null,
+      extract: f.extract.trim() || undefined,
       hasDiagram: f.hasDiagram || !!f.diagramUrl || f.answerType === 'Drawing' ? true : undefined,
       diagramNote: f.diagramNote.trim() || undefined, diagramUrl: f.diagramUrl || undefined,
       options: undefined, a: undefined, typedAnswer: undefined, typedAliases: undefined, examAnswer: undefined, examKeywords: undefined,
@@ -806,6 +813,9 @@ function QuestionEditor({ p, topicsList, syllabus, onSave, onClose }) {
         <div className="text-[11px] tracking-[0.14em] uppercase font-semibold text-blue-700 inline-flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" /> Edit question</div>
         <button type="button" onClick={onClose} className="w-7 h-7 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white flex items-center justify-center" aria-label="Cancel"><X className="w-4 h-4" /></button>
       </div>
+      <label className="block text-[10.5px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Extract — shared source material for this question (optional)</label>
+      <textarea className="input-base min-h-[60px] text-[12.5px] mb-2" placeholder="The passage / data / scenario the parts hang off. Shown above the question, once." value={f.extract} onChange={(e) => set({ extract: e.target.value })} data-testid="editor-extract" />
+      <label className="block text-[10.5px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Question</label>
       <textarea className="input-base min-h-[80px] text-[13px]" value={f.q} onChange={(e) => set({ q: e.target.value })} data-testid="editor-q" />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
         <select className="input-base !py-1.5 text-[12.5px]" value={f.topic} onChange={(e) => set({ topic: e.target.value })} data-testid="editor-topic">

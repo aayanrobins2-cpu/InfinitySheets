@@ -80,7 +80,9 @@ function describeQuestion(q, given, ok, n, working) {
   const w = working && (working.transcript || (working.images || []).length)
     ? `\n   Working (transcribed from the student's photo): ${working.transcript ? clip(working.transcript, 900) : '(photo attached, not transcribed)'}`
     : '';
-  return `${n}. [${ok ? 'correct' : 'WRONG'}] ${clip(q.q, 260)}\n   Accepted: ${clip(expected, 200)}${scheme ? `\n   Mark scheme: ${clip(scheme, 400)}` : ''}\n   Student: ${clip(student, 300)}${w}`;
+  const ex = q.extract ? `
+   Extract: ${clip(q.extract, 300)}` : '';
+  return `${n}. [${ok ? 'correct' : 'WRONG'}] ${clip(q.q, 260)}${ex}\n   Accepted: ${clip(expected, 200)}${scheme ? `\n   Mark scheme: ${clip(scheme, 400)}` : ''}\n   Student: ${clip(student, 300)}${w}`;
 }
 
 // "2 marks: correct substitution; 1 mark: final answer with units"
@@ -144,6 +146,8 @@ export async function markAgainstScheme({ q, given, working, board, subject }) {
     ? (typeof given === 'number' && given >= 0 ? q.options[given] : '(no answer)')
     : (given ? String(given) : '(no typed answer)');
   const content = [
+    q.extract ? `Extract the question refers to:
+${String(q.extract).slice(0, 2000)}` : '',
     `Question: ${q.q}`,
     q.examAnswer ? `Model answer: ${q.examAnswer}` : '',
     `Marking scheme (total ${max}): ${scheme || '(none — use the model answer)'}`,
@@ -273,7 +277,8 @@ export async function extractFromPdf({ paper, scheme, board, subject, topics = [
       ? 'A MARK SCHEME is attached: take the accepted answer and the mark points for each question from it, matched by question number.'
       : 'No mark scheme is attached: give the correct answer and write a sensible examiner-style marking scheme for each question.',
     `Tag each question with the closest topic from: ${topics.join('; ') || '(free choice)'}.`,
-    'Choose "Multiple choice" only when the paper prints options; short numeric / one-line answers are "Typed response"; anything that must be drawn/sketched/plotted/labelled is "Drawing" (it cannot be typed); anything else needing explanation or working is "Exam style". Keep every sub-part (a), (b), (c) as a separate question with the shared stem repeated.',
+    'Choose "Multiple choice" only when the paper prints options; short numeric / one-line answers are "Typed response"; anything that must be drawn/sketched/plotted/labelled is "Drawing" (it cannot be typed); anything else needing explanation or working is "Exam style". Keep every sub-part (a), (b), (c) as a separate question.',
+    'EXTRACTS: when several parts hang off the same source material — a passage, a data table, a described experiment, a scenario, a set of values — do NOT repeat it inside every part. Put it once in an "extract" field on the FIRST part of that question, verbatim, and write each part\'s "q" as only what that part actually asks. Leave "extract" out when a question needs no shared material.',
     'Include a "number" field with the printed question label, e.g. "1", "3(b)", "12 (ii)".',
     'CONTEXT CHAINS: when a part cannot be answered on its own because it refers back to an earlier part or to a shared stem ("hence", "your answer to (a)", "the graph above", "using this value"), set "dependsOnPrevious": true. A part that stands completely alone gets false. Repeat the shared stem in "q" anyway, but still flag the dependency.',
     'Put the question stem in "q" without the question number and without repeating the options (options go in "options" only). For MCQs set "a" only when the correct option is printed, given in the mark scheme, or unambiguous — otherwise set "a" to null; never guess. Include diagram questions: set "hasDiagram": true with a short "diagramNote". Skip only cover pages, instructions and answer-key commentary. Never invent options or answers you cannot see.',
@@ -311,7 +316,7 @@ export async function extractFromPdf({ paper, scheme, board, subject, topics = [
       if (!key || seen.has(key)) continue;
       seen.add(key);
       const q = shapeQuestion(r, { answerType: 'Exam style', difficulty: 'Medium', topics, subject, strict: true });
-      if (q) { all.push({ ...q, _number: num, _dependsOn: r.dependsOnPrevious === true, year: Number(r.year) || undefined }); added += 1; }
+      if (q) { all.push({ ...q, _number: num, _dependsOn: r.dependsOnPrevious === true, extract: r.extract ? String(r.extract).trim() : undefined, year: Number(r.year) || undefined }); added += 1; }
     }
     if (onProgress) { try { onProgress(all.length); } catch (_) { /* ignore */ } }
     // If a truncated reply still gave us questions, there are almost certainly
@@ -324,13 +329,28 @@ export async function extractFromPdf({ paper, scheme, board, subject, topics = [
   // never serves "(b) Hence find…" without the "(a)" it depends on.
   const withIds = all.map((q, i) => ({ ...q, id: q.id || `x${i}` }));
   const chains = detectChains(withIds, { numberOf: (q) => q._number, sequential: true });
+  // An extract belongs to the whole chain: the AI puts it on the first part,
+  // so copy it onto the rest instead of repeating the text inside every "q".
+  const extractByChain = {};
+  withIds.forEach((q) => {
+    const c = chains.get(q.id);
+    if (c && q.extract && !extractByChain[c.chainId]) extractByChain[c.chainId] = q.extract;
+  });
   return withIds.map((q) => {
     const c = chains.get(q.id);
     const { _number, _dependsOn, id, ...rest } = q;
+    const extract = (c && extractByChain[c.chainId]) || q.extract || undefined;
     return {
       ...rest,
+      extract,
       number: _number || undefined,
-      ...(c ? { chainId: c.chainId, chainOrder: c.chainOrder, chainSize: c.chainSize, chainNeeds: c.chainNeeds || _dependsOn === true } : {}),
+      ...(c ? {
+        chainId: c.chainId,
+        chainOrder: c.chainOrder,
+        chainSize: c.chainSize,
+        // A part that hangs off a shared extract cannot stand alone either.
+        chainNeeds: c.chainNeeds || _dependsOn === true || (!!extract && c.chainOrder > 1),
+      } : {}),
     };
   });
 }
@@ -349,7 +369,8 @@ export async function assessPaper({ questions, files, board, subject }) {
     else accepted = `model answer: ${q.examAnswer || '(use the scheme)'}${(q.examKeywords || []).length ? `; key ideas: ${q.examKeywords.join(', ')}` : ''}`;
     const scheme = markSchemeText(q.markScheme);
     const max = maxOf(q);
-    return `Q${i + 1} [${max} mark${max === 1 ? '' : 's'}]: ${q.q}\n   ${accepted}${scheme ? `\n   mark scheme: ${scheme}` : ''}`;
+    return `Q${i + 1} [${max} mark${max === 1 ? '' : 's'}]${q.extract ? `
+   Extract: ${String(q.extract).slice(0, 400)}` : ''}: ${q.q}\n   ${accepted}${scheme ? `\n   mark scheme: ${scheme}` : ''}`;
   });
   const content = [
     `The printed worksheet had these ${questions.length} questions:`,

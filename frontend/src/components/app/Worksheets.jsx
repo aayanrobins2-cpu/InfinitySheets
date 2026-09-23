@@ -316,8 +316,17 @@ function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerTy
 
   // ----- Questions -----
   const optionLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
+  let prevExtract = null;
   questions.forEach((q, idx) => {
     ensureRoom(80);
+    // The shared source material is printed once, above the part that needs
+    // it, so a student reading the sheet on paper has the context in front
+    // of them without it being repeated in every sub-part.
+    if (q.extract && q.extract !== prevExtract) {
+      writeWrapped('EXTRACT', { size: 9, style: 'bold', after: 2 });
+      writeWrapped(q.extract, { size: 11, after: 6 });
+      prevExtract = q.extract;
+    }
     writeWrapped(`${idx + 1}. ${q.q}${q.marks ? `   [${q.marks} mark${q.marks === 1 ? '' : 's'}]` : ''}`, { size: 12, style: 'bold', after: 4 });
 
     if (q.answerType === 'Multiple choice' && Array.isArray(q.options)) {
@@ -495,24 +504,28 @@ export default function Worksheets({ go }) {
   // A question they got right is "marked correct": it only comes back
   // infrequently. Ones they got wrong stay in rotation, and spaced-repetition
   // reviews are a separate stream that is meant to repeat.
-  const masteredIds = useMemo(() => {
-    const set = new Set();
-    (state.worksheets || []).forEach((w) => (w.questions || []).forEach((q, i) => { if (q && q.id && w.results && w.results[i] === true) set.add(q.id); }));
-    return set;
+  const attempted = useMemo(() => {
+    const done = new Set();     // answered correctly — completed
+    const review = new Set();   // answered wrong — comes back as a review
+    (state.worksheets || []).forEach((w) => (w.questions || []).forEach((q, i) => {
+      if (!q || !q.id || !w.results) return;
+      if (w.results[i] === true) done.add(q.id);
+      else if (w.results[i] === false) review.add(q.id);
+    }));
+    return { done, review, all: new Set([...done, ...review]) };
   }, [state.worksheets]);
   const pastPaperPool = useMemo(
     () => {
       const hidden = new Set(state.flaggedQuestionIds || []);
       const all = questionsForSubject(state.pastPapers, subject, state.courses, track, activeEntry && activeEntry.subject === subject ? { board: activeEntry.board, ibLevel: activeEntry.ibLevel || undefined } : undefined).filter((p) => !hidden.has(p.id));
-      const fresh = all.filter((p) => !masteredIds.has(p.id));
-      const mastered = all.filter((p) => masteredIds.has(p.id));
-      // Let a mastered question slip back in only occasionally (about 1 in 6,
-      // at most two per sheet) so it is refreshed, not drilled again.
-      const revisit = mastered.filter(() => Math.random() < 0.16).slice(0, 2);
-      return [...fresh, ...revisit];
+      // Every question the student has already sat leaves the pool: the ones
+      // they got right are completed, the ones they missed come back through
+      // the spaced-repetition review stream instead. Nothing repeats by
+      // accident in a freshly built sheet.
+      return all.filter((p) => !attempted.all.has(p.id));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.pastPapers, subject, state.courses, track, state.flaggedQuestionIds, masteredIds, activeEntry],
+    [state.pastPapers, subject, state.courses, track, state.flaggedQuestionIds, attempted, activeEntry],
   );
   const [difficulty, setDifficulty] = useState('Medium');
   const [duration, setDuration] = useState(challengePick ? 15 : examMinutes);
@@ -785,6 +798,15 @@ export default function Worksheets({ go }) {
     return (pastPaperPool || []).filter((p) => topics.includes(p.topic) && (p.answerType === answerType || p.answerType === 'Drawing')).length;
   }, [pastPaperPool, topics, answerType]);
 
+  // How many of this subject's past-paper questions are already behind them.
+  const ppDone = useMemo(() => {
+    const mine = questionsForSubject(state.pastPapers, subject, state.courses, track, activeEntry && activeEntry.subject === subject ? { board: activeEntry.board, ibLevel: activeEntry.ibLevel || undefined } : undefined);
+    let done = 0; let review = 0;
+    mine.forEach((p) => { if (attempted.done.has(p.id)) done += 1; else if (attempted.review.has(p.id)) review += 1; });
+    return { done, review };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.pastPapers, subject, state.courses, track, activeEntry, attempted]);
+
   // Validate the builder, ask the AI for original questions when that source
   // is ticked, and assemble the sheet. Resolves to null when validation fails.
   const assembleQuestions = async ({ withReviews }) => {
@@ -824,7 +846,31 @@ export default function Worksheets({ go }) {
         }
       }
     }
-    const qs = buildQuestions({ topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, length, pastPapers, aiGenerated, pastPaperPool, reviewQuestions, generated });
+    let qs = buildQuestions({ topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, length, pastPapers, aiGenerated, pastPaperPool, reviewQuestions, generated });
+
+    // Final check: a sheet must have enough questions for the time it claims.
+    // The AI sometimes returns fewer than asked (or nothing at all when it is
+    // rate-limited), so top the sheet up before showing it — up to two more
+    // attempts, each asking only for what is still missing.
+    if (aiGenerated && aiOn && qs.length < length) {
+      setGenerating(true);
+      try {
+        for (let attempt = 0; attempt < 2 && qs.length < length; attempt += 1) {
+          const missing = length - qs.length;
+          let more = [];
+          try {
+            more = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, count: missing });
+          } catch (e) {
+            break; // rate-limited or offline — keep what we have
+          }
+          const seen = new Set(qs.map((q) => String(q.q || '').trim().toLowerCase()));
+          const fresh = more.filter((q) => q && q.q && !seen.has(String(q.q).trim().toLowerCase()));
+          if (!fresh.length) break;
+          qs = [...qs, ...fresh.slice(0, missing).map(textbookQuestion)];
+        }
+      } finally { setGenerating(false); }
+    }
+
     if (!qs.length) {
       toast.error(aiGenerated ? 'The AI did not return any questions (it may be at its daily limit). Try again in a moment, or tick past papers.' : 'No questions are available for this selection yet.');
       return null;
@@ -1324,6 +1370,12 @@ export default function Worksheets({ go }) {
           <div className="h-1.5 rounded-full bg-zinc-100 overflow-hidden mb-5">
             <div className="h-full bg-blue-500 transition-all" style={{ width: `${((current + 1) / questions.length) * 100}%` }} />
           </div>
+          {q.extract && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 mb-4 text-[14px] text-slate-800 leading-relaxed whitespace-pre-wrap" data-testid="ws-extract">
+              <div className="text-[10px] tracking-[0.14em] uppercase font-semibold text-slate-500 mb-1.5">Extract</div>
+              {q.extract}
+            </div>
+          )}
           <h3 className="text-[18px] font-semibold mb-3 leading-snug">{q.q}</h3>
           {q.diagramUrl && <img src={q.diagramUrl} alt={q.diagramNote || 'Diagram'} className="max-h-72 rounded-xl border border-zinc-200 object-contain bg-white mb-4" data-testid="ws-diagram" />}
           {!q.diagramUrl && q.hasDiagram && q.diagramNote && <div className="text-[13px] text-slate-600 italic mb-4">Figure: {q.diagramNote}</div>}
@@ -1759,7 +1811,7 @@ export default function Worksheets({ go }) {
           <div className="text-[10px] tracking-[0.14em] uppercase font-semibold text-zinc-500 mb-2">Question source</div>
           <div className="flex flex-col sm:flex-row gap-2.5">
             <CheckboxCard
-              label={<span>Past paper questions <span className="text-slate-500 font-normal">({ppAvailable} available)</span></span>}
+              label={<span>Past paper questions <span className="text-slate-500 font-normal">({ppAvailable} available{ppDone.done ? ` \u00b7 ${ppDone.done} completed` : ''}{ppDone.review ? ` \u00b7 ${ppDone.review} in review` : ''})</span></span>}
               icon={<FileText className="w-5 h-5 text-slate-600" />}
               checked={pastPapers}
               onChange={setPastPapers}
@@ -1774,7 +1826,7 @@ export default function Worksheets({ go }) {
             />
           </div>
           {pastPapers && ppAvailable === 0 && (
-            <div className="text-[11.5px] text-amber-700 mt-2 inline-flex items-center gap-1.5"><AlertCircle className="w-4 h-4" /> No past-paper questions match this subject / topic / answer type. Uploads live on the Admin page.</div>
+            <div className="text-[11.5px] text-amber-700 mt-2 inline-flex items-center gap-1.5"><AlertCircle className="w-4 h-4" /> {ppDone.done + ppDone.review > 0 ? 'You have already done every past-paper question for this selection — the ones you missed come back as reviews.' : 'No past-paper questions match this subject / topic / answer type. Uploads live on the Admin page.'}</div>
           )}
           {!pastPapers && !aiGenerated && (
             <div className="text-[11.5px] text-rose-600 mt-2">Pick at least one question source.</div>

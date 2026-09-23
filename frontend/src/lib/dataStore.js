@@ -299,7 +299,7 @@ function ppToRow(pp) {
     exam_answer: pp.examAnswer ?? null,
     exam_keywords: pp.examKeywords ?? null,
     source: 'past-paper',
-    data: { ...pp, source: 'past-paper', chainId: pp.chainId ?? null, chainOrder: pp.chainOrder ?? null, chainSize: pp.chainSize ?? null, chainNeeds: pp.chainNeeds === true || undefined, number: pp.number ?? null, multiplied: pp.source === 'multiplied' || pp.multiplied === true || undefined },
+    data: { ...pp, source: 'past-paper', extract: pp.extract ?? null, chainId: pp.chainId ?? null, chainOrder: pp.chainOrder ?? null, chainSize: pp.chainSize ?? null, chainNeeds: pp.chainNeeds === true || undefined, number: pp.number ?? null, multiplied: pp.source === 'multiplied' || pp.multiplied === true || undefined },
   };
   if (pp.id) row.id = pp.id;
   return row;

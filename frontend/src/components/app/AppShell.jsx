@@ -21,6 +21,7 @@ import ResourcesPage from '../landing/ResourcesPage';
 import Sidebar from './shell/Sidebar';
 import TopHeader from './shell/TopHeader';
 import NotesFlashcards from './NotesFlashcards';
+import RouteBoundary from './RouteBoundary';
 import Groups from './Groups';
 import ConsentGate from './ConsentGate';
 import CommandPalette from './CommandPalette';
@@ -255,7 +256,9 @@ export default function AppShell({ hash }) {
           syncStatus={syncStatus}
         />
         <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-7 max-w-[1280px]">
-          {PLUS_NAV[current.key] && !plus ? <PlusPreview feature={PLUS_NAV[current.key]}>{renderRoute(current.key, params, go, isAdmin)}</PlusPreview> : renderRoute(current.key, params, go, isAdmin)}
+          <RouteBoundary routeKey={current.key}>
+            {PLUS_NAV[current.key] && !plus ? <PlusPreview feature={PLUS_NAV[current.key]}>{renderRoute(current.key, params, go, isAdmin)}</PlusPreview> : renderRoute(current.key, params, go, isAdmin)}
+          </RouteBoundary>
         </div>
       </main>
 

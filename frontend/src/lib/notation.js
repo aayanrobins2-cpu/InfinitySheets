@@ -64,6 +64,7 @@ export function textbookQuestion(q) {
     ...q,
     marks: marksFor(q),
     q: textbook(q.q),
+    extract: q.extract ? textbook(q.extract) : q.extract,
     options: Array.isArray(q.options) ? q.options.map(textbook) : q.options,
     typedAnswer: q.typedAnswer ? textbook(q.typedAnswer) : q.typedAnswer,
     typedAliases: Array.isArray(q.typedAliases) ? q.typedAliases.map(textbook) : q.typedAliases,
