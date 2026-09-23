@@ -19,7 +19,7 @@ function HeroHeading() {
 
   return (
     <h1 className="h-display text-[56px] sm:text-[80px] lg:text-[108px] leading-[1.02] max-w-[1080px]">
-      A study tool tailored just for{' '}
+      A study tool made just for{' '}
       <span className={`hl-mark hl-serif ${highlight ? 'hl-on' : ''}`}>you</span>.
     </h1>
   );
@@ -43,9 +43,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           className="mt-8 text-[18px] sm:text-[20px] text-slate-500 max-w-[680px] leading-relaxed"
         >
-          Coaching centres win exams with endless on-syllabus practice, focused work on weak
-          concepts, and total exam familiarity. InfinitySheets puts that training on any
-          device&mdash;<Emphasis variant="highlight" className="text-slate-800 font-medium">completely free</Emphasis>.
+          Endless on-syllabus practice, targeted feedback, and worksheets that actually help you improve, &mdash;<Emphasis variant="highlight" className="text-slate-800 font-medium">completely free</Emphasis>.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
