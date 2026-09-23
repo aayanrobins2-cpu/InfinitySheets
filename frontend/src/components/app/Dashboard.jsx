@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { haptic } from '../../lib/haptics';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
 import { predictedBreakdown, formatGrade, scoreToIBGrade } from '../../lib/predictedGrade';
+import { effectiveStreak } from '../../lib/streak';
 import { SUBJECT_INFO } from '../../data/mock';
 import { enrolledSubjects, subjectBoards, boardName, activeWorksheets, primaryTrack, resolvedTopics, subjectMark, subjectEntries, sheetBelongs } from '../../lib/subjects';
 import PredictedScoreMini from './PredictedScoreMini';
@@ -208,6 +209,8 @@ export default function Dashboard({ go }) {
   // Per-subject predicted grade + optional IB total.
   // ---------------------------------------------------------------------------
   const examTrack = primaryTrack(state.courses, state.user?.examTrack);
+  // The streak they still have today — the stored one expires when a day is missed.
+  const liveStreak = effectiveStreak(state);
   // Each subject's board comes from the course it belongs to (falling back to
   // the student's exam track). Predicted grades are then computed and shown
   // per board, never mixed across boards.
@@ -479,11 +482,11 @@ export default function Dashboard({ go }) {
     { id: 'streak', label: 'Study streak + projection', node: (() => {
       // The projection card only appears when it predicts an actual grade
       // change; when it doesn't, the heatmap takes the full width.
-      const proj = bestProjection(ws, mySubjects, mySubjectBoards, { streak: state.streak, weeks: 2 });
+      const proj = bestProjection(ws, mySubjects, mySubjectBoards, { streak: liveStreak, weeks: 2 });
       return (
       <div className={`grid gap-4 ${proj ? 'lg:grid-cols-3' : ''}`}>
-        <div className={proj ? 'lg:col-span-2' : ''}><StreakHeatmap worksheets={ws} streak={state.streak} /></div>
-        {proj && <StreakProjectionCard worksheets={ws} subjects={mySubjects} boards={mySubjectBoards} streak={state.streak} />}
+        <div className={proj ? 'lg:col-span-2' : ''}><StreakHeatmap worksheets={ws} streak={liveStreak} /></div>
+        {proj && <StreakProjectionCard worksheets={ws} subjects={mySubjects} boards={mySubjectBoards} streak={liveStreak} />}
       </div>
       );
     })() },

@@ -9,7 +9,8 @@ export const BOARD_SYLLABUS = {
   ICSE: { name: 'CISCE — Regulations & Syllabuses', url: 'https://cisce.org/publications/', domain: 'cisce.org' },
   ISC: { name: 'CISCE — ISC Regulations & Syllabuses', url: 'https://cisce.org/publications/', domain: 'cisce.org' },
   IGCSE: { name: 'Cambridge IGCSE — Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-upper-secondary/cambridge-igcse/subjects/', domain: 'cambridgeinternational.org' },
-  ASA: { name: 'Cambridge International AS & A Level — Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-advanced/cambridge-international-as-and-a-levels/subjects/', domain: 'cambridgeinternational.org' },
+  AS: { name: 'Cambridge International AS Level — Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-advanced/cambridge-international-as-and-a-levels/subjects/', domain: 'cambridgeinternational.org' },
+  ASA: { name: 'Cambridge International A Level — Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-advanced/cambridge-international-as-and-a-levels/subjects/', domain: 'cambridgeinternational.org' },
   IB: { name: 'IB Diploma Programme — Curriculum', url: 'https://www.ibo.org/programmes/diploma-programme/curriculum/', domain: 'ibo.org' },
   AP: { name: 'AP Central — Courses', url: 'https://apcentral.collegeboard.org/courses', domain: 'apcentral.collegeboard.org' },
   SAT: { name: "College Board — What's on the SAT", url: 'https://satsuite.collegeboard.org/sat/whats-on-the-test', domain: 'satsuite.collegeboard.org' },
@@ -156,6 +157,10 @@ export const SUBJECT_SYLLABUS = {
   JEE: { JEE: 'https://jeemain.nta.nic.in/' },
   NEET: { NEET: 'https://neet.nta.nic.in/' },
 };
+
+// AS Level is its own board in the app, but Cambridge publishes one syllabus
+// document per subject covering both years, so AS reuses A Level's pages.
+SUBJECT_SYLLABUS.AS = SUBJECT_SYLLABUS.ASA;
 
 /**
  * Best official syllabus link for a subject on a board.
