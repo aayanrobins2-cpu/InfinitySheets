@@ -745,7 +745,7 @@ html.dark .c-ring path { stroke: #60a5fa; }
 
 .tut-highlight {
     position: relative;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.55), 0 0 0 6px rgba(124, 58, 237, 0.18);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.55), 0 0 0 6px rgba(255, 255, 255, 0.28);
     border-radius: 10px;
     z-index: 5;
 }
@@ -939,7 +939,9 @@ main button.rounded-xl.border.bg-white:active, main button.card-soft:active { tr
 
 /* Buttons: pill-ish radius and a soft glow, like system controls. */
 .btn-violet, .btn-blue, .btn-outline-dark { border-radius: 0.75rem; }
-.btn-violet { box-shadow: 0 6px 18px -8px rgba(124, 58, 237, 0.55); }
+/* A soft white glow under the primary buttons — no purple halo. */
+.btn-violet { box-shadow: 0 6px 18px -8px rgba(255, 255, 255, 0.55); }
+html:not(.dark) .btn-violet { box-shadow: 0 6px 18px -8px rgba(15, 23, 42, 0.28); }
 .btn-outline-dark {
   background-color: var(--glass-bg-strong) !important;
   -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.55));

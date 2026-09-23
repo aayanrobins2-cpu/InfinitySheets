@@ -805,7 +805,7 @@ export default function Dashboard({ go }) {
             onPointerUp={endPress}
             onPointerCancel={() => endPress(null)}
             onContextMenu={(e) => { if (pressRef.current.id || liftId) e.preventDefault(); }}
-            className={`relative rounded-2xl select-none [-webkit-touch-callout:none] transition-[transform,box-shadow,opacity] duration-150 ${liftId === c.id ? 'scale-[1.02] shadow-2xl ring-2 ring-violet-400 z-20 opacity-95 cursor-grabbing' : ''} ${liftId && liftOver === c.id && liftId !== c.id ? 'ring-2 ring-blue-400/70' : ''}`}
+            className={`relative rounded-2xl select-none [-webkit-touch-callout:none] transition-[transform,box-shadow,opacity] duration-150 ${liftId === c.id ? 'scale-[1.02] shadow-2xl ring-2 ring-white/70 z-20 opacity-95 cursor-grabbing' : ''} ${liftId && liftOver === c.id && liftId !== c.id ? 'ring-2 ring-blue-400/70' : ''}`}
             style={{ touchAction: liftId ? 'none' : 'pan-y' }}
             data-testid={`dash-card-${c.id}`}
           >

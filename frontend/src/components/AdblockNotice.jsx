@@ -3,6 +3,7 @@ import { HeartHandshake, X, Globe2, Sparkles } from 'lucide-react';
 import { isPlus } from '../lib/entitlements';
 import { useApp } from '../context/AppContext';
 import { detectVpn } from '../lib/vpn';
+import { openPlusBanner, PlusMark } from './app/PlusUpgradeBanner';
 
 // A gentle nudge for the two things that stop ads paying for the site: an ad
 // blocker, and a VPN that makes the traffic worthless to advertisers. Neither
@@ -64,7 +65,8 @@ export default function AdblockNotice() {
 
   const isVpn = kind === 'vpn';
   const dismiss = () => { ack(isVpn ? VPN_ACK_KEY : ACK_KEY); setKind(null); };
-  const goPlus = () => { ack(isVpn ? VPN_ACK_KEY : ACK_KEY); setKind(null); window.location.hash = '#settings'; };
+  // Show them exactly what + includes rather than dropping them in Settings.
+  const goPlus = () => { ack(isVpn ? VPN_ACK_KEY : ACK_KEY); setKind(null); openPlusBanner(); };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" role="dialog" aria-modal="true" data-testid={isVpn ? 'vpn-notice' : 'adblock-notice'}>
@@ -81,13 +83,13 @@ export default function AdblockNotice() {
               Ads help us fund our mission, and ads shown through a VPN are worth
               roughly nothing to us &mdash; because, as it turns out, putting a website on the
               internet is <span className="font-semibold text-slate-700">preetttttyyyyyyy</span> expensive.
-              But it&rsquo;s fine if you love your VPN. Just get InfinitySheets+.
+              But it&rsquo;s fine if you love your VPN. Just get InfinitySheets<PlusMark />.
             </>
           ) : (
             <>
               Ads help us fund our mission, because, as it turns out, putting a website
               on the internet is <span className="font-semibold text-slate-700">preetttttyyyyyyy</span> expensive.
-              But it&rsquo;s fine if you hate ads. Just get InfinitySheets+.
+              But it&rsquo;s fine if you hate ads. Just get InfinitySheets<PlusMark />.
             </>
           )}
         </p>
@@ -98,7 +100,7 @@ export default function AdblockNotice() {
             className="btn-violet w-full py-2.5 rounded-lg text-[14px] font-semibold inline-flex items-center justify-center gap-1.5"
             data-testid={isVpn ? 'vpn-plus' : 'adblock-plus'}
           >
-            <Sparkles className="w-4 h-4" /> Get InfinitySheets+
+            <Sparkles className="w-4 h-4" /> Get InfinitySheets<PlusMark className="text-[15px]" />
           </button>
           <button
             type="button"

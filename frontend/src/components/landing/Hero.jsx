@@ -51,7 +51,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
           className="mt-9 flex flex-wrap items-center justify-center gap-3"
         >
-          <a href="#signup" className="btn-violet inline-flex items-center gap-2 px-8 py-4 rounded-xl text-[17px] font-semibold shadow-lg shadow-violet-300/40">
+          <a href="#signup" className="btn-violet inline-flex items-center gap-2 px-8 py-4 rounded-xl text-[17px] font-semibold shadow-lg shadow-white/30">
             Start Free <ArrowRight className="w-5 h-5" />
           </a>
           {/* Secondary: the product walkthrough — the only visual proof on the page */}

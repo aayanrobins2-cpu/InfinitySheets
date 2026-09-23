@@ -45,11 +45,11 @@ export default function Navbar({ onStart }) {
             {state.theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           {state.user ? (
-            <button onClick={() => { window.location.hash = '#dashboard'; }} data-testid="nav-open-app" className={`btn-violet hidden lg:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-medium transition-all duration-300 ${scrolled ? 'shadow-lg shadow-violet-400/40 ring-2 ring-violet-300/60 scale-105' : 'shadow-sm'}`}>
+            <button onClick={() => { window.location.hash = '#dashboard'; }} data-testid="nav-open-app" className={`btn-violet hidden lg:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[14px] font-medium transition-all duration-300 ${scrolled ? 'shadow-lg shadow-white/30 ring-2 ring-white/40 scale-105' : 'shadow-sm'}`}>
               Open app <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
-            <button onClick={onStart} className={`btn-violet hidden lg:inline-flex px-4 py-2 rounded-lg text-[14px] font-medium transition-all duration-300 ${scrolled ? 'shadow-lg shadow-violet-400/40 ring-2 ring-violet-300/60 scale-105' : 'shadow-sm'}`}>Start Free</button>
+            <button onClick={onStart} className={`btn-violet hidden lg:inline-flex px-4 py-2 rounded-lg text-[14px] font-medium transition-all duration-300 ${scrolled ? 'shadow-lg shadow-white/30 ring-2 ring-white/40 scale-105' : 'shadow-sm'}`}>Start Free</button>
           )}
           <button onClick={() => setOpen(!open)} aria-label="Open menu" className="lg:hidden w-9 h-9 inline-flex items-center justify-center rounded-md hover:bg-slate-100">
             {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
