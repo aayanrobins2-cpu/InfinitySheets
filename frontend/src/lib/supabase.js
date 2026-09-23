@@ -18,6 +18,9 @@ const DEFAULT_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 const url = (process.env.REACT_APP_SUPABASE_URL || '').trim() || DEFAULT_URL;
 const anonKey = (process.env.REACT_APP_SUPABASE_ANON_KEY || '').trim() || DEFAULT_ANON_KEY;
 
+// The project URL, for the handful of places that call a function directly.
+export const SUPABASE_URL = url;
+
 export const supabase = createClient(url, anonKey, {
   auth: {
     persistSession: true, // localStorage — survives reloads
