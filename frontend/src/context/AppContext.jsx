@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { SUBJECTS } from '../data/mock';
 import { SEED_PAST_PAPERS } from '../data/pastPapers';
 import { advanceStreak, effectiveStreak, dayKey } from '../lib/streak';
-import { canUseDevice, rememberDeviceAccount, DEVICE_LIMIT_MESSAGE } from '../lib/deviceAccounts';
+import { canUseDevice, rememberDeviceAccount, claimDeviceSlot, DEVICE_LIMIT_MESSAGE, ACCOUNT_DEVICE_LIMIT_MESSAGE } from '../lib/deviceAccounts';
 import { enrolledSubjects, primaryTrack, topicsFor } from '../lib/subjects';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import * as store from '../lib/dataStore';
@@ -98,6 +98,10 @@ export function AppProvider({ children }) {
   // real account is never touched, and nothing syncs (a demo user has no id,
   // so canSync() is already false).
   const demoRef = useRef(false);
+  // Accounts refused by a device rule. The sign-in listener and bootstrap
+  // both check it, so a refused account can never be half-signed-in by a
+  // race between the SIGNED_IN event and our sign-out.
+  const deniedRef = useRef(null);
 
   // Cloud-sync status for the header badge: idle | saving | saved | error | local
   const [syncStatus, setSyncStatus] = useState('idle');
@@ -129,6 +133,7 @@ export function AppProvider({ children }) {
   // migrating any local-only data on the very first sign-in for that user.
   const bootstrapCore = useCallback(async (authUser) => {
     const userId = authUser.id;
+    if (deniedRef.current === userId) return;
     // One-time migration of pre-existing localStorage data.
     try {
       const flagKey = `infinitysheets_synced_${userId}`;
@@ -219,9 +224,9 @@ export function AppProvider({ children }) {
         // apiLogin: a second student account on this device is signed out.
         const gate = await guardDevice(session.user);
         if (gate) {
-          setLoaded(true);
+          await denyAccess(session.user, gate);
           toast.error(gate.message);
-          await supabase.auth.signOut();
+          try { window.location.hash = '#login'; } catch (_) { /* noop */ }
           return;
         }
         bootstrappedRef.current = session.user.id;
@@ -327,17 +332,39 @@ export function AppProvider({ children }) {
   // same browser is refused, so streaks, predicted grades and the "already
   // answered" question pool describe one person. Admins are exempt — they
   // sign into test accounts to see what students see.
+  // Refuse an account and leave nothing behind: sign out, drop any state the
+  // SIGNED_IN race may have set, and send them back to the login screen.
+  const denyAccess = async (authUser, err) => {
+    deniedRef.current = authUser.id;
+    bootstrappedRef.current = null;
+    try { await supabase.auth.signOut(); } catch (_) { /* already gone */ }
+    setState((s) => ({ ...defaultState, theme: s.theme }));
+    setLoaded(true);
+    setTimeout(() => { deniedRef.current = null; }, 15000);
+    return err;
+  };
+
   const guardDevice = async (authUser) => {
     let isAdmin = false;
     try {
       const { data } = await supabase.from('profiles').select('role').eq('id', authUser.id).maybeSingle();
       isAdmin = data?.role === 'admin';
     } catch (_) { /* treat as a student */ }
+    // Rule 1 — one student account per device (admins, and devices an admin
+    // has used, are exempt).
     const verdict = canUseDevice({ id: authUser.id, email: authUser.email, isAdmin });
     if (!verdict.allowed) {
       const e = new Error(DEVICE_LIMIT_MESSAGE);
       e.code = 'device_account_limit';
       e.owner = verdict.owner?.email || null;
+      return e;
+    }
+    // Rule 2 — three devices per account, for everyone including admins.
+    const slot = await claimDeviceSlot();
+    if (slot && slot.ok === false) {
+      const e = new Error(ACCOUNT_DEVICE_LIMIT_MESSAGE);
+      e.code = 'account_device_limit';
+      e.devices = slot.list || [];
       return e;
     }
     rememberDeviceAccount({ id: authUser.id, email: authUser.email, isAdmin });
@@ -359,7 +386,7 @@ export function AppProvider({ children }) {
     }
     const authUser = data.user;
     const gate = await guardDevice(authUser);
-    if (gate) { await supabase.auth.signOut(); throw gate; }
+    if (gate) throw await denyAccess(authUser, gate);
     bootstrappedRef.current = authUser.id;
     try {
       // email is owned by auth (a trigger rejects client-side changes), so it is not sent here.
@@ -376,7 +403,7 @@ export function AppProvider({ children }) {
     if (error) throw error;
     const authUser = data.user;
     const gate = await guardDevice(authUser);
-    if (gate) { await supabase.auth.signOut(); throw gate; }
+    if (gate) throw await denyAccess(authUser, gate);
     bootstrappedRef.current = authUser.id;
     await bootstrapCore(authUser);
     setLoaded(true);

@@ -2,12 +2,13 @@ import { openPlusBanner } from './PlusUpgradeBanner';
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { toast } from 'sonner';
-import { User, Sliders, Accessibility, GraduationCap, AlertTriangle, Save, RotateCcw, Trash2, Sun, Moon, Keyboard, BookOpen, Calendar, Bot } from 'lucide-react';
+import { User, Sliders, Accessibility, GraduationCap, AlertTriangle, Save, RotateCcw, Trash2, Sun, Moon, Keyboard, BookOpen, Calendar, Bot, Laptop } from 'lucide-react';
 import { EXAM_TRACKS, SUBJECTS } from '../../data/mock';
 import { primaryTrack, enrolledSubjects } from '../../lib/subjects';
 import { RemindersSection } from './ReminderSettings';
 import { PrivacySection, ThemeModeToggle } from './PrivacyExportSettings';
 import ExamDatesSettings from './ExamDatesSettings';
+import DeviceList from './DeviceSettings';
 import { isPlus } from '../../lib/entitlements';
 import { Lock, Sparkles as SparklesIcon } from 'lucide-react';
 
@@ -54,6 +55,9 @@ export default function SettingsView() {
       <ExamDatesSettings />
 
       <AiSection settings={state.settings} updateSettings={updateSettings} />
+      <Section title="Devices" icon={Laptop} subtitle="Your account works on up to 3 devices. Sign out of one here to use a new phone or laptop.">
+        <DeviceList />
+      </Section>
       <RemindersSection />
       <PrivacySection />
       <AccessibilitySection settings={state.settings} updateSettings={updateSettings} theme={state.theme} toggleTheme={toggleTheme} />

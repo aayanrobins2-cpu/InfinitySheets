@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Heart } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+import { isPlus } from '../../lib/entitlements';
 
 /**
  * Reserved advertising space. Renders a labelled placeholder until an ad
@@ -33,15 +35,20 @@ const SIZE = {
   compact: 'min-h-[60px]',
 };
 
-// Master switch. Ads are parked for now: every placement stays in the code
-// (9 slots, see AD_UNITS) but renders nothing until this is true. To turn
-// ads on later: set REACT_APP_ADS=on in frontend/.env, fill AD_UNITS with the
-// network's unit ids, and load the network script in public/index.html.
-export const ADS_ENABLED = process.env.REACT_APP_ADS === 'on';
+// Ad spaces are live on the free plan: every placement reserves its room in
+// the layout and shows the "Ad space" placeholder until a network is wired
+// in (fill AD_UNITS with the network's unit ids and load its script in
+// public/index.html — no other change needed). InfinitySheets+ members never
+// see them, which is part of what they pay for.
+//
+// REACT_APP_ADS=off hides every placement, for screenshots and demos.
+export const ADS_ENABLED = process.env.REACT_APP_ADS !== 'off';
 
 export default function AdSlot({ slot, size = 'banner', className = '', label = 'Advertisement' }) {
   const ref = useRef(null);
   const unit = AD_UNITS[slot];
+  const { state } = useApp();
+  const plus = isPlus(state);
 
   // Hook for the ad network: when a unit id exists, request the ad into
   // this element. (e.g. AdSense: push to window.adsbygoogle.) Until then the
@@ -51,7 +58,8 @@ export default function AdSlot({ slot, size = 'banner', className = '', label = 
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (_) { /* network not loaded */ }
   }, [unit]);
 
-  if (!ADS_ENABLED) return null;
+  // No ads for paying members.
+  if (!ADS_ENABLED || plus) return null;
 
   return (
     <aside className={`w-full ${className}`} data-testid={`ad-${slot}`} data-ad-slot={slot} aria-label={label}>
