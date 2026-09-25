@@ -122,13 +122,21 @@ function envLike(canonical: string): string | undefined {
 //   FAST     — chat, cached overviews, flashcards, transcription, blurting.
 // Model IDs verified against this key's ListModels (mode "models" prints it).
 const SMART_CHAIN = ["gemini-3.1-pro-preview", "gemini-pro-latest", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
-const BALANCED_CHAIN = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-lite-latest"];
+const BALANCED_CHAIN = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-lite-latest"];
 const FAST_CHAIN = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
 const TIER: Record<string, string[]> = {
   extract: SMART_CHAIN, assess: SMART_CHAIN, mark: SMART_CHAIN, diagnose: SMART_CHAIN, "course-search": SMART_CHAIN, multiply: SMART_CHAIN,
   plan: BALANCED_CHAIN, solution: BALANCED_CHAIN, syllabus: BALANCED_CHAIN, generate: BALANCED_CHAIN,
 };
 function chainFor(mode: string) { return TIER[mode] || FAST_CHAIN; }
+
+// Circuit breaker, per warm function instance: model → time it may be tried
+// again. Busy/timeouts cool off briefly; quota and "no such model" for longer.
+const coolUntil = new Map<string, number>();
+const BUSY_COOLDOWN_MS = 90_000;
+const QUOTA_COOLDOWN_MS = 15 * 60_000;
+// Stay well inside the runtime's 150 s wall-clock limit.
+const TOTAL_BUDGET_MS = 130_000;
 
 const DB_URL = Deno.env.get("SUPABASE_URL");
 const DB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -285,30 +293,76 @@ Deno.serve(async (req: Request) => {
   let lastDetail = "";
   let everQuotaExhausted = false;
 
-  outer:
-  for (const candidate of models) {
-    // One quick retry on 503, then move down the chain — a busy model should
-    // not hold the student for 30 s when the next one answers in 5.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent`, {
+  // The edge runtime kills a request at 150 s, and a busy Gemini model can
+  // hang for over a minute before answering 503 — one stuck model used to eat
+  // the whole budget, so the student got nothing. Now every attempt has its
+  // own timeout inside an overall deadline, overloaded models are not retried
+  // while there are others to try, and a model that just failed is skipped
+  // (circuit breaker) so the next request doesn't wait on it again.
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
+  const perAttemptMs = mode === "extract" || mode === "assess" ? 75_000 : 35_000;
+  const now = Date.now();
+  const warm = models.filter((m) => !((coolUntil.get(m) || 0) > now));
+  // All cooling down? Try them anyway rather than fail without asking.
+  const order = warm.length ? warm : models;
+
+  for (let i = 0; i < order.length; i++) {
+    const candidate = order[i];
+    const remaining = deadline - Date.now();
+    if (remaining < 4_000) break; // not enough time left for a real answer
+    const isLast = i === order.length - 1;
+    const timeoutMs = Math.min(perAttemptMs, remaining - 2_000);
+    let r: Response | null = null;
+    try {
+      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": key },
         body: payload,
+        signal: AbortSignal.timeout(timeoutMs),
       });
-      if (r.ok) { res = r; used = candidate; break outer; }
-      lastStatus = r.status;
-      lastDetail = await r.text().catch(() => "");
-      console.error("gemini", candidate, r.status, lastDetail.slice(0, 300));
-      if (r.status === 429) { everQuotaExhausted = true; continue outer; }
-      if (r.status === 503 && attempt < 1) { await new Promise((x) => setTimeout(x, 600)); continue; }
-      break;
+    } catch (e) {
+      // Timed out or the connection dropped: treat as busy.
+      lastStatus = 504;
+      lastDetail = String((e as Error)?.name || e);
+      console.error("gemini", candidate, "timeout/abort after", timeoutMs, "ms");
+      coolUntil.set(candidate, Date.now() + BUSY_COOLDOWN_MS);
+      continue;
     }
+    if (r.ok) { res = r; used = candidate; coolUntil.delete(candidate); break; }
+    lastStatus = r.status;
+    lastDetail = await r.text().catch(() => "");
+    console.error("gemini", candidate, r.status, lastDetail.slice(0, 300));
+    if (r.status === 429) {
+      everQuotaExhausted = true;
+      coolUntil.set(candidate, Date.now() + QUOTA_COOLDOWN_MS);
+      continue;
+    }
+    if (r.status === 503 || r.status === 500) {
+      coolUntil.set(candidate, Date.now() + BUSY_COOLDOWN_MS);
+      // Only the last model left gets a second try — earlier ones move on.
+      if (isLast && deadline - Date.now() > 10_000) {
+        await new Promise((x) => setTimeout(x, 800));
+        try {
+          const again = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+            body: payload,
+            signal: AbortSignal.timeout(Math.min(perAttemptMs, deadline - Date.now() - 2_000)),
+          });
+          if (again.ok) { res = again; used = candidate; coolUntil.delete(candidate); break; }
+          lastStatus = again.status;
+        } catch (_) { lastStatus = 504; }
+      }
+      continue;
+    }
+    // 404 (model not available to this key) — skip it for a long while.
+    if (r.status === 404) coolUntil.set(candidate, Date.now() + QUOTA_COOLDOWN_MS);
   }
 
   if (!res) {
     const friendly = everQuotaExhausted
       ? "The daily free AI limit has been reached. It resets at midnight Pacific time — or add billing to the Google AI key to lift it."
-      : lastStatus === 503 ? "The AI is busy right now. Give it a moment and try again."
+      : lastStatus === 503 || lastStatus === 504 || lastStatus === 500 ? "The AI is very busy right now. Give it a minute and try again."
       : lastStatus === 404 ? "No usable AI model was found for this key. Set the GEMINI_MODEL secret to a current model."
       : lastStatus === 400 || lastStatus === 403 ? "The AI key was rejected. Check the GEMINI_API_KEY secret on the Supabase project."
       : `AI request failed (${lastStatus || "no response"}).`;

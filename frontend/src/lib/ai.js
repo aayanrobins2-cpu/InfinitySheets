@@ -207,6 +207,23 @@ function recoverQuestions(text) {
 // Normalise whatever the model returns into the shape the worksheet uses.
 const DIFFICULTIES = ['Easy', 'Medium', 'Exam level', 'Hard'];
 
+// The correct option as an index, whatever form the model gave it in:
+// 2 · "2" · "C" · "c)" · "(C)" · "Option C" · or the option's own text.
+// Returns null when it can't be determined.
+function answerIndex(a, opts, rawOpts) {
+  if (a === null || a === undefined || a === '') return null;
+  if (typeof a === 'number') return Number.isInteger(a) && a >= 0 && a < opts.length ? a : null;
+  const s = String(a).trim();
+  if (/^\d+$/.test(s)) { const n = Number(s); return n >= 0 && n < opts.length ? n : null; }
+  const letter = /^(?:option\s*)?\(?([A-Ha-h])\)?[.):]?$/i.exec(s);
+  if (letter) { const n = letter[1].toUpperCase().charCodeAt(0) - 65; return n < opts.length ? n : null; }
+  const norm = (t) => String(t).toLowerCase().replace(/^\s*\(?[a-h1-8][.):]?\)?\s+/i, '').replace(/[^a-z0-9]+/g, ' ').trim();
+  const target = norm(s);
+  let i = opts.findIndex((o) => norm(o) === target);
+  if (i < 0) i = rawOpts.findIndex((o) => norm(o) === target);
+  return i >= 0 && i < opts.length ? i : null;
+}
+
 export function shapeQuestion(raw, { answerType, difficulty, topics = [], subject, strict = false } = {}) {
   if (!raw || !raw.q) return null;
   const type = ['Multiple choice', 'Typed response', 'Exam style', 'Drawing'].includes(raw.answerType) ? raw.answerType : answerType;
@@ -226,14 +243,18 @@ export function shapeQuestion(raw, { answerType, difficulty, topics = [], subjec
     markScheme: Array.isArray(raw.markScheme) ? raw.markScheme.filter((p) => p && p.point).map((p) => ({ point: String(p.point), marks: Math.max(1, parseInt(p.marks, 10) || 1) })) : undefined,
   };
   if (type === 'Multiple choice') {
-    const opts = Array.isArray(raw.options) ? raw.options.map((o) => String(o)).filter(Boolean) : [];
+    // Models sometimes label options themselves ("A. Cohesion", "(b) …"); the
+    // sheet adds its own A–D, so strip theirs or it reads "A. A. Cohesion".
+    const LABEL = /^\s*(?:\(?[A-Ha-h]\)|[A-Ha-h][.):]|\(?[1-8]\)|[1-8][.)])\s+/;
+    const opts = Array.isArray(raw.options) ? raw.options.map((o) => String(o).replace(LABEL, '').trim()).filter(Boolean) : [];
     if (opts.length < 2) return null;
     q.options = opts;
-    const hasAnswer = Number.isInteger(raw.a) && raw.a >= 0 && raw.a < opts.length;
-    // Imported papers: an MCQ whose correct option is not known is dropped
-    // rather than silently marked "A" — the grader would mark at random.
-    if (!hasAnswer && strict) return null;
-    q.a = hasAnswer ? raw.a : 0;
+    const a = answerIndex(raw.a ?? raw.answer ?? raw.correct, opts, Array.isArray(raw.options) ? raw.options.map(String) : []);
+    const hasAnswer = a !== null;
+    // An MCQ whose correct option can't be worked out is dropped rather than
+    // silently marked "A" — the grader would otherwise mark at random.
+    if (!hasAnswer) return null;
+    q.a = a;
   } else if (type === 'Typed response') {
     q.typedAnswer = String(raw.typedAnswer || raw.answer || '').trim();
     q.typedAliases = Array.isArray(raw.typedAliases) ? raw.typedAliases.map(String) : [];
