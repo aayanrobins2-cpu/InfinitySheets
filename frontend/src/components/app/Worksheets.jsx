@@ -17,6 +17,7 @@ import { subjectBoards } from '../../lib/subjects';
 import WorkingCapture from './WorkingCapture';
 import { textbookQuestion, asciiNotation } from '../../lib/notation';
 import { expandChains } from '../../lib/chains';
+import { targetMarks, typicalMarks, sheetMarks, questionMarks, minutesPerMark, PACE_TOLERANCE } from '../../lib/examPacing';
 import AdSlot from '../ads/AdSlot';
 import ReportQuestion from './ReportQuestion';
 import { adaptiveDifficulty } from '../../lib/adaptive';
@@ -824,9 +825,16 @@ export default function Worksheets({ go }) {
       toast.error('No past-paper questions match this selection. Ask an admin to upload some, or also tick AI generated.');
       return null;
     }
-    // Recap: as many quick answers as the chosen duration allows (~1/min),
-    // not a fixed 10; normal sheets pace at ~3 min per question.
-    const length = recap ? Math.max(5, Math.min(40, Math.round(duration))) : Math.max(3, Math.min(30, Math.round(duration / 3)));
+    // Recap: as many quick answers as the chosen duration allows (~1/min).
+    // Normal sheets are sized by MARKS at the pace of the real exam: the board
+    // gives N minutes per mark, so a D-minute sheet should carry D ÷ N marks
+    // (lib/examPacing.js). The question count is only a first estimate from
+    // the typical marks of this answer type; the marks check below settles it.
+    const sheetType = recap ? 'Typed response' : answerType;
+    const goalMarks = recap ? null : targetMarks(duration, boardForSubject);
+    const length = recap
+      ? Math.max(5, Math.min(40, Math.round(duration)))
+      : Math.max(3, Math.min(60, Math.round(goalMarks / typicalMarks(sheetType, boardForSubject))));
     const reviewQuestions = withReviews && includeReviews && !recap ? reviewsDue.filter((r) => topics.includes(r.topic) || !r.topic).map(reviewToQuestion) : [];
     let generated = [];
     if (aiGenerated && aiOn) {
@@ -840,7 +848,7 @@ export default function Worksheets({ go }) {
         try {
           generated = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, count: need });
         } catch (e) {
-          toast.error(`${e.message || 'The AI could not write questions'} — using the built-in bank instead.`);
+          toast.error(`${e.message || 'The AI could not write questions'}${pastPapers ? ' — using past-paper questions instead.' : ''}`);
         } finally {
           setGenerating(false);
         }
@@ -848,37 +856,53 @@ export default function Worksheets({ go }) {
     }
     let qs = buildQuestions({ topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, length, pastPapers, aiGenerated, pastPaperPool, reviewQuestions, generated });
 
-    // Final check: a sheet must have enough questions for the time it claims.
-    // The AI sometimes returns fewer than asked (or nothing at all when it is
-    // rate-limited), so top the sheet up before showing it — up to two more
-    // attempts, each asking only for what is still missing.
-    if (aiGenerated && aiOn && qs.length < length) {
+    // Final check, once the sheet is built: does it carry the right number of
+    // MARKS for the time allowed? Too few → ask the AI for more (sized to the
+    // missing marks, never repeating what's there), up to two rounds. Too
+    // many → drop questions from the end, which never strands a context-chain
+    // part because a chain's earlier parts always come first.
+    const tooFew = () => (goalMarks ? sheetMarks(qs, boardForSubject) < goalMarks * PACE_TOLERANCE.low : qs.length < length);
+    if (aiGenerated && aiOn && tooFew()) {
       setGenerating(true);
       try {
-        for (let attempt = 0; attempt < 2 && qs.length < length; attempt += 1) {
-          const missing = length - qs.length;
+        for (let attempt = 0; attempt < 2 && tooFew(); attempt += 1) {
+          const missingMarks = goalMarks ? goalMarks - sheetMarks(qs, boardForSubject) : 0;
+          const missing = goalMarks
+            ? Math.max(1, Math.ceil(missingMarks / typicalMarks(sheetType, boardForSubject)))
+            : length - qs.length;
           let more = [];
           try {
-            more = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, count: missing });
+            more = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: sheetType, difficulty: recap ? 'Easy' : effDifficulty, count: missing, avoid: qs.map((q) => q.q) });
           } catch (e) {
             break; // rate-limited or offline — keep what we have
           }
           const seen = new Set(qs.map((q) => String(q.q || '').trim().toLowerCase()));
-          const fresh = more.filter((q) => q && q.q && !seen.has(String(q.q).trim().toLowerCase()));
+          const fresh = more.filter((q) => q && q.q && !seen.has(String(q.q).trim().toLowerCase())).map(textbookQuestion);
           if (!fresh.length) break;
-          qs = [...qs, ...fresh.slice(0, missing).map(textbookQuestion)];
+          // Add only as many as the marks need.
+          for (const q of fresh) {
+            if (!tooFew()) break;
+            qs = [...qs, q];
+          }
         }
       } finally { setGenerating(false); }
+    }
+    if (goalMarks) {
+      while (qs.length > 3 && sheetMarks(qs, boardForSubject) - questionMarks(qs[qs.length - 1], boardForSubject) >= goalMarks * PACE_TOLERANCE.low
+        && sheetMarks(qs, boardForSubject) > goalMarks * PACE_TOLERANCE.high) {
+        qs = qs.slice(0, -1);
+      }
     }
 
     if (!qs.length) {
       toast.error(aiGenerated ? 'The AI did not return any questions (it may be at its daily limit). Try again in a moment, or tick past papers.' : 'No questions are available for this selection yet.');
       return null;
     }
-    if (qs.length < length) {
-      toast(aiGenerated && !pastPapers
-        ? `The AI produced ${qs.length} question${qs.length === 1 ? '' : 's'} instead of ${length}, so this sheet is shorter.`
-        : `Only ${qs.length} question${qs.length === 1 ? '' : 's'} match this selection, so this sheet has ${qs.length}.${aiGenerated ? '' : ' Tick Accurate to you for more.'}`);
+    const gotMarks = sheetMarks(qs, boardForSubject);
+    if (goalMarks ? gotMarks < goalMarks * PACE_TOLERANCE.low : qs.length < length) {
+      toast(goalMarks
+        ? `This sheet has ${gotMarks} of the ${goalMarks} marks ${duration} minutes would hold in the real exam — ${aiGenerated ? 'the AI couldn’t write the rest right now' : 'there aren’t more matching questions'}.${aiGenerated ? '' : ' Tick Accurate to you for more.'}`
+        : `Only ${qs.length} question${qs.length === 1 ? '' : 's'} could be made, so this sheet is shorter.`);
     }
     return qs;
   };
@@ -1802,6 +1826,11 @@ export default function Worksheets({ go }) {
             <span>{fmtDuration(DURATION_MIN)}</span>
             <span>{fmtDuration(DURATION_MAX)}</span>
           </div>
+          {!recap && !simulation && (
+            <div className="text-[11.5px] text-slate-500 mt-1.5" data-testid="ws-pace">
+              ≈ <span className="font-semibold text-slate-700">{targetMarks(duration, boardForSubject)} marks</span> at the real exam’s pace ({(minutesPerMark(boardForSubject)).toFixed(minutesPerMark(boardForSubject) < 1 ? 2 : 1)} min per mark)
+            </div>
+          )}
         </Field>
 
         <div>

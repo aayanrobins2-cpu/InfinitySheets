@@ -270,18 +270,56 @@ export function shapeQuestion(raw, { answerType, difficulty, topics = [], subjec
  * Original, in-syllabus questions written by the AI. Resolves to an array of
  * shaped questions (source: 'ai-generated').
  */
-export async function generateQuestions({ board, ibLevel, subject, topics, answerType, difficulty, count }) {
-  const n = Math.max(1, Math.min(30, count || 5));
-  const content = [
-    `Write ${n} original ${answerType} questions for ${subject} (${board}${ibLevel ? ` ${ibLevel}` : ''}) at ${difficulty} difficulty.`,
-    `Topics to cover (spread the questions across them, each tagged with exactly one): ${topics.join('; ')}.`,
-    'They must be brand-new questions in the exact style this exam uses. Never reproduce a past-paper question; vary the contexts and numbers. Every question needs a correct answer and a marking scheme.',
-    `Reply as {"questions": [...]}. ${QUESTION_SHAPE}. Use "answerType": "${answerType}" for every question.`,
-  ].join('\n');
-  const text = await askAi({ mode: 'generate', context: { board, ibLevel, subject, topic: topics.join(', ') }, messages: [{ role: 'user', content }] });
-  const parsed = parseJsonReply(text);
-  const list = (parsed.questions || []).map((r) => shapeQuestion(r, { answerType, difficulty, topics, subject })).filter(Boolean);
-  if (!list.length) throw new Error('The AI returned no usable questions');
+// A reply that runs out of room is cut off mid-JSON ("Expected ']'"), which
+// used to throw away every question in it. Questions are therefore asked for
+// in batches small enough to fit comfortably in one reply, and a reply that is
+// still cut off keeps every question that closed cleanly.
+const GENERATE_BATCH = 10;
+
+function readQuestions(text) {
+  try {
+    const parsed = parseJsonReply(text);
+    if (Array.isArray(parsed?.questions)) return parsed.questions;
+  } catch (_) { /* truncated or malformed — salvage below */ }
+  return recoverQuestions(text);
+}
+
+export async function generateQuestions({ board, ibLevel, subject, topics, answerType, difficulty, count, avoid = [] }) {
+  const n = Math.max(1, Math.min(60, count || 5));
+  const batches = [];
+  for (let left = n, i = 0; left > 0; left -= GENERATE_BATCH, i += 1) batches.push({ size: Math.min(GENERATE_BATCH, left), i });
+  // Rotate the topic list per batch so parallel batches don't all start on the
+  // same topic and write near-duplicates.
+  const rotate = (arr, k) => (arr.length ? [...arr.slice(k % arr.length), ...arr.slice(0, k % arr.length)] : arr);
+  const avoidLine = avoid.length ? `Do not repeat or closely paraphrase any of these existing questions: ${avoid.slice(0, 25).map((q) => `"${String(q).slice(0, 90)}"`).join('; ')}.` : '';
+
+  const one = async ({ size, i }) => {
+    const order = rotate(topics, i * 3);
+    const content = [
+      `Write ${size} original ${answerType} questions for ${subject} (${board}${ibLevel ? ` ${ibLevel}` : ''}) at ${difficulty} difficulty.`,
+      `Topics to cover (spread the questions across them, each tagged with exactly one): ${order.join('; ')}.`,
+      'They must be brand-new questions in the exact style this exam uses. Never reproduce a past-paper question; vary the contexts and numbers. Every question needs a correct answer and a marking scheme, and "marks" must match the scheme.',
+      batches.length > 1 ? `This is batch ${i + 1} of ${batches.length}; make these questions different from the other batches by leaning on different topics and contexts.` : '',
+      avoidLine,
+      'For multiple choice, "a" is the 0-based INDEX of the correct option (0 = first), and options have no "A." / "B." labels.',
+      `Reply as {"questions": [...]}. ${QUESTION_SHAPE}. Use "answerType": "${answerType}" for every question.`,
+    ].filter(Boolean).join('\n');
+    const text = await askAi({ mode: 'generate', context: { board, ibLevel, subject, topic: order.join(', ') }, messages: [{ role: 'user', content }] });
+    return readQuestions(text);
+  };
+
+  const results = await Promise.allSettled(batches.map(one));
+  const raw = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+  const seen = new Set();
+  const list = raw
+    .map((r) => shapeQuestion(r, { answerType, difficulty, topics, subject }))
+    .filter(Boolean)
+    .filter((q) => { const k = q.q.toLowerCase().replace(/\s+/g, ' ').trim(); if (seen.has(k)) return false; seen.add(k); return true; });
+  if (!list.length) {
+    // Every batch failed: surface the real reason (quota, busy…) if we have one.
+    const failed = results.find((r) => r.status === 'rejected');
+    throw new Error(failed?.reason?.message || 'The AI returned no usable questions');
+  }
   return list.map((q) => ({ ...q, source: 'ai-generated' }));
 }
 
