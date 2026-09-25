@@ -16,9 +16,10 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
+from starlette.concurrency import run_in_threadpool
 
-from auth_supabase import require_admin
+from auth_supabase import get_current_user, require_admin
 from supabase_client import admin_client
 from .topics import normalize_topic
 
@@ -116,7 +117,7 @@ def _validate(payload: PastPaperIn) -> None:
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def create_past_paper(payload: PastPaperIn, _admin: dict = Depends(require_admin)) -> Dict[str, Any]:
+def create_past_paper(payload: PastPaperIn, _admin: dict = Depends(require_admin)) -> Dict[str, Any]:
     _validate(payload)
     row = _to_row(payload.model_dump())
     res = admin_client().table("past_papers").insert(row).execute()
@@ -125,13 +126,14 @@ async def create_past_paper(payload: PastPaperIn, _admin: dict = Depends(require
 
 
 @router.get("")
-async def list_past_papers(
+def list_past_papers(
     subject: Optional[str] = Query(None),
     topic: Optional[str] = Query(None),
     answerType: Optional[str] = Query(None),
     board: Optional[str] = Query(None),
     addedBy: Optional[str] = Query(None),
     limit: int = Query(500, ge=1, le=2000),
+    _user: dict = Depends(get_current_user),
 ) -> List[Dict[str, Any]]:
     query = admin_client().table("past_papers").select("*").order("created_at", desc=True).limit(limit)
     if subject:
@@ -149,7 +151,7 @@ async def list_past_papers(
 
 
 @router.delete("/{pp_id}")
-async def delete_past_paper(pp_id: str, _admin: dict = Depends(require_admin)) -> Response:
+def delete_past_paper(pp_id: str, _admin: dict = Depends(require_admin)) -> Response:
     res = admin_client().table("past_papers").delete().eq("id", pp_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Past-paper question not found")
@@ -327,7 +329,7 @@ async def extract_past_papers_from_pdf(
                     q["examAnswer"] = q.get("examAnswer") or q["q"]
                 rows.append(_to_row(q))
             if rows:
-                res = admin_client().table("past_papers").insert(rows).execute()
+                res = await run_in_threadpool(admin_client().table("past_papers").insert(rows).execute)
                 saved = [_row_to_pp(r) for r in (res.data or [])]
 
         return {

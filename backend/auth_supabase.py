@@ -17,7 +17,7 @@ def _extract_token(request: Request) -> str | None:
     return request.cookies.get("access_token")
 
 
-async def get_current_user(request: Request) -> dict:
+def get_current_user(request: Request) -> dict:
     token = _extract_token(request)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -27,8 +27,8 @@ async def get_current_user(request: Request) -> dict:
     return {"id": user["id"], "email": user.get("email")}
 
 
-async def require_admin(request: Request) -> dict:
-    user = await get_current_user(request)
+def require_admin(request: Request) -> dict:
+    user = get_current_user(request)
     try:
         res = (
             admin_client()
