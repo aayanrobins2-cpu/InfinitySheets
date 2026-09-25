@@ -86,8 +86,11 @@ export const SUBJECTS = SUBJECTS_BY_BOARD;
 // subject) in lib/subjects.js reads the per-board syllabus first. Still keyed
 // by topic name for QUESTION_BANK / TOPIC_SUMMARY lookups.
 export const TOPICS = {
-  'Science': ['Chemical Reactions', 'Acids, Bases and Salts', 'Metals and Non-metals', 'Life Processes', 'Control and Coordination', 'Light', 'Electricity', 'Magnetic Effects of Current', 'Our Environment'],
-  'Information Technology': ['Digital Documentation', 'Spreadsheets', 'Databases', 'Web Basics', 'Digital Safety'],
+  // Science / Information Technology are each shared by several boards, so the
+  // lists are the union of every board's topics (they used to be declared twice,
+  // and the second declaration silently discarded the first).
+  'Science': ['Chemical Reactions', 'Acids, Bases and Salts', 'Metals and Non-metals', 'Life Processes', 'Control and Coordination', 'Light', 'Electricity', 'Magnetic Effects of Current', 'Our Environment', 'Heredity & Evolution'],
+  'Information Technology': ['Digital Documentation', 'Spreadsheets', 'Databases', 'Web Basics', 'Digital Safety', 'Hardware & Software', 'Networks'],
   'Commerce': ['Business Environment', 'Trade', 'Banking', 'Insurance', 'Marketing', 'Consumer Protection'],
   'Mass Media & Communication': ['Media Theory', 'Print Media', 'Broadcast Media', 'Digital Media', 'Advertising'],
   'Computer Science': ['Programming Basics', 'Data Structures', 'Algorithms', 'Databases', 'Networks'],
@@ -122,7 +125,6 @@ export const TOPICS = {
   'Reading Comprehension': ['Main Point', 'Author Attitude', 'Comparative Passages', 'Detail & Structure'],
   Malayalam: ['Prose', 'Poetry', 'Grammar', 'Essay Writing', 'Comprehension'],
   Tamil: ['Prose', 'Poetry', 'Grammar', 'Letter Writing', 'Comprehension'],
-  Science: ['Chemical Reactions', 'Life Processes', 'Electricity', 'Light', 'Heredity & Evolution'],
   Sanskrit: ['Grammar (Vyakarana)', 'Prose', 'Poetry (Shlokas)', 'Translation', 'Comprehension'],
   Urdu: ['Prose', 'Poetry (Ghazal & Nazm)', 'Grammar', 'Letter Writing', 'Comprehension'],
   'Home Science': ['Nutrition & Diet', 'Child Development', 'Textiles & Clothing', 'Resource Management', 'Food Safety'],
@@ -147,7 +149,6 @@ export const TOPICS = {
   'Classical Studies': ['Greek Epic', 'Athenian Drama', 'Roman History', 'Classical Art', 'Philosophy'],
   Divinity: ['Old Testament', 'New Testament', 'Church History', 'Ethics', 'Philosophy of Religion'],
   'Thinking Skills': ['Problem Solving', 'Critical Thinking', 'Argument Analysis', 'Evaluating Evidence', 'Reasoning'],
-  'Information Technology': ['Hardware & Software', 'Networks', 'Databases', 'Spreadsheets', 'Digital Safety'],
   'Spanish A': ['Readers, Writers & Texts', 'Time & Space', 'Intertextuality', 'Textual Analysis', 'Individual Oral'],
   'German B': ['Identities', 'Experiences', 'Human Ingenuity', 'Social Organisation', 'Sharing the Planet'],
   'Japanese B': ['Identities', 'Experiences', 'Human Ingenuity', 'Social Organisation', 'Sharing the Planet'],

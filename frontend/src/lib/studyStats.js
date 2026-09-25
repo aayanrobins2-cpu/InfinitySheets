@@ -79,17 +79,21 @@ export function activityCalendar(worksheets = [], { weeks = 16, now = Date.now()
   });
   const today = new Date(now); today.setHours(0, 0, 0, 0);
   const end = new Date(today);
-  const start = new Date(end.getTime() - (weeks * 7 - 1) * DAY);
+  // Step by calendar day (setDate), not by 24h: across a DST change a 24h
+  // step lands at 23:00/01:00 and would repeat or skip a day in the grid.
+  const nextDay = (x) => { const y = new Date(x); y.setDate(y.getDate() + 1); return y; };
+  const start = new Date(end);
+  start.setDate(start.getDate() - (weeks * 7 - 1));
   start.setDate(start.getDate() - start.getDay());          // back to Sunday
   const days = [];
-  for (let d = new Date(start); d <= end; d = new Date(d.getTime() + DAY)) {
+  for (let d = new Date(start); d <= end; d = nextDay(d)) {
     const k = dayKey(d);
     days.push({ date: d, key: k, count: counts[k]?.count || 0, questions: counts[k]?.questions || 0, future: false });
   }
   // Pad the final week so the grid is rectangular.
   while (days.length % 7 !== 0) {
     const last = days[days.length - 1].date;
-    const d = new Date(last.getTime() + DAY);
+    const d = nextDay(last);
     days.push({ date: d, key: dayKey(d), count: 0, questions: 0, future: true });
   }
   const max = Math.max(1, ...days.map((d) => d.questions));

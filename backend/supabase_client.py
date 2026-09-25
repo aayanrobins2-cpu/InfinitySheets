@@ -10,7 +10,7 @@ SDK: admin_client().table("past_papers").select("*").eq(...).execute().data
 import os
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import requests
 from dotenv import load_dotenv

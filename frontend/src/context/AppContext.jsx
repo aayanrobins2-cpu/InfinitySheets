@@ -160,8 +160,15 @@ export function AppProvider({ children }) {
       const live = effectiveStreak(loadedState);
       if (live !== (loadedState.streak || 0)) {
         loadedState.streak = live;
-        bg(() => store.upsertSettings({ ...loadedState, user: { id: userId } }, userId), 'streak/expire');
+        // Direct call, not bg(): bg() is a no-op until state.user is set,
+        // which has not happened yet at this point in the bootstrap.
+        store.upsertSettings({ ...loadedState, user: { id: userId } }, userId)
+          .catch((e) => logError('streak/expire', e));
       }
+      // The DB only holds admin-added papers; keep the seeded ones that ship
+      // with the app (as refreshPastPapers and the local hydrate both do).
+      const remoteIds = new Set((loadedState.pastPapers || []).map((p) => p.id));
+      loadedState.pastPapers = [...(loadedState.pastPapers || []), ...SEED_PAST_PAPERS.filter((p) => !remoteIds.has(p.id))];
       setState((s) => withTrack({ ...defaultState, theme: s.theme, draftWorksheet: s.draftWorksheet, ...loadedState }, loadedState.courses));
       setSyncStatus('saved');
       setTimeout(syncTrack, 0);
@@ -504,8 +511,10 @@ export function AppProvider({ children }) {
 
   const recordWorksheet = useCallback((sheet) => {
     const { next, newMistakes } = computeWorksheet(stateRef.current, sheet);
-    // Completing a worksheet clears any saved in-progress draft.
-    setState({ ...next, draftWorksheet: null });
+    // Completing a worksheet clears any saved in-progress draft. Applied as a
+    // functional update so an unflushed change is not overwritten by the
+    // stateRef snapshot (see the note above updateProfile).
+    setState((s) => ({ ...computeWorksheet(s, sheet).next, draftWorksheet: null }));
     track('worksheet_completed', { subject: sheet.subject, score: sheet.score, total: sheet.total, difficulty: sheet.difficulty, answerType: sheet.answerType, examMode: !!sheet.examMode, simulation: !!sheet.simulation, paper: !!sheet.paper });
     bg(() => store.upsertWorksheet(sheet, uid()), 'recordWorksheet/sheet');
     bg(() => store.upsertMistakes(newMistakes, uid()), 'recordWorksheet/mistakes');
@@ -585,13 +594,12 @@ export function AppProvider({ children }) {
     setTimeout(syncTrack, 0);
   }, []);
   const updateCourse = useCallback((id, patch) => {
-    let updated = null;
+    // Resolved up front: the setState updater may not have run yet when the
+    // sync microtask fires, which left `updated` null and skipped the save.
+    const cur = (stateRef.current.courses || []).find((c) => c.id === id);
+    const updated = cur ? { ...cur, ...patch } : null;
     setState((s) => {
-      const courses = s.courses.map((c) => {
-        if (c.id !== id) return c;
-        updated = { ...c, ...patch };
-        return updated;
-      });
+      const courses = s.courses.map((c) => (c.id === id ? { ...c, ...patch } : c));
       // Dropping a subject from a course drops it from the fallback list too.
       const user = s.user && patch && patch.subjects
         ? { ...s.user, subjects: subjectsStillTaken(courses, s.user.subjects) }
@@ -618,7 +626,7 @@ export function AppProvider({ children }) {
     const worksheets = [];
     const mistakes = [];
     let totalQuestionsToday = 0;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = dayKey(new Date());
 
     subs.forEach((subject) => {
       const topics = topicsFor(primaryTrack(stateRef.current.courses, stateRef.current.user?.examTrack), subject);
@@ -648,7 +656,7 @@ export function AppProvider({ children }) {
           const q = questions[qi];
           mistakes.push({ id: `${sheetId}-${qi}`, worksheetId: sheetId, subject, topic: q._topic, question: q.q, options: q.options, correct: q.a, given: answers[qi], answerType: 'Multiple choice', typedAnswer: null, examKeywords: null, date: sheet.date });
         }
-        if (dt.toISOString().slice(0, 10) === today) totalQuestionsToday += total;
+        if (dayKey(dt) === today) totalQuestionsToday += total;
       }
     });
 
@@ -834,38 +842,39 @@ export function AppProvider({ children }) {
     setState((s) => ({ ...s, studyPlan: plan }));
     bg(() => store.upsertSettings({ ...stateRef.current, studyPlan: plan }, uid()), 'studyPlan');
   }, []);
+  // Values to sync are computed from stateRef up front: a setState updater is
+  // not guaranteed to have run by the time bg()'s microtask fires, so reading
+  // a variable it assigns could see null and silently skip the save.
   const togglePlanTask = useCallback((dayIdx, taskIdx) => {
-    let next = null;
-    setState((s) => {
-      if (!s.studyPlan) return s;
-      const days = s.studyPlan.days.map((d, i) => (i !== dayIdx ? d : { ...d, tasks: d.tasks.map((t, j) => (j !== taskIdx ? t : { ...t, done: !t.done })) }));
-      next = { ...s.studyPlan, days };
-      return { ...s, studyPlan: next };
+    const toggle = (plan) => ({
+      ...plan,
+      days: plan.days.map((d, i) => (i !== dayIdx ? d : { ...d, tasks: d.tasks.map((t, j) => (j !== taskIdx ? t : { ...t, done: !t.done })) })),
     });
-    bg(() => next && store.upsertSettings({ ...stateRef.current, studyPlan: next }, uid()), 'studyPlan/toggle');
+    const cur = stateRef.current.studyPlan;
+    if (!cur) return;
+    const next = toggle(cur);
+    setState((s) => (s.studyPlan ? { ...s, studyPlan: toggle(s.studyPlan) } : s));
+    bg(() => store.upsertSettings({ ...stateRef.current, studyPlan: next }, uid()), 'studyPlan/toggle');
   }, []);
 
   // Why a question was missed: stored on the sheet (reasons[i]) and on the
   // matching mistake row so Strengths can split knowledge vs technique.
   const tagMistakeReason = useCallback((sheetId, i, reason) => {
-    let sheet = null;
-    let mistake = null;
-    setState((s) => {
-      const worksheets = (s.worksheets || []).map((w) => {
-        if (w.id !== sheetId) return w;
-        const reasons = { ...(w.reasons || {}) };
-        if (reason) reasons[i] = reason; else delete reasons[i];
-        sheet = { ...w, reasons };
-        return sheet;
-      });
-      const mid = `${sheetId}-${i}`;
-      const mistakes = (s.mistakes || []).map((m) => {
-        if (m.id !== mid) return m;
-        mistake = { ...m, reason: reason || null };
-        return mistake;
-      });
-      return { ...s, worksheets, mistakes };
-    });
+    const withReason = (w) => {
+      const reasons = { ...(w.reasons || {}) };
+      if (reason) reasons[i] = reason; else delete reasons[i];
+      return { ...w, reasons };
+    };
+    const mid = `${sheetId}-${i}`;
+    const curSheet = (stateRef.current.worksheets || []).find((w) => w.id === sheetId);
+    const curMistake = (stateRef.current.mistakes || []).find((m) => m.id === mid);
+    const sheet = curSheet ? withReason(curSheet) : null;
+    const mistake = curMistake ? { ...curMistake, reason: reason || null } : null;
+    setState((s) => ({
+      ...s,
+      worksheets: (s.worksheets || []).map((w) => (w.id === sheetId ? withReason(w) : w)),
+      mistakes: (s.mistakes || []).map((m) => (m.id === mid ? { ...m, reason: reason || null } : m)),
+    }));
     bg(() => sheet && store.upsertWorksheet(sheet, uid()), 'tagReason/sheet');
     bg(() => mistake && store.upsertMistakes([mistake], uid()), 'tagReason/mistake');
   }, []);

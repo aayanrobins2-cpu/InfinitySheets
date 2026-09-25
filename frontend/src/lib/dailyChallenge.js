@@ -4,8 +4,11 @@
 // list (a sheet tagged challenge: today's key).
 import { computeMastery } from './mastery';
 
+// Local calendar date — the challenge rolls over at the student's midnight,
+// not UTC's (toISOString would flip it mid-morning in e.g. India).
 export function dayKey(now = Date.now()) {
-  return new Date(now).toISOString().slice(0, 10);
+  const x = new Date(now);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
 }
 
 // Small seeded PRNG so the pick is stable for the day.
@@ -45,8 +48,9 @@ export function challengeDone(worksheets = [], key = dayKey()) {
 export function challengeStreak(worksheets = [], now = Date.now()) {
   const days = new Set((worksheets || []).filter((w) => w?.challenge).map((w) => w.challenge));
   let streak = 0;
-  let d = new Date(now);
-  if (!days.has(dayKey(d.getTime()))) d = new Date(d.getTime() - 86400000);
-  while (days.has(dayKey(d.getTime()))) { streak += 1; d = new Date(d.getTime() - 86400000); }
+  const d = new Date(now);
+  d.setHours(12, 0, 0, 0);                         // midday: DST-safe day steps
+  if (!days.has(dayKey(d.getTime()))) d.setDate(d.getDate() - 1);
+  while (days.has(dayKey(d.getTime()))) { streak += 1; d.setDate(d.getDate() - 1); }
   return streak;
 }

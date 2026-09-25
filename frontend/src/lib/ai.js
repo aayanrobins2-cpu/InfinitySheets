@@ -157,9 +157,10 @@ ${String(q.extract).slice(0, 2000)}` : '',
     `Reply with JSON only: {"marks": <number 0-${max}>, "max": ${max}, "feedback": "<2-4 sentences: which scheme points were earned, which were missed and why>"}`,
   ].filter(Boolean).join('\n');
   const text = await askAi({ mode: 'mark', context: { board, subject, topic: q._topic || q.topic }, messages: [{ role: 'user', content }] });
-  const m = /\{[\s\S]*\}/.exec(text);
-  if (!m) throw new Error('The marker did not return a result');
-  const parsed = JSON.parse(m[0]);
+  // parseJsonReply tolerates fences / trailing commas; a bare JSON.parse
+  // surfaced a raw SyntaxError to the student on any slightly-off reply.
+  let parsed;
+  try { parsed = parseJsonReply(text); } catch (_) { throw new Error('The marker did not return a result'); }
   const marks = Math.max(0, Math.min(max, Number(parsed.marks) || 0));
   return { marks, max, feedback: String(parsed.feedback || '').trim() };
 }

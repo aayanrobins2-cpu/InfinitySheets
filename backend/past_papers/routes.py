@@ -16,9 +16,10 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
+from starlette.concurrency import run_in_threadpool
 
-from auth_supabase import require_admin
+from auth_supabase import get_current_user, require_admin
 from supabase_client import admin_client
 from .topics import normalize_topic
 
@@ -115,8 +116,10 @@ def _validate(payload: PastPaperIn) -> None:
             raise HTTPException(status_code=422, detail="examAnswer is required for exam-style")
 
 
+# The CRUD handlers are plain `def` so FastAPI runs their blocking Supabase
+# REST calls in the threadpool rather than stalling the event loop.
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def create_past_paper(payload: PastPaperIn, _admin: dict = Depends(require_admin)) -> Dict[str, Any]:
+def create_past_paper(payload: PastPaperIn, _admin: dict = Depends(require_admin)) -> Dict[str, Any]:
     _validate(payload)
     row = _to_row(payload.model_dump())
     res = admin_client().table("past_papers").insert(row).execute()
@@ -125,13 +128,16 @@ async def create_past_paper(payload: PastPaperIn, _admin: dict = Depends(require
 
 
 @router.get("")
-async def list_past_papers(
+def list_past_papers(
     subject: Optional[str] = Query(None),
     topic: Optional[str] = Query(None),
     answerType: Optional[str] = Query(None),
     board: Optional[str] = Query(None),
     addedBy: Optional[str] = Query(None),
     limit: int = Query(500, ge=1, le=2000),
+    # Reads go through the service-role client (bypassing RLS), so the
+    # "authenticated users only" rule has to be enforced here.
+    _user: dict = Depends(get_current_user),
 ) -> List[Dict[str, Any]]:
     query = admin_client().table("past_papers").select("*").order("created_at", desc=True).limit(limit)
     if subject:
@@ -149,7 +155,7 @@ async def list_past_papers(
 
 
 @router.delete("/{pp_id}")
-async def delete_past_paper(pp_id: str, _admin: dict = Depends(require_admin)) -> Response:
+def delete_past_paper(pp_id: str, _admin: dict = Depends(require_admin)) -> Response:
     res = admin_client().table("past_papers").delete().eq("id", pp_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Past-paper question not found")
@@ -217,13 +223,13 @@ def _sanitize_extracted(raw: Dict[str, Any], defaults: Dict[str, Any]) -> List[D
     for item in items:
         if not isinstance(item, dict):
             continue
-        q_text = (item.get("q") or "").strip()
+        q_text = str(item.get("q") or "").strip()
         if not q_text:
             continue
         answer_type = item.get("answerType") if item.get("answerType") in ANSWER_TYPES else "Multiple choice"
         difficulty = item.get("difficulty") if item.get("difficulty") in DIFFICULTIES else defaults.get("difficulty", "Medium")
         subject = subject_default or (item.get("subject") or "")
-        raw_topic = (item.get("topic") or "").strip() or defaults.get("topic")
+        raw_topic = str(item.get("topic") or "").strip() or defaults.get("topic")
         normalized_topic = normalize_topic(subject, raw_topic) or raw_topic or (defaults.get("topic") or "")
         cleaned: Dict[str, Any] = {
             "q": q_text,
@@ -233,7 +239,7 @@ def _sanitize_extracted(raw: Dict[str, Any], defaults: Dict[str, Any]) -> List[D
             "topic": normalized_topic or "",
             "year": defaults.get("year"),
             "board": defaults.get("board"),
-            "marks": item.get("marks") if isinstance(item.get("marks"), int) else None,
+            "marks": item.get("marks") if isinstance(item.get("marks"), int) and not isinstance(item.get("marks"), bool) else None,
             "link": defaults.get("link"),
             "addedBy": defaults.get("addedBy"),
         }
@@ -242,7 +248,7 @@ def _sanitize_extracted(raw: Dict[str, Any], defaults: Dict[str, Any]) -> List[D
             if isinstance(opts, list):
                 cleaned["options"] = [str(o) for o in opts]
                 a = item.get("a")
-                cleaned["a"] = a if isinstance(a, int) and 0 <= a < len(cleaned["options"]) else 0
+                cleaned["a"] = a if isinstance(a, int) and not isinstance(a, bool) and 0 <= a < len(cleaned["options"]) else 0
         elif answer_type == "Typed response":
             cleaned["typedAnswer"] = (item.get("typedAnswer") or "").strip() or None
             cleaned["typedAliases"] = []
@@ -327,7 +333,7 @@ async def extract_past_papers_from_pdf(
                     q["examAnswer"] = q.get("examAnswer") or q["q"]
                 rows.append(_to_row(q))
             if rows:
-                res = admin_client().table("past_papers").insert(rows).execute()
+                res = await run_in_threadpool(admin_client().table("past_papers").insert(rows).execute)
                 saved = [_row_to_pp(r) for r in (res.data or [])]
 
         return {

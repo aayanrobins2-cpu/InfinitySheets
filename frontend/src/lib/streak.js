@@ -10,6 +10,10 @@
 // gain or lose anyone a day.
 
 export function dayKey(d) {
+  // A stored key ("2026-09-25") is already a local date. new Date() would
+  // parse it as UTC midnight, which west of UTC is the previous local day —
+  // that made a second sheet on the same day reset the streak to 1.
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
   const x = d instanceof Date ? d : new Date(d);
   if (Number.isNaN(x.getTime())) return null;
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;

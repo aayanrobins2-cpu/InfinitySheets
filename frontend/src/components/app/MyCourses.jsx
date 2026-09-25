@@ -37,7 +37,7 @@ function SubjectRow({ s }) {
         <span className="text-[15px] leading-none">{info.emoji}</span>
         <div className="min-w-0">
           <div className="text-[13px] font-semibold text-slate-900 truncate">{s.subject}{s.ibLevel && <span className="ml-1.5 align-middle px-1.5 py-0.5 rounded bg-violet-100 text-violet-800 text-[10px] font-semibold">{s.ibLevel}</span>}</div>
-          <div className="text-[11px] text-slate-500">{s.examDate ? new Date(s.examDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}</div>
+          <div className="text-[11px] text-slate-500">{s.examDate ? new Date(s.examDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}</div>
         </div>
       </div>
       <div className="text-right">

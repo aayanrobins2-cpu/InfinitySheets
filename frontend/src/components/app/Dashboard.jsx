@@ -526,7 +526,7 @@ export default function Dashboard({ go }) {
                 <div key={c.name + c.date} className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-[color:var(--color-border)]">
                   <div className="min-w-0">
                     <div className="text-[13.5px] font-medium text-slate-900 truncate">{c.name}</div>
-                    <div className="text-[11.5px] text-slate-500">{new Date(c.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                    <div className="text-[11.5px] text-slate-500">{new Date(c.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-[16px] font-semibold tabular-nums text-slate-900">{c.days}</div>

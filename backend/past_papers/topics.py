@@ -6,6 +6,7 @@ label without needing the frontend to pass the list in every request.
 
 from __future__ import annotations
 
+import re
 from difflib import SequenceMatcher
 from typing import Dict, List, Optional
 
@@ -101,7 +102,10 @@ def normalize_topic(subject: str, proposed: Optional[str]) -> Optional[str]:
             return t
     # 2) Keyword-based hints for this subject.
     for keywords, canonical in _KEYWORD_HINTS.get(subject, []):
-        if any(k in guess_lower for k in keywords):
+        # Keywords must start a word: a bare substring test sent "using" to
+        # Trigonometry ("sin"), "meaning" to Statistics ("mean") and
+        # "excellent" to Cell Biology ("cell").
+        if any(re.search(rf"\b{re.escape(k)}", guess_lower) for k in keywords):
             if canonical in valid:
                 return canonical
     # 3) Fuzzy string similarity to canonical topics.

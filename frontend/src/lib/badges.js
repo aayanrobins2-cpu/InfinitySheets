@@ -23,6 +23,8 @@ export const BADGES = [
   { id: 'flashcards', name: 'Card shark', emoji: '🃏', how: 'Go through 20 flashcards' },
 ];
 
+import { effectiveStreak } from './streak';
+
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Which badges are unlocked: { [id]: true }. */
@@ -36,7 +38,7 @@ export function computeBadges(state, now = Date.now()) {
   if (ws.length >= 50) on('fifty-sheets');
   if (questions >= 100) on('hundred-questions');
   if (questions >= 500) on('five-hundred-questions');
-  const streak = state.streak || 0;
+  const streak = effectiveStreak(state, new Date(now));
   if (streak >= 3) on('streak-3');
   if (streak >= 7) on('streak-7');
   if (streak >= 30) on('streak-30');
@@ -68,7 +70,8 @@ export function computeBadges(state, now = Date.now()) {
 export function nextBadge(state, unlocked) {
   const ws = (state.worksheets || []).filter((w) => w && (w.total || 0) > 0);
   const questions = ws.reduce((s, w) => s + (w.total || 0), 0);
-  const streak = state.streak || 0;
+  // The stored streak is stale once a day is missed; progress uses the live one.
+  const streak = effectiveStreak(state);
   const progress = {
     'first-sheet': ws.length / 1, 'ten-sheets': ws.length / 10, 'fifty-sheets': ws.length / 50,
     'hundred-questions': questions / 100, 'five-hundred-questions': questions / 500,

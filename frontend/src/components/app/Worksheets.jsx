@@ -28,6 +28,7 @@ import { Wand2, BookOpenCheck, MessageCircleQuestion, Zap } from 'lucide-react';
 import { usePlus, PlusBadge } from './PlusLock';
 import { papersFor } from '../../lib/paperTypes';
 import AiChat from './ai/AiChat';
+import { dayKey } from '../../lib/streak';
 
 // Why a question was missed — tagged on the result screen.
 export const MISTAKE_REASONS = [['misread', 'Misread'], ['careless', 'Careless slip'], ['unknown', "Didn't know"], ['time', 'Ran out of time']];
@@ -50,9 +51,19 @@ function normalizeText(s) {
   return asciiNotation((s || '').toString())
     .toLowerCase()
     .replace(/[\u2018\u2019\u201C\u201D]/g, "'")
+    // A leading minus on a number is meaningful ("-3" is not "3"); keep it as
+    // a token before the punctuation strip below throws it away.
+    .replace(/(^|[\s(=,:])[-\u2212](?=\d)/g, '$1minus')
     .replace(/[^a-z0-9\s\.]/g, ' ')
+    .replace(/\.(?!\d)/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+// `needle` appears in `hay` as whole words ("12.5" is not inside "112.5",
+// "cat" is not inside "category"). Both are normalizeText output.
+function containsWords(hay, needle) {
+  return ` ${hay} `.includes(` ${needle} `);
 }
 
 function gradeTyped(userAnswer, expected, aliases = []) {
@@ -60,8 +71,11 @@ function gradeTyped(userAnswer, expected, aliases = []) {
   if (!u) return false;
   const candidates = [expected, ...(aliases || [])].map(normalizeText).filter(Boolean);
   if (!candidates.length) return false;
-  // Exact match after normalization, OR one contains the other (short answers).
-  return candidates.some((c) => u === c || (c.length >= 3 && (u.includes(c) || c.includes(u))));
+  // Exact match after normalization, or the accepted answer written inside a
+  // longer reply ("the answer is 12.5 m"). Whole words only: plain substring
+  // matching marked "2.5" right for "12.5" and "photo" right for
+  // "photosynthesis".
+  return candidates.some((c) => u === c || (c.length >= 3 && containsWords(u, c)));
 }
 
 function gradeExamStyle(userAnswer, keywords = []) {
@@ -69,7 +83,11 @@ function gradeExamStyle(userAnswer, keywords = []) {
   if (!kw.length) return null; // not gradable → treat as ungraded (won't count as mistake)
   const u = normalizeText(userAnswer);
   if (!u) return false;
-  const hit = kw.filter((k) => u.includes(k)).length;
+  // Whole-word, tolerating a short inflection ("cell" → "cells",
+  // "evaporate" → "evaporated") but not a different word that merely
+  // starts or ends with the keyword.
+  const esc = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const hit = kw.filter((k) => new RegExp(`(^| )${esc(k)}[a-z]{0,3}( |$)`).test(u)).length;
   // Pass threshold: at least half of the keywords must appear.
   return hit / kw.length >= 0.5;
 }
@@ -414,7 +432,7 @@ function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerTy
   });
 
   const safeName = (subject || 'worksheet').replace(/\W+/g, '_').slice(0, 40).toLowerCase();
-  const stamp = new Date().toISOString().slice(0, 10);
+  const stamp = dayKey(new Date());
   doc.save(`infinitysheets_${safeName}_${stamp}.pdf`);
 }
 
@@ -961,7 +979,7 @@ export default function Worksheets({ go }) {
       addPendingSubmission({
         subject, topics, answerType, difficulty, duration,
         questions: qs, board: boardForSubject, ibLevel: ibLevelForSubject,
-        dueDate: due.toISOString().slice(0, 10),
+        dueDate: dayKey(due),
       });
     } catch (err) {
       // eslint-disable-next-line no-console

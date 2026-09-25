@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { buildStudyPlan, tweakStudyPlan, isAiEnabled } from '../../lib/ai';
 import { enrolledSubjects, primaryTrack, subjectBoards } from '../../lib/subjects';
 import { track } from '../../lib/analytics';
+import { dayKey } from '../../lib/streak';
 
 // AI study plan for the week: weakest topics first, spaced reviews later,
 // tasks tick off and persist with the student's settings.
@@ -14,7 +15,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
   const plan = state.studyPlan;
   const aiOn = isAiEnabled(state);
   const subjects = useMemo(() => enrolledSubjects(state.courses, state.user?.subjects, state.user?.examTrack), [state.courses, state.user?.subjects, state.user?.examTrack]);
-  const daysToExam = state.settings?.examDate ? Math.ceil((new Date(state.settings.examDate).getTime() - Date.now()) / 86400000) : null;
+  const daysToExam = state.settings?.examDate ? Math.ceil((new Date(state.settings.examDate + 'T00:00:00').getTime() - Date.now()) / 86400000) : null;
   const stale = plan?.createdAt && Date.now() - new Date(plan.createdAt).getTime() > 7 * 24 * 60 * 60 * 1000;
 
   // Every exam the student registered, across all courses (each subject may
@@ -44,7 +45,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
         plan, instruction, history: chat.slice(-6),
         board: primaryTrack(state.courses, state.user?.examTrack),
         boards: subjectBoards(state.courses, primaryTrack(state.courses, state.user?.examTrack)),
-        exams: allExams(), subjects, startDate: new Date().toISOString().slice(0, 10),
+        exams: allExams(), subjects, startDate: dayKey(new Date()),
       });
       setStudyPlan({ summary: p.summary, days: p.days, createdAt: plan.createdAt || new Date().toISOString(), tweakedAt: new Date().toISOString() });
       setChat((c) => [...c, { role: 'assistant', content: p.reply }]);
@@ -68,7 +69,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
         weeklyGoal: state.settings?.weeklyGoal,
         weakTopics: weak,
         subjects,
-        startDate: new Date().toISOString().slice(0, 10),
+        startDate: dayKey(new Date()),
       });
       setStudyPlan({ ...p, createdAt: new Date().toISOString() });
       setChat([]);
