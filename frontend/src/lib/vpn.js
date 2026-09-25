@@ -1,19 +1,25 @@
-// "Probably on a VPN" — a deliberately conservative check.
+// "Probably on a VPN".
 //
-// There is no way to detect a VPN from a browser with certainty, and a false
-// accusation is much worse than a miss, so we compare only two things we can
-// see honestly:
+// We compare two things:
+//   1. the timezone the visitor's device is set to, and
+//   2. the timezone Netlify geolocates their connection to (/api/geo, a
+//      Netlify function reading `context.geo` — the visitor's own IP location,
+//      nothing stored, no third party).
+// A VPN makes the connection appear somewhere else. When the two are three or
+// more hours apart, the connection is surfacing far from where the device
+// thinks it is — in practice a VPN or proxy.
 //
-//   1. the timezone the device is set to, and
-//   2. the UTC offset of the network edge the request came out of, from our
-//      own `geo` Supabase function (it reads the Cloudflare data-centre code
-//      already attached to the request — no IP is returned, nothing is
-//      stored, and no third-party lookup happens).
+// History: the first version (Sept 2026) used the Cloudflare data centre that
+// served a Supabase request instead of the visitor's location. That is not
+// where the visitor is (an Indian browser with no VPN was routed via Boston),
+// so it walled genuine users and was switched off. This version uses real
+// per-visitor geolocation.
 //
-// A three-hour-plus gap means the connection surfaces a long way from where
-// the device thinks it is, which in practice is a VPN or proxy. Anything
-// smaller, or anything unknown, says nothing at all.
-import { SUPABASE_URL } from './supabase';
+// Limits: a VPN that exits in the same timezone band (e.g. an Indian VPN
+// server for an Indian user) is not detected; a traveller whose device clock
+// is still on home time can be flagged.
+
+const GEO_URL = '/api/geo';
 
 function offsetMinutes(timeZone, at = new Date()) {
   try {
@@ -27,30 +33,25 @@ function offsetMinutes(timeZone, at = new Date()) {
 }
 
 /**
- * detectVpn() → { likely, hours, deviceZone, edgeZone, edge } or null when
- * anything at all is unknown. Never guesses.
+ * detectVpn() → { likely, hours, deviceZone, networkZone, country } or null
+ * when anything is unknown (offline, local dev, lookup failed) — never guesses.
  */
-// OFF (25 Sept 2026): the cf-ray data-centre code is NOT where the visitor is.
-// A browser in India with no VPN was routed via Boston (BOS), so this check
-// walled genuine users. Detection stays disabled — returning null means "no
-// VPN" — until there is a real per-visitor location signal (e.g. a geo-IP
-// country) to compare against.
-export const VPN_DETECTION_ENABLED = false;
-
-export async function detectVpn({ timeoutMs = 2500 } = {}) {
-  if (!VPN_DETECTION_ENABLED) return null;
+export async function detectVpn({ timeoutMs = 3000 } = {}) {
   try {
-    if (!SUPABASE_URL) return null;
     const deviceZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const deviceOffset = deviceZone ? offsetMinutes(deviceZone) : null;
     if (deviceOffset === null) return null;
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/geo`, { signal: AbortSignal.timeout(timeoutMs), cache: 'no-store' });
+    const res = await fetch(GEO_URL, { signal: AbortSignal.timeout(timeoutMs), cache: 'no-store' });
     if (!res.ok) return null;
+    const type = res.headers.get('content-type') || '';
+    if (!type.includes('json')) return null; // e.g. local dev serving index.html
     const geo = await res.json();
-    if (typeof geo?.offsetMinutes !== 'number') return null;
-    const hours = Math.abs(deviceOffset - geo.offsetMinutes) / 60;
-    return { likely: hours >= 3, hours, deviceZone, edgeZone: geo.timezone || null, edge: geo.edge || null };
+    if (!geo?.timezone) return null;
+    const networkOffset = offsetMinutes(geo.timezone);
+    if (networkOffset === null) return null;
+    const hours = Math.abs(deviceOffset - networkOffset) / 60;
+    return { likely: hours >= 3, hours, deviceZone, networkZone: geo.timezone, country: geo.country || null };
   } catch (_) {
-    return null; // offline, blocked, or the function is unavailable
+    return null;
   }
 }

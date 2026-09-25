@@ -76,23 +76,3 @@ export async function detectAdblock() {
     return false;
   }
 }
-
-// "Continue without disabling" is remembered for a few days, not forever, so
-// the ask comes back if the blocker is still on.
-const ACK_KEY = 'infinitysheets_adblock_ack';
-const ACK_DAYS = 3;
-
-export function adblockAcked() {
-  try {
-    const v = localStorage.getItem(ACK_KEY);
-    if (!v) return false;
-    const at = Number(v);
-    // Old versions stored '1' (forever) — treat those as expired.
-    if (!at || at < 1e12) return false;
-    return Date.now() - at < ACK_DAYS * 86400000;
-  } catch (_) { return false; }
-}
-
-export function ackAdblock() {
-  try { localStorage.setItem(ACK_KEY, String(Date.now())); } catch (_) { /* private mode */ }
-}
