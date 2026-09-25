@@ -21,6 +21,11 @@ def get_backend_url() -> str:
 BASE_URL = get_backend_url()
 API_BASE = f"{BASE_URL}/api"
 
+# Every /api/past-papers route needs a signed-in user (writes need an admin).
+# Pass a Supabase access token for an admin account in TEST_ACCESS_TOKEN.
+ACCESS_TOKEN = os.environ.get("TEST_ACCESS_TOKEN", "")
+AUTH_HEADERS = {"Authorization": f"Bearer {ACCESS_TOKEN}"} if ACCESS_TOKEN else {}
+
 # Test results tracking
 test_results = []
 created_ids = []  # Track created items for cleanup
@@ -54,7 +59,7 @@ def test_post_with_link_and_board():
     }
     
     try:
-        response = requests.post(f"{API_BASE}/past-papers", json=payload, timeout=10)
+        response = requests.post(f"{API_BASE}/past-papers", headers=AUTH_HEADERS, json=payload, timeout=10)
         
         if response.status_code == 201:
             data = response.json()
@@ -83,7 +88,7 @@ def test_post_with_link_and_board():
 def test_get_returns_link_and_board():
     """Test 2: GET /api/past-papers returns items with link and board fields."""
     try:
-        response = requests.get(f"{API_BASE}/past-papers", timeout=10)
+        response = requests.get(f"{API_BASE}/past-papers", headers=AUTH_HEADERS, timeout=10)
         
         if response.status_code == 200:
             data = response.json()
@@ -128,6 +133,7 @@ def test_extract_valid_pdf():
             # Increased timeout to 120s for LLM processing
             response = requests.post(
                 f"{API_BASE}/past-papers/extract",
+                headers=AUTH_HEADERS,
                 files=files,
                 params=params,
                 timeout=120
@@ -183,6 +189,7 @@ def test_extract_non_pdf_file():
         
         response = requests.post(
             f"{API_BASE}/past-papers/extract",
+            headers=AUTH_HEADERS,
             files=files,
             params=params,
             timeout=10
@@ -206,6 +213,7 @@ def test_extract_no_file():
         # Send request without file
         response = requests.post(
             f"{API_BASE}/past-papers/extract",
+            headers=AUTH_HEADERS,
             params=params,
             timeout=10
         )
@@ -220,8 +228,18 @@ def test_extract_no_file():
         log_test("Extract with no file returns 422", False, f"Exception: {str(e)}")
 
 
+def test_get_requires_auth():
+    """Test 6: GET /api/past-papers without a token should return 401."""
+    try:
+        response = requests.get(f"{API_BASE}/past-papers", timeout=10)
+        log_test("Anonymous GET /api/past-papers is rejected", response.status_code == 401,
+                f"Status: {response.status_code}")
+    except Exception as e:
+        log_test("Anonymous GET /api/past-papers is rejected", False, f"Exception: {str(e)}")
+
+
 def test_pre_existing_endpoints():
-    """Test 6: Verify pre-existing endpoints still work (regression check)."""
+    """Test 7: Verify pre-existing endpoints still work (regression check)."""
     try:
         # Test GET /api/
         response = requests.get(f"{API_BASE}/", timeout=10)
@@ -232,7 +250,7 @@ def test_pre_existing_endpoints():
                     f"Status: {response.status_code}, Body: {response.text}")
         
         # Test GET /api/past-papers
-        response = requests.get(f"{API_BASE}/past-papers", timeout=10)
+        response = requests.get(f"{API_BASE}/past-papers", headers=AUTH_HEADERS, timeout=10)
         if response.status_code == 200 and isinstance(response.json(), list):
             log_test("Pre-existing GET /api/past-papers still works", True, 
                     f"Returns list with {len(response.json())} items")
@@ -250,7 +268,7 @@ def test_pre_existing_endpoints():
             "options": ["5", "7", "9", "11"],
             "a": 1
         }
-        response = requests.post(f"{API_BASE}/past-papers", json=payload, timeout=10)
+        response = requests.post(f"{API_BASE}/past-papers", headers=AUTH_HEADERS, json=payload, timeout=10)
         if response.status_code == 201:
             data = response.json()
             created_ids.append(data["id"])
@@ -263,7 +281,7 @@ def test_pre_existing_endpoints():
         # Test DELETE /api/past-papers/{id}
         if created_ids:
             test_id = created_ids[-1]
-            response = requests.delete(f"{API_BASE}/past-papers/{test_id}", timeout=10)
+            response = requests.delete(f"{API_BASE}/past-papers/{test_id}", headers=AUTH_HEADERS, timeout=10)
             if response.status_code == 204:
                 created_ids.remove(test_id)
                 log_test("Pre-existing DELETE /api/past-papers/{id} still works", True, 
@@ -284,7 +302,7 @@ def cleanup_created_items():
     print("\n🧹 Cleaning up test data...")
     for item_id in created_ids[:]:
         try:
-            response = requests.delete(f"{API_BASE}/past-papers/{item_id}", timeout=10)
+            response = requests.delete(f"{API_BASE}/past-papers/{item_id}", headers=AUTH_HEADERS, timeout=10)
             if response.status_code == 204:
                 print(f"  Deleted {item_id}")
                 created_ids.remove(item_id)
@@ -327,6 +345,8 @@ def main():
     print("="*70)
     print(f"Backend URL: {BASE_URL}")
     print(f"API Base: {API_BASE}")
+    if not ACCESS_TOKEN:
+        print("WARNING: TEST_ACCESS_TOKEN is not set; authenticated tests will get 401")
     print("="*70 + "\n")
     
     # Run regression tests for new features
@@ -335,6 +355,7 @@ def main():
     test_extract_valid_pdf()
     test_extract_non_pdf_file()
     test_extract_no_file()
+    test_get_requires_auth()
     test_pre_existing_endpoints()
     
     # Cleanup remaining items
