@@ -38,17 +38,9 @@ const STEPS = [
     bullets: ['Topic overview cited to the syllabus', 'Ask a doubt about any topic', 'Add subjects to a course from here'],
   },
   {
-    route: 'qbank',
-    target: 'qbank',
-    eyebrow: 'Step 4',
-    title: 'Syllabus Bank',
-    body: 'Each subject links to its official syllabus and lists the real past-paper questions in the library, grouped by topic. Practise a topic straight from here.',
-    bullets: ['Official syllabus per subject', 'Past-paper questions by topic', 'Reveal answers, search, practise'],
-  },
-  {
     route: 'worksheets',
     target: 'worksheets',
-    eyebrow: 'Step 5',
+    eyebrow: 'Step 4',
     title: 'Build a worksheet',
     body: 'Pick subject, topics, answer type, difficulty and duration. AI writes original in-syllabus questions; tick past papers to mix in real ones. Exam mode locks the screen; Pace coach budgets your time per question.',
     bullets: ['Adaptive difficulty and full exam simulations', 'Tag why you missed a question (optional), get the worked solution', 'Missed questions come back as spaced reviews'],
@@ -56,7 +48,7 @@ const STEPS = [
   {
     route: 'history',
     target: 'history',
-    eyebrow: 'Step 6',
+    eyebrow: 'Step 5',
     title: 'Worksheet History',
     body: 'Every sheet you finish, with its score, AI diagnosis and a "How you worked" analysis: time per question, revisits, changed answers and what it says about your technique.',
     bullets: ['Resume an unfinished sheet', 'Time-per-question graph', 'Mistake history lives here too'],
@@ -64,7 +56,7 @@ const STEPS = [
   {
     route: 'progress',
     target: 'progress',
-    eyebrow: 'Step 7',
+    eyebrow: 'Step 6',
     title: 'Performance',
     body: 'Score trend per subject with the predicted grade in your board’s format. Click a subject to see it alone. Timing trends show which topics slow you down and whether speed costs accuracy.',
     bullets: ['Predicted grade per subject', 'Pace vs accuracy', 'Improvement over time'],
@@ -72,7 +64,7 @@ const STEPS = [
   {
     route: 'strengths',
     target: 'strengths',
-    eyebrow: 'Step 8',
+    eyebrow: 'Step 7',
     title: 'Strengths & Weaknesses',
     body: 'Topics sorted by accuracy with adaptive thresholds you can customise. Weak topics feed the recommendations and the "Study next" chips on your dashboard.',
     bullets: ['Filter by subject', 'Adaptive or custom thresholds', 'Weakest topics first'],
@@ -80,7 +72,7 @@ const STEPS = [
   {
     route: 'recommendations',
     target: 'recommendations',
-    eyebrow: 'Step 9',
+    eyebrow: 'Step 8',
     title: 'Smart Learning',
     body: 'Your AI study coach knows your boards, exam dates, weak topics and every diagnosis. Below it: all worksheet diagnoses and your next best actions.',
     bullets: ['A 7-day AI study plan you tick off', 'Re-run any diagnosis', 'Next best actions by weakest topic'],
@@ -88,7 +80,7 @@ const STEPS = [
   {
     route: 'flashcards',
     target: 'flashcards',
-    eyebrow: 'Step 10',
+    eyebrow: 'Step 9',
     title: 'Notes & Flashcards',
     body: 'Keep your PDF and audio notes per subject, work through concept flashcards, and blurt: your notes come back with the key facts blanked out for you to fill in from memory.',
     bullets: ['Upload PDF notes or record audio notes', 'Flashcards by subject and topic', 'Blurting: fill the blanks from memory'],
@@ -96,7 +88,7 @@ const STEPS = [
   {
     route: 'groups',
     target: 'groups',
-    eyebrow: 'Step 11',
+    eyebrow: 'Step 10',
     title: 'Study Groups',
     body: 'Create a group for your class and share the 8-character code. The weekly leaderboard shows first names, questions answered, accuracy and streak — never answers or emails.',
     bullets: ['Join with a code', 'This week in your group — no rankings', 'First names only'],
@@ -104,7 +96,7 @@ const STEPS = [
   {
     route: 'settings',
     target: 'settings',
-    eyebrow: 'Step 12',
+    eyebrow: 'Step 11',
     title: 'Settings',
     body: 'Goals, difficulty, keyboard shortcuts, light or dark mode, daily reminders, the weekly email digest, your privacy choices and a copy of your data, and one switch that turns every AI assistant off.',
     bullets: ['Reminders and weekly digest', 'Privacy & download my data', 'AI on / off, theme and shortcuts'],

@@ -36,7 +36,6 @@ const BASE_NAV = [
   { key: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { key: 'courses', label: 'My Courses', Icon: GraduationCap },
   { key: 'study', label: 'Start Studying', Icon: Pencil },
-  { key: 'qbank', label: 'Syllabus Bank', Icon: Library },
   { key: 'history', label: 'Worksheet History', Icon: History },
   { key: 'progress', label: 'Performance', Icon: TrendingUp },
   { key: 'strengths', label: 'Strengths & Weaknesses', Icon: Dumbbell },
@@ -47,6 +46,9 @@ const BASE_NAV = [
 ];
 const ADMIN_ITEM = { key: 'admin', label: 'Admin', Icon: Shield };
 const HIDDEN_ROUTES = [
+  // Off the sidebar (each subject page links its syllabus now), but old
+  // #qbank links still open it.
+  { key: 'qbank', label: 'Syllabus Bank', Icon: Library },
   { key: 'worksheets', label: 'Create a Worksheet', Icon: FileText },
   { key: 'mistakes', label: 'Mistake History', Icon: AlertTriangle },
   { key: 'course-overview', label: 'Course Overview', Icon: GraduationCap },
