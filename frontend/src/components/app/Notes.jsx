@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FileText, Mic, Square, Upload, Trash2, Loader2, Play, Pause, ExternalLink, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
-import { haptic } from '../../lib/haptics';
 import { track } from '../../lib/analytics';
 import { uploadNoteFile, noteFileUrl, deleteNoteFile } from '../../lib/dataStore';
 import { isSupabaseConfigured } from '../../lib/supabase';
@@ -48,7 +47,6 @@ export default function Notes({ subject, topics, board }) {
       const id = uid();
       const path = await uploadNoteFile(userId, id, file, extFor(file));
       addNote({ id, subject, topic: topic || null, kind, name: file.name || (kind === 'audio' ? `Audio note ${new Date().toLocaleString()}` : 'Notes.pdf'), path, size: file.size, mime: file.type || null, createdAt: new Date().toISOString(), ...extra });
-      haptic('success');
       track('note_added', { kind, subject });
       toast.success(kind === 'pdf' ? 'Notes saved' : 'Audio note saved');
     } catch (e) {
@@ -71,7 +69,6 @@ export default function Notes({ subject, topics, board }) {
   const remove = async (n) => {
     try { await deleteNoteFile(n.path); } catch (_) { /* metadata still goes */ }
     removeNote(n.id);
-    haptic('light');
     toast.success('Removed');
   };
 
@@ -207,7 +204,6 @@ function Recorder({ onDone, disabled }) {
       setSecs(0);
       secsRef.current = 0;
       timer.current = setInterval(() => { secsRef.current += 1; setSecs(secsRef.current); }, 1000);
-      haptic('medium');
     } catch (e) {
       toast.error(e?.name === 'NotAllowedError' ? 'Microphone access was blocked' : 'Could not start recording');
     }

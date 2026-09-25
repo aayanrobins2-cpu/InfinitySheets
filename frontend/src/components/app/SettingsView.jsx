@@ -296,13 +296,6 @@ function AccessibilitySection({ settings, updateSettings, theme, toggleTheme }) 
           hint="Removes every blur and transparency for readability and for older devices. The slider is ignored while this is on."
           testid="pref-glass-off"
         />
-        <Toggle
-          checked={settings.haptics !== false}
-          onChange={(v) => { updateSettings({ haptics: v }); toast.success(v ? 'Vibration feedback on' : 'Vibration feedback off'); if (v) { try { navigator.vibrate && navigator.vibrate([12, 40, 18]); } catch (_) { /* ignore */ } } }}
-          label="Vibration feedback"
-          hint="Short buzzes on your phone for right/wrong answers, finishing a sheet, time's up and badges. (Android — iPhones don't expose vibration to websites.)"
-          testid="pref-haptics"
-        />
       </div>
     </Section>
   );
