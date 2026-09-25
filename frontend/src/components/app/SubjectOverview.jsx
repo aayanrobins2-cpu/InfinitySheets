@@ -83,7 +83,7 @@ export default function SubjectOverview({ subject, go, onBack }) {
           onOpen={(topic) => { window.location.hash = `#topic?subject=${encodeURIComponent(subject)}&topic=${encodeURIComponent(topic)}`; }}
         />
         <div className="flex flex-col gap-4">
-          <SubjectSidePanels keyTopics={info.keyTopics} studyTips={info.studyTips} />
+          <SubjectSidePanels subject={subject} board={board} ibLevel={ibLevel} />
           <PastPapersPanel pastPapers={state.pastPapers} subject={subject} board={board} />
         </div>
       </div>

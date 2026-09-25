@@ -3,43 +3,18 @@ import { HeartHandshake, X, Globe2, Sparkles } from 'lucide-react';
 import { isPlus } from '../lib/entitlements';
 import { useApp } from '../context/AppContext';
 import { detectVpn } from '../lib/vpn';
+import { detectAdblock, adblockAcked, ackAdblock } from '../lib/adblock';
 import { openPlusBanner, PlusMark } from './app/PlusUpgradeBanner';
 
 // The two things that stop ads paying for the site: an ad blocker, and a VPN
 // that makes the traffic worthless to advertisers.
-//   - Ad blocker: a nudge with a "continue anyway" out, asked once.
+//   - Ad blocker: a nudge with a "continue anyway" out, re-asked every few days
+//     while the blocker stays on (detection: lib/adblock.js).
 //   - VPN: a wall. It cannot be dismissed or clicked past — the only ways on
 //     are turning the VPN off (then reload) or InfinitySheets+. It is checked
 //     on every load and nothing about it is remembered, so an old "continue"
 //     from before the wall existed does not let anyone skip it.
 // InfinitySheets+ members (and admins) never see either — they pay for the site.
-const ACK_KEY = 'infinitysheets_adblock_ack';
-
-// Bait-element detection: ad blockers hide elements whose class names look like
-// ad slots. We drop one off-screen, then check whether it was hidden/removed.
-function detectAdblock() {
-  return new Promise((resolve) => {
-    try {
-      const bait = document.createElement('div');
-      bait.className = 'adsbox ad-banner ads pub_300x250 pub_300x250m text-ad textAd text_ad text_ads text-ads';
-      bait.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;';
-      bait.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(bait);
-      // Give an extension a tick to act on it.
-      setTimeout(() => {
-        const blocked = bait.offsetParent === null || bait.offsetHeight === 0 || bait.clientHeight === 0
-          || window.getComputedStyle(bait).display === 'none';
-        try { bait.remove(); } catch (_) { /* noop */ }
-        resolve(blocked);
-      }, 150);
-    } catch (_) {
-      resolve(false);
-    }
-  });
-}
-
-const read = (k) => { try { return localStorage.getItem(k) === '1'; } catch (_) { return false; } };
-const ack = (k) => { try { localStorage.setItem(k, '1'); } catch (_) { /* ignore */ } };
 
 export default function AdblockNotice() {
   const { state } = useApp();
@@ -55,7 +30,7 @@ export default function AdblockNotice() {
       const vpn = await detectVpn();
       if (!alive) return;
       if (vpn?.likely) { setKind('vpn'); return; }
-      if (!read(ACK_KEY)) {
+      if (!adblockAcked()) {
         const blocked = await detectAdblock();
         if (alive && blocked) setKind('adblock');
       }
@@ -64,12 +39,12 @@ export default function AdblockNotice() {
   }, [plus]);
 
   const isVpn = kind === 'vpn';
-  const dismiss = () => { ack(ACK_KEY); setKind(null); };
+  const dismiss = () => { ackAdblock(); setKind(null); };
   // Show them exactly what + includes. The ad-blocker nudge closes; the VPN
   // wall stays underneath the banner, so closing the banner lands them back
   // on the wall, not in the app.
   const goPlus = () => {
-    if (!isVpn) { ack(ACK_KEY); setKind(null); }
+    if (!isVpn) { ackAdblock(); setKind(null); }
     openPlusBanner();
   };
 
