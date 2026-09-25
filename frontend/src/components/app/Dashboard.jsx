@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, Mail, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { haptic } from '../../lib/haptics';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
 import { predictedBreakdown, formatGrade, scoreToIBGrade } from '../../lib/predictedGrade';
 import { effectiveStreak } from '../../lib/streak';
@@ -681,7 +680,6 @@ export default function Dashboard({ go }) {
     clearTimeout(r.timer);
     r.timer = setTimeout(() => {
       r.active = true; setLiftId(id);
-      haptic('medium');
     }, 450);
   };
   const onCardPointerMove = (e) => {

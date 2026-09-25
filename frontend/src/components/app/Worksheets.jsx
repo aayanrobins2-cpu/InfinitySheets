@@ -5,7 +5,6 @@ import { TOPICS, QUESTION_BANK, EXAM_DURATIONS } from '../../data/mock';
 import { enrolledSubjects, questionsForSubject, resolvedTopics, topicGroups, primaryTrack, subjectEntries } from '../../lib/subjects';
 import { Check, X, Clock, ChevronLeft, ChevronRight, Sparkles, FileText, AlertCircle, Download, Flag, Lock, Maximize2, Gauge, RotateCcw, Loader2, ClipboardCheck, Printer, Play, Upload, Trash2, ChevronDown, Minus } from 'lucide-react';
 import { toast } from 'sonner';
-import { haptic } from '../../lib/haptics';
 import jsPDF from 'jspdf';
 import CreateWorksheetButton from './CreateWorksheetButton';
 import DiagnosisPanel from './ai/DiagnosisPanel';
@@ -754,7 +753,7 @@ export default function Worksheets({ go }) {
   const deadlineRef = useRef(0);
   useEffect(() => {
     if (stage !== 'take') return;
-    if (timeLeft <= 0) { haptic('warning'); finalize(); return; }
+    if (timeLeft <= 0) { finalize(); return; }
     if (!deadlineRef.current || Math.abs(deadlineRef.current - (Date.now() + timeLeft * 1000)) > 5000) deadlineRef.current = Date.now() + timeLeft * 1000;
     const id = setInterval(() => setTimeLeft(Math.max(0, Math.round((deadlineRef.current - Date.now()) / 1000))), 1000);
     return () => clearInterval(id);
@@ -1054,7 +1053,6 @@ export default function Worksheets({ go }) {
       setPaper(null);
       setPaperFiles([]);
       setStage('result');
-      haptic('celebrate');
       toast.success(`Marked: ${correct}/${qs.length} correct`);
     } catch (e) {
       toast.error(e.message || 'Could not assess the answers');
@@ -1129,7 +1127,6 @@ export default function Worksheets({ go }) {
     recordWorksheet(sheet);
     setResult(sheet);
     setStage('result');
-    haptic(sheet.score >= 70 ? 'celebrate' : 'medium');
   };
 
   const fmtTime = (s) => {
@@ -1156,7 +1153,6 @@ export default function Worksheets({ go }) {
       c[idx] = value;
       return c;
     });
-    if (!UNANSWERED(value)) haptic('light');
   };
 
   const setWorkingAt = (idx, value) => {

@@ -5,7 +5,6 @@ import { useApp } from '../../context/AppContext';
 import { buildBlurt, isAiEnabled } from '../../lib/ai';
 import { downloadNoteFile } from '../../lib/dataStore';
 import { fileToParts } from '../../lib/images';
-import { haptic } from '../../lib/haptics';
 import { track } from '../../lib/analytics';
 
 // Loose answer match: case/punctuation-insensitive, ignores articles and
@@ -80,7 +79,6 @@ export default function Blurting({ subject, topics, board, ibLevel }) {
 
   const check = () => {
     setChecked(true);
-    haptic(score.right === score.total ? 'celebrate' : score.right ? 'success' : 'error');
     track('blurt_checked', { right: score.right, total: score.total });
   };
   const retry = () => { setAnswers({}); setChecked(false); setRevealed(false); };
