@@ -30,7 +30,15 @@ function offsetMinutes(timeZone, at = new Date()) {
  * detectVpn() → { likely, hours, deviceZone, edgeZone, edge } or null when
  * anything at all is unknown. Never guesses.
  */
+// OFF (25 Sept 2026): the cf-ray data-centre code is NOT where the visitor is.
+// A browser in India with no VPN was routed via Boston (BOS), so this check
+// walled genuine users. Detection stays disabled — returning null means "no
+// VPN" — until there is a real per-visitor location signal (e.g. a geo-IP
+// country) to compare against.
+export const VPN_DETECTION_ENABLED = false;
+
 export async function detectVpn({ timeoutMs = 2500 } = {}) {
+  if (!VPN_DETECTION_ENABLED) return null;
   try {
     if (!SUPABASE_URL) return null;
     const deviceZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
