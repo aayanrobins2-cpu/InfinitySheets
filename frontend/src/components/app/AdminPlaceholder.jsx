@@ -182,12 +182,12 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
   const { state } = useApp();
   const addedBy = state.user?.email || 'unknown';
   const [form, setForm] = useState(() => emptyForm({ syllabus, subject }));
-  const [filterTopic, setFilterTopic] = useState('');
+  const [filterTopics, setFilterTopics] = useState([]); // [] = all topics
   const [busy, setBusy] = useState(false);
 
   // Reset form whenever the parent category changes (component is keyed, but
   // keep this for safety).
-  useEffect(() => { setForm(emptyForm({ syllabus, subject })); setFilterTopic(''); }, [syllabus, subject]);
+  useEffect(() => { setForm(emptyForm({ syllabus, subject })); setFilterTopics([]); }, [syllabus, subject]);
 
   const setF = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -207,9 +207,9 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
   }), [scopedPastPapers, chainMap]);
 
   const filteredPastPapers = useMemo(() => {
-    if (!filterTopic) return chainedPapers;
-    return chainedPapers.filter((p) => p.topic === filterTopic);
-  }, [chainedPapers, filterTopic]);
+    if (!filterTopics.length) return chainedPapers;
+    return chainedPapers.filter((p) => filterTopics.includes(p.topic));
+  }, [chainedPapers, filterTopics]);
   // Duplicate detector: exact + near-duplicate questions in this category.
   const dupGroups = useMemo(() => findDuplicates(scopedPastPapers), [scopedPastPapers]);
   const dupExtras = dupGroups.reduce((n, g) => n + g.items.length - 1, 0);
@@ -418,7 +418,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
             <div className="text-[12px] tracking-[0.16em] uppercase font-semibold text-blue-700">Past-paper library</div>
-            <div className="text-[12.5px] text-slate-500">{syllabus} · {subject} · {scopedPastPapers.length} total{filterTopic ? ` · ${filteredPastPapers.length} shown` : ''}</div>
+            <div className="text-[12.5px] text-slate-500">{syllabus} · {subject} · {scopedPastPapers.length} total{filterTopics.length ? ` · ${filteredPastPapers.length} shown` : ''}</div>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setShowDups((v) => !v)} className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border transition-colors ${dupExtras ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100' : 'border-[color:var(--color-border)] text-slate-500 hover:bg-slate-50'}`} data-testid="admin-dup-toggle" title="Find duplicate questions">
@@ -434,7 +434,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
           </div>
         </div>
         {showMultiply && (
-          <MultiplyPanel syllabus={syllabus} subject={subject} questions={filteredPastPapers} topicsList={topicsList} filterTopic={filterTopic} addPastPaper={addPastPaper} onClose={() => setShowMultiply(false)} />
+          <MultiplyPanel syllabus={syllabus} subject={subject} questions={filteredPastPapers} topicsList={topicsList} filterTopics={filterTopics} addPastPaper={addPastPaper} onClose={() => setShowMultiply(false)} />
         )}
         {showChains && (
           <div className="mb-4 rounded-xl border border-teal-200 bg-teal-50/40 p-3" data-testid="admin-chain-panel">
@@ -486,10 +486,27 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
           </div>
         )}
 
-        <select className="input-base mb-4" value={filterTopic} onChange={(e) => setFilterTopic(e.target.value)}>
-          <option value="">All topics</option>
-          {topicsList.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
+        {/* Pick one topic, several, or none (= all). Multiply uses the same pick. */}
+        <div className="mb-4" data-testid="admin-topic-filter">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-[11px] tracking-[0.12em] uppercase font-semibold text-slate-500">Topics {filterTopics.length ? `(${filterTopics.length} selected)` : '(all)'}</span>
+            <span className="flex gap-2 text-[11.5px]">
+              <button type="button" onClick={() => setFilterTopics(topicsList)} className="text-blue-700 hover:underline">Select all</button>
+              {filterTopics.length > 0 && <button type="button" onClick={() => setFilterTopics([])} className="text-slate-500 hover:underline">Clear</button>}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {topicsList.map((t) => {
+              const on = filterTopics.includes(t);
+              return (
+                <button key={t} type="button" aria-pressed={on} onClick={() => setFilterTopics((cur) => (on ? cur.filter((x) => x !== t) : [...cur, t]))}
+                  className={`text-[12px] px-2.5 py-1 rounded-lg border transition-colors ${on ? 'border-blue-500 bg-blue-50 text-blue-800' : 'border-[color:var(--color-border)] text-slate-600 hover:bg-slate-50'}`}>
+                  {on ? '✓ ' : ''}{t}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         {filteredPastPapers.length === 0 ? (
           <div className="rounded-xl border border-dashed border-[color:var(--color-border)] p-8 text-center text-[13px] text-slate-500 bg-slate-50/50">
@@ -551,7 +568,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
 // Multiply: new questions on the same concepts as the ones in the library
 // --------------------------------------------------------------------------
 
-function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopic, addPastPaper, onClose }) {
+function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopics = [], addPastPaper, onClose }) {
   const { state } = useApp();
   const addedBy = state.user?.email || 'unknown';
   const [count, setCount] = useState(6);
@@ -568,7 +585,7 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopic, 
       // Seed with a random sample so repeated presses explore the library.
       const seeds = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
       const ibLevel = seeds.every((q) => q.ibLevel === seeds[0].ibLevel) ? seeds[0].ibLevel : null;
-      const list = await multiplyQuestions({ board: syllabus, ibLevel, subject, questions: seeds, count, topics: filterTopic ? [filterTopic] : topicsList, syllabus: resolvedTopics(state.syllabusTopics, syllabus, subject) });
+      const list = await multiplyQuestions({ board: syllabus, ibLevel, subject, questions: seeds, count, topics: filterTopics.length ? filterTopics : topicsList, syllabus: resolvedTopics(state.syllabusTopics, syllabus, subject) });
       setDrafts((d) => [...list.map((q) => ({ ...q, _key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, ibLevel })), ...d]);
       toast.success(`${list.length} new question${list.length === 1 ? '' : 's'} drafted`);
     } catch (e) {
@@ -577,7 +594,7 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopic, 
   };
 
   const payloadFor = (d) => ({
-    subject, board: syllabus, topic: d.topic || filterTopic || topicsList[0] || '',
+    subject, board: syllabus, topic: (filterTopics.includes(d.topic) || !filterTopics.length ? d.topic : '') || filterTopics[0] || topicsList[0] || '',
     ibLevel: syllabus === 'IB' && d.ibLevel ? d.ibLevel : null,
     year: null, difficulty: d.difficulty || 'Exam level', answerType: d.answerType, marks: d.marks || null, link: null, addedBy,
     q: d.q, source: 'multiplied',
@@ -603,7 +620,7 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopic, 
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <div className="min-w-0">
           <div className="text-[12.5px] font-semibold text-blue-900 inline-flex items-center gap-1.5"><Layers className="w-4 h-4" /> Multiply</div>
-          <div className="text-[11.5px] text-slate-600">Reads the {pool.length} question{pool.length === 1 ? '' : 's'} {filterTopic ? `in ${filterTopic}` : 'in this category'} together with the {syllabus} {subject} syllabus and writes new ones on the same concepts — changed values, a different quantity asked for, or two concepts combined.</div>
+          <div className="text-[11.5px] text-slate-600">Reads the {pool.length} question{pool.length === 1 ? '' : 's'} {filterTopics.length ? `in ${filterTopics.length === 1 ? filterTopics[0] : `${filterTopics.length} topics (${filterTopics.join(', ')})`}` : 'in this category'} together with the {syllabus} {subject} syllabus and writes new ones on the same concepts — changed values, a different quantity asked for, or two concepts combined.</div>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-[11.5px] text-slate-600 inline-flex items-center gap-1.5">Make

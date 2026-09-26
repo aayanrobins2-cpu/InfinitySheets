@@ -645,6 +645,7 @@ export async function multiplyQuestions({ board, ibLevel, subject, questions, co
     `Write ${n} NEW questions that test the same concepts. For each: keep the examiner style and answer type of a seed but change the numbers or context, or ask for a different quantity, or combine two seeds' concepts into one question. Never reuse a seed's wording. Every question needs a correct answer and a marking scheme.`,
     syllabus.length ? `The current ${board} ${subject} syllabus is:\n${syllabus.map((t) => `- ${t}`).join('\n')}\nEvery new question must sit inside this syllabus. When you combine concepts you may pair a seed's concept with another syllabus point above, and you may draw on the syllabus for context the seeds do not cover.` : '',
     `Tag each with one of these topics: ${(topics.length ? topics : [...new Set(seeds.map((q) => q.topic).filter(Boolean))]).join('; ') || '(free choice)'}.`,
+    topics.length > 1 ? `Spread the new questions across ALL of these topics as evenly as the count allows (${topics.length} topics), and only write questions on these topics.` : '',
     `Reply as {"questions": [...]}. ${QUESTION_SHAPE}.`,
   ].filter(Boolean).join('\n');
   const text = await askAi({ mode: 'multiply', context: { board, ibLevel, subject }, messages: [{ role: 'user', content }] });

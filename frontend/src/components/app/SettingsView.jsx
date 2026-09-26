@@ -1,4 +1,5 @@
 import { openPlusBanner, PlusName } from './PlusUpgradeBanner';
+import { isOffensiveName, OFFENSIVE_NAME_MESSAGE } from '../../lib/nameFilter';
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { toast } from 'sonner';
@@ -153,6 +154,7 @@ function AccountDetails({ user, updateProfile }) {
   const dirty = name !== (user?.name || '') || email !== (user?.email || '') || avatar !== (user?.avatar || '');
 
   const save = () => {
+    if (isOffensiveName(name)) { toast.error(OFFENSIVE_NAME_MESSAGE); return; }
     updateProfile({ name: name.trim() || 'Student', email: email.trim(), avatar: avatar.trim() || null });
     toast.success('Account details saved');
   };

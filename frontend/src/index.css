@@ -1014,7 +1014,7 @@ html.no-glass .tile-violet, html.no-glass .tile-royal, html.no-glass .tile-emera
 /* InfinitySheets Plus brand: the same blue mark with a slow shine sweep, and a
    shimmering "Plus" wordmark. */
 .brand-plus-text {
-  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 35%, #ffffff 50%, #60a5fa 65%, #2563eb 100%);
+  background: linear-gradient(90deg, #b8860b 0%, #f5c542 30%, #fff4c2 50%, #f5c542 70%, #b8860b 100%);
   background-size: 220% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent;
   animation: brand-plus-sheen 3s linear infinite;
@@ -1038,11 +1038,10 @@ html.no-glass .tile-violet, html.no-glass .tile-royal, html.no-glass .tile-emera
   animation: ambient-drift 26s ease-in-out infinite alternate;
 }
 .app-ambient::before { width: 46vw; height: 46vw; left: -6vw; top: -8vw; background: radial-gradient(circle, rgba(59, 130, 246, 0.30), transparent 65%); }
-.app-ambient::after { width: 40vw; height: 40vw; right: -4vw; bottom: -6vw; background: radial-gradient(circle, rgba(139, 92, 246, 0.24), transparent 65%); animation-duration: 32s; animation-direction: alternate-reverse; }
+.app-ambient::after { width: 40vw; height: 40vw; right: -4vw; bottom: -6vw; background: radial-gradient(circle, rgba(14, 165, 233, 0.24), transparent 65%); animation-duration: 32s; animation-direction: alternate-reverse; }
 html.dark .app-ambient::before { background: radial-gradient(circle, rgba(59, 130, 246, 0.22), transparent 65%); }
-html.dark .app-ambient::after { background: radial-gradient(circle, rgba(139, 92, 246, 0.18), transparent 65%); }
+html.dark .app-ambient::after { background: radial-gradient(circle, rgba(14, 165, 233, 0.18), transparent 65%); }
 @keyframes ambient-drift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(6vw, 5vh, 0) scale(1.15); } }
-.app-ambient + * , .app-shell-layer { position: relative; z-index: 1; }
 
 aside[data-glass-sidebar],
 header[data-testid="top-header"] {

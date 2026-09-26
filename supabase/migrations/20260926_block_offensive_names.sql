@@ -1,0 +1,5 @@
+-- Applied to project annyogfzxzznyzkzlodx on 26 Sept 2026 (migration "block_offensive_names").
+-- public.is_offensive_name(text) mirrors frontend/src/lib/nameFilter.js;
+-- triggers guard_profile_name (insert → "Student", update → error) on
+-- public.profiles and guard_group_name (error) on public.study_groups.
+-- See the migration in the Supabase dashboard for the full SQL.

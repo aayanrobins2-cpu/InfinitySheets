@@ -17,7 +17,7 @@ export function openPlusBanner(feature) {
 // The shiny "+" used everywhere a padlock used to be.
 // "InfinitySheets+" as one gold wordmark with the moving sheen.
 export function PlusName({ className = '' }) {
-  return <span className={`plus-gold ${className}`}>InfinitySheets+</span>;
+  return <span className={className}>InfinitySheets<span className="plus-gold">+</span></span>;
 }
 
 export function PlusMark({ className = '' }) {

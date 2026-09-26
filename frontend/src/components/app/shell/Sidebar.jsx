@@ -22,7 +22,7 @@ export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose,
         </span>
         <div className="leading-tight min-w-0 flex-1">
           <div className="font-semibold text-[14.5px] tracking-tight whitespace-nowrap">
-            {plus ? <span className="plus-gold" data-testid="brand-plus">InfinitySheets+</span> : 'InfinitySheets'}
+            {plus ? <span data-testid="brand-plus">InfinitySheets<span className="plus-gold">+</span></span> : 'InfinitySheets'}
           </div>
           {!plus && <div className="text-[10px] text-slate-500">Adaptive study</div>}
         </div>

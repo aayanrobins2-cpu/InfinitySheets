@@ -13,7 +13,7 @@ export default function InfinityBackground({ variant = 'soft', className = '' })
   return (
     <div className={`infinity-bg ${className}`} aria-hidden="true">
       <InfSvg className="inf-1" size={420} stroke={stroke} color="#2563eb" opacity={op} />
-      <InfSvg className="inf-2" size={520} stroke={stroke} color="#7c3aed" opacity={op * 0.9} />
+      <InfSvg className="inf-2" size={520} stroke={stroke} color="#0ea5e9" opacity={op * 0.9} />
       <InfSvg className="inf-3" size={380} stroke={stroke} color="#dc2626" opacity={op * 0.75} />
       <InfSvg className="inf-4" size={300} stroke={stroke} color="#2563eb" opacity={op * 0.6} />
     </div>

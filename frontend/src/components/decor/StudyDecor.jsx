@@ -17,7 +17,7 @@ export function Pencil({ className = '', color = '#2563eb', size = 64 }) {
   );
 }
 
-export function Pen({ className = '', color = '#7c3aed', size = 64 }) {
+export function Pen({ className = '', color = '#0ea5e9', size = 64 }) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none">
       <g stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -111,7 +111,7 @@ export default function StudyDecor({ density = 'normal' }) {
         { C: Pencil, top: '6%',  left: '4%',  rot: -12, size: 78, op: 0.35, color: '#2563eb' },
         { C: TestTube, top: '12%', right: '6%', rot: 16, size: 72, op: 0.32, color: '#10b981' },
         { C: Notebook, top: '46%', left: '3%', rot: -6, size: 86, op: 0.30, color: '#dc2626' },
-        { C: Pen, top: '60%', right: '5%', rot: 22, size: 82, op: 0.34, color: '#7c3aed' },
+        { C: Pen, top: '60%', right: '5%', rot: 22, size: 82, op: 0.34, color: '#0ea5e9' },
         { C: Student, bottom: '8%', left: '38%', rot: -4, size: 86, op: 0.28, color: '#2563eb' },
         { C: Ruler, top: '32%', left: '46%', rot: 10, size: 78, op: 0.28, color: '#f59e0b' },
       ]
@@ -119,14 +119,14 @@ export default function StudyDecor({ density = 'normal' }) {
         { C: Pencil, top: '8%', left: '6%', rot: -14, size: 60, op: 0.30, color: '#2563eb' },
         { C: TestTube, top: '64%', right: '6%', rot: 14, size: 60, op: 0.28, color: '#10b981' },
         { C: Notebook, bottom: '8%', left: '8%', rot: -6, size: 62, op: 0.26, color: '#dc2626' },
-        { C: Pen, top: '14%', right: '12%', rot: 22, size: 60, op: 0.28, color: '#7c3aed' },
+        { C: Pen, top: '14%', right: '12%', rot: 22, size: 60, op: 0.28, color: '#0ea5e9' },
       ];
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
       {/* infinity marks */}
       <div className="absolute top-[5%] right-[28%] -rotate-12"><InfinityMark size={260} color="#2563eb" opacity={0.32} /></div>
-      <div className="absolute bottom-[12%] left-[18%] rotate-6"><InfinityMark size={220} color="#7c3aed" opacity={0.28} /></div>
+      <div className="absolute bottom-[12%] left-[18%] rotate-6"><InfinityMark size={220} color="#0ea5e9" opacity={0.28} /></div>
       <div className="absolute top-[58%] right-[6%] rotate-12"><InfinityMark size={180} color="#dc2626" opacity={0.24} /></div>
 
       {/* clipart */}

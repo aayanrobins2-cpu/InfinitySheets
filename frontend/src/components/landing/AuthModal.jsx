@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { isOffensiveName, OFFENSIVE_NAME_MESSAGE } from '../../lib/nameFilter';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
@@ -39,6 +40,7 @@ export default function AuthModal({ open, initialTab = 'signup', onClose }) {
       toast.error('Enter an email and a password of at least 6 characters.');
       return;
     }
+    if (isOffensiveName(form.name)) { toast.error(OFFENSIVE_NAME_MESSAGE); return; }
     setBusy(true);
     try {
       await apiRegister({ email: form.email, password: form.password, name: form.name, examTrack: form.track, subjects: [] });

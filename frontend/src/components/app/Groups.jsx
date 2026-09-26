@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { isOffensiveName, OFFENSIVE_NAME_MESSAGE } from '../../lib/nameFilter';
 import { Users, Plus, LogIn, Copy, Loader2, Activity, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
@@ -40,6 +41,7 @@ export default function Groups() {
   const create = async () => {
     if (!isReal) { toast('Sign in to create a group'); return; }
     if (!name.trim()) { toast.error('Give the group a name'); return; }
+    if (isOffensiveName(name) || isOffensiveName(school)) { toast.error(OFFENSIVE_NAME_MESSAGE); return; }
     setBusy(true);
     try {
       const g = await store.createGroup(name.trim(), school.trim());
