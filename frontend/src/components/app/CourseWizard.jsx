@@ -247,7 +247,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
                   value={subjectQuery}
                   onChange={(e) => setSubjectQuery(e.target.value)}
                   placeholder="Search subjects"
-                  className="input-base pl-9"
+                  className="input-base" style={{ paddingLeft: 38 }}
                   data-testid="wizard-subject-search"
                 />
               </div>

@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FileText, ExternalLink, Search, ListTree } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { syllabusLink } from '../../../data/syllabus';
 import { boardName, topicGroups } from '../../../lib/subjects';
 import { papersFor } from '../../../lib/paperTypes';
+import { askAi, isAiEnabled } from '../../../lib/ai';
 
 /**
  * Right-hand sidebar on the SubjectOverview page.
@@ -84,17 +85,89 @@ export default function SubjectSidePanels({ subject, board, ibLevel }) {
         {papers.length > 0 && (
           <div className="mt-4 pt-4 border-t border-[color:var(--color-border)]">
             <div className="text-[10.5px] tracking-[0.14em] uppercase font-semibold text-slate-500 mb-2">How it’s examined</div>
-            <ul className="flex flex-col gap-1.5">
-              {papers.map((p) => (
-                <li key={p.id} className="text-[13px] text-slate-700 flex items-baseline gap-2">
-                  <span className="font-semibold text-slate-900 shrink-0">{p.label}</span>
-                  <span className="text-slate-500 text-[12.5px]">{p.hint}</span>
-                </li>
-              ))}
-            </ul>
+            <ExamFormat subject={subject} board={board} ibLevel={ibLevel} papers={papers} />
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// "How it's examined", in detail: for each paper, its length, marks and share
+// of the grade, the kinds of questions it asks and what examiners reward.
+// Written once by the AI per board + subject and cached on this device; the
+// short paper list shows while it loads, and stays if AI is off.
+function ExamFormat({ subject, board, ibLevel, papers }) {
+  const { state } = useApp();
+  const key = `exam_format:v1:${board}:${subject}:${ibLevel || ''}`;
+  const [detail, setDetail] = useState(() => { try { return JSON.parse(window.localStorage.getItem(key) || 'null'); } catch (_) { return null; } });
+  const [loading, setLoading] = useState(false);
+  const aiOn = isAiEnabled(state);
+
+  useEffect(() => {
+    if (detail || !aiOn) return undefined;
+    let alive = true;
+    setLoading(true);
+    const content = [
+      `Explain how ${subject} (${boardName(board)}${ibLevel ? ` ${ibLevel}` : ''}) is examined, for a student preparing for it.`,
+      `Its papers/sections are: ${papers.map((p) => `${p.label} (${p.hint})`).join('; ')}.`,
+      'For EACH paper give: duration, total marks, % of the final grade, the question types and how many, what the questions test, and one tip on what examiners reward. Only state facts you are confident are in the current official specification; say "varies" rather than guess.',
+      'Then give 2-3 overall points (e.g. calculators, command words, how grades are set).',
+      'Reply with JSON only: {"papers": [{"label": string, "facts": [short strings like "2 hr 15 min", "80 marks", "50% of grade"], "about": "2-3 sentences", "tip": "1 sentence"}], "overall": [strings]}',
+    ].join('\n');
+    askAi({ mode: 'chat', context: { board, subject, ibLevel }, messages: [{ role: 'user', content }] })
+      .then((text) => {
+        const m = /\{[\s\S]*\}/.exec(text || '');
+        const parsed = m ? JSON.parse(m[0]) : null;
+        if (!alive || !Array.isArray(parsed?.papers)) return;
+        setDetail(parsed);
+        try { window.localStorage.setItem(key, JSON.stringify(parsed)); } catch (_) { /* ignore */ }
+      })
+      .catch(() => { /* keep the short list */ })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, [key, detail, aiOn]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!detail) {
+    return (
+      <>
+        <ul className="flex flex-col gap-1.5">
+          {papers.map((p) => (
+            <li key={p.id} className="text-[13px] text-slate-700 flex items-baseline gap-2">
+              <span className="font-semibold text-slate-900 shrink-0">{p.label}</span>
+              <span className="text-slate-500 text-[12.5px]">{p.hint}</span>
+            </li>
+          ))}
+        </ul>
+        {loading && <div className="text-[12px] text-slate-400 mt-2">Getting the full exam breakdown…</div>}
+      </>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-3" data-testid="exam-format-detail">
+      {detail.papers.map((p, i) => (
+        <div key={`${p.label}-${i}`} className="rounded-xl border border-[color:var(--color-border)] p-3.5">
+          <div className="text-[13.5px] font-semibold text-slate-900">{p.label}</div>
+          {Array.isArray(p.facts) && p.facts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {p.facts.map((f) => <span key={f} className="text-[11.5px] px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">{f}</span>)}
+            </div>
+          )}
+          {p.about && <p className="text-[12.5px] text-slate-600 mt-2 leading-relaxed">{p.about}</p>}
+          {p.tip && <p className="text-[12.5px] text-slate-700 mt-1.5 leading-relaxed"><span className="font-semibold">Tip:</span> {p.tip}</p>}
+        </div>
+      ))}
+      {Array.isArray(detail.overall) && detail.overall.length > 0 && (
+        <ul className="flex flex-col gap-1.5">
+          {detail.overall.map((o) => (
+            <li key={o} className="text-[12.5px] text-slate-600 flex items-start gap-2 leading-relaxed">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 mt-[7px]" />
+              <span>{o}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="text-[11px] text-slate-400">AI summary — check the official syllabus above for the final word.</div>
     </div>
   );
 }

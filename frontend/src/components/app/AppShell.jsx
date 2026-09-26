@@ -218,12 +218,12 @@ export default function AppShell({ hash }) {
       <div
         className={
           isMobile
-            ? `fixed inset-y-0 left-0 z-40 w-[280px] py-2 pl-2 pr-1 transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
-            : `shrink-0 py-2 pl-2 transition-[width,opacity,transform] duration-300 ease-out overflow-hidden ${sidebarOpen ? 'w-[242px] opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-4'}`
+            ? `fixed inset-y-0 left-0 z-40 w-[280px] transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`
+            : `shrink-0 transition-[width,opacity,transform] duration-300 ease-out overflow-hidden ${sidebarOpen ? 'w-[240px] opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-4'}`
         }
         aria-hidden={!sidebarOpen}
       >
-        <div className={isMobile ? 'w-full h-[calc(100vh-16px)]' : 'w-[230px] h-[calc(100vh-16px)]'}>
+        <div className={isMobile ? 'w-full h-screen' : 'w-[240px] h-screen'}>
           <Sidebar
             nav={NAV}
             activeKey={current.key}

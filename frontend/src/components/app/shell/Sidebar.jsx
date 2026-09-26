@@ -15,7 +15,7 @@ const PARENT_ROUTE = { worksheets: 'study', topic: 'study', mistakes: 'history',
 
 export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose, plus = false }) {
   return (
-    <aside className="border border-[color:var(--color-border)] flex flex-col bg-white relative overflow-hidden rounded-2xl shadow-sm h-full">
+    <aside className="border border-y-0 border-l-0 border-[color:var(--color-border)] flex flex-col bg-white relative overflow-hidden rounded-none h-full" data-glass-sidebar>
       <div className="relative px-5 pt-5 pb-6 flex items-center gap-2 shrink-0">
         <span className={`w-9 h-9 rounded-xl flex items-center justify-center bg-[color:var(--color-primary)]`} data-testid="brand-mark">
           <Infinity className="w-6 h-6 text-white relative" strokeWidth={2.6} />

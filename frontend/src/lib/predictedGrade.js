@@ -226,6 +226,11 @@ export function scoreToASGrade(score) {
  * @param {number} score      0-100 predicted score
  * @param {string} examTrack  e.g. 'IB', 'IGCSE', 'ASA', 'CBSE', ...
  */
+/** Percentage → SAT total (400-1600, steps of 10). */
+export function satScore(pct) {
+  return Math.round((400 + (clamp(Number(pct) || 0, 0, 100) / 100) * 1200) / 10) * 10;
+}
+
 export function formatGrade(score, examTrack) {
   const s = Math.round(score);
   let tone = 'weak';
@@ -245,7 +250,11 @@ export function formatGrade(score, examTrack) {
     const trackLabel = track === 'ASA' ? 'A Level' : 'IGCSE';
     return { label: g, sub: `Predicted ${trackLabel} grade`, tone };
   }
-  // CBSE, ICSE, SSLC, SAT, JEE, NEET → percentage
+  if (track === 'SAT') {
+    // The SAT is scored 400-1600 in steps of 10, not as a percentage.
+    return { label: `${satScore(s)}`, sub: 'Predicted SAT score (400–1600)', tone };
+  }
+  // CBSE, ICSE, SSLC, JEE, NEET → percentage
   return { label: `${s}%`, sub: 'Predicted score', tone };
 }
 

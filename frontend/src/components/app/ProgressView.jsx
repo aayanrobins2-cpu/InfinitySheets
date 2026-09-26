@@ -543,7 +543,9 @@ function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectD
           const op = opacityFor(s);
           const name = labelOf ? labelOf(s) : s;
           const locked = p.ready === false;
-          const gradeLabel = locked ? 'locked' : (p.grade?.label ?? `${p.predicted}%`);
+          // Before a full-length exam-level sheet the grade is provisional —
+          // still shown, marked as such, never a bare "locked".
+          const gradeLabel = p.grade?.label ?? `${p.predicted}%`;
           return (
             <g
               key={`pred-${s}`}
@@ -565,7 +567,7 @@ function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectD
                 {gradeLabel}
               </text>
               <text x={predX + 8} y={predY + 10} fontSize="8.5" fill="#64748b">
-                {name.length > 18 ? name.slice(0, 18) + '\u2026' : name}
+                {name.length > 18 ? name.slice(0, 18) + '\u2026' : name}{locked ? ' \u00b7 provisional' : ''}
               </text>
             </g>
           );

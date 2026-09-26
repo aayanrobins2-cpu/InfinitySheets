@@ -28,6 +28,7 @@ export const PLUS_PITCH = [
   'Ask a doubt on any question, any topic',
   'Spaced review reminders so nothing slips',
   'Save any worksheet as a PDF',
+  'Custom requests — tell the AI how to tweak any worksheet',
   'Custom courses built from your own material',
   `More than ${FREE_SUBJECT_LIMIT} subjects`,
   'No ads, anywhere',
@@ -42,5 +43,6 @@ export const PLUS_FEATURES = {
   diagnosis: 'AI worksheet diagnosis',
   pdf: 'Saving a worksheet as PDF',
   customCourse: 'Custom courses',
+  customRequest: 'Custom requests to tweak a worksheet',
   moreSubjects: `More than ${FREE_SUBJECT_LIMIT} subjects`,
 };

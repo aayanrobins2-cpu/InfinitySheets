@@ -694,7 +694,7 @@ html.dark .hl-amber::before {
 }
 .u-line path {
     fill: none; stroke: #2563eb; stroke-width: 2.4; stroke-linecap: round;
-    vector-effect: non-scaling-stroke; stroke-dasharray: 220; stroke-dashoffset: 220;
+    vector-effect: non-scaling-stroke; stroke-dasharray: var(--dash, 1000); stroke-dashoffset: var(--dash, 1000);
 }
 html.dark .u-line path { stroke: #60a5fa; }
 .u-mark.u-on .u-line path { animation: u-draw 0.75s 0.05s ease-out forwards; }
@@ -708,7 +708,7 @@ html.dark .u-line path { stroke: #60a5fa; }
 }
 .c-ring path {
     fill: none; stroke: #2563eb; stroke-width: 2.4; stroke-linecap: round;
-    vector-effect: non-scaling-stroke; stroke-dasharray: 360; stroke-dashoffset: 360;
+    vector-effect: non-scaling-stroke; stroke-dasharray: var(--dash, 1000); stroke-dashoffset: var(--dash, 1000);
 }
 html.dark .c-ring path { stroke: #60a5fa; }
 .c-mark.c-on .c-ring path { animation: c-draw 0.9s 0.1s ease-out forwards; }
@@ -917,7 +917,10 @@ header[data-testid="top-header"],
   background-color: var(--glass-bg-strong) !important;
 }
 /* Sidebar + header: a touch stronger so text stays crisp while scrolling. */
-aside.border.bg-white, header[data-testid="top-header"] { background-color: var(--glass-bg-strong) !important; }
+header[data-testid="top-header"] { background-color: var(--glass-bg-strong) !important; }
+/* Sidebar: a flush, square-cornered glass panel, following the Liquid glass
+   slider like the cards do (solid when glass is turned off). */
+aside[data-glass-sidebar] { border-radius: 0 !important; background-color: var(--glass-bg) !important; box-shadow: none; }
 header[data-testid="top-header"] { position: sticky; top: 0; z-index: 20; border-bottom-color: var(--glass-border) !important; }
 
 /* Nested tiles inside a glass card: a whisper lighter than the card. */

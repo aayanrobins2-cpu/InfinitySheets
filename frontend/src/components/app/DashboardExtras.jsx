@@ -41,34 +41,57 @@ export function DailyChallengeCard({ worksheets, subjects, topicsFor, go }) {
 // Pomodoro timer (25/5 by default). Sessions are logged so the
 // weekly summary can show focused minutes, not just questions.
 const PRESETS = [[25, 5], [45, 10], [15, 3]];
+// The timer runs off a saved end time, not a per-second countdown in memory,
+// so it keeps going when you leave the dashboard, switch tabs (browsers slow
+// background timers down), or reload — and finishes on time either way.
+const POMO_KEY = 'infinitysheets_pomodoro';
+const loadPomo = () => { try { return JSON.parse(window.localStorage.getItem(POMO_KEY) || 'null'); } catch (_) { return null; } };
+const savePomo = (p) => { try { window.localStorage.setItem(POMO_KEY, JSON.stringify(p)); } catch (_) { /* ignore */ } };
+
 export function PomodoroTimer() {
   const { state, logFocusSession } = useApp();
-  const [preset, setPreset] = useState(0);
-  const [phase, setPhase] = useState('focus'); // focus | break
-  const [left, setLeft] = useState(PRESETS[0][0] * 60);
-  const [running, setRunning] = useState(false);
-  const startedRef = useRef(null);
-  const total = (phase === 'focus' ? PRESETS[preset][0] : PRESETS[preset][1]) * 60;
+  const saved = useRef(loadPomo()).current;
+  const [preset, setPresetRaw] = useState(saved?.preset ?? 0);
+  const [phase, setPhase] = useState(saved?.phase || 'focus'); // focus | break
+  const lengthOf = (pr, ph) => (ph === 'focus' ? PRESETS[pr][0] : PRESETS[pr][1]) * 60;
+  // Running: endsAt is set. Paused / idle: pausedLeft holds the seconds left.
+  const [endsAt, setEndsAt] = useState(saved?.endsAt || null);
+  const [pausedLeft, setPausedLeft] = useState(saved?.pausedLeft ?? lengthOf(saved?.preset ?? 0, saved?.phase || 'focus'));
+  const [, tick] = useState(0);
+  const running = !!endsAt;
+  const total = lengthOf(preset, phase);
+  const left = running ? Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)) : pausedLeft;
 
-  useEffect(() => { setLeft((phase === 'focus' ? PRESETS[preset][0] : PRESETS[preset][1]) * 60); setRunning(false); }, [preset, phase]);
+  useEffect(() => { savePomo({ preset, phase, endsAt, pausedLeft }); }, [preset, phase, endsAt, pausedLeft]);
   useEffect(() => {
     if (!running) return undefined;
-    const id = setInterval(() => setLeft((s) => s - 1), 1000);
-    return () => clearInterval(id);
+    const id = setInterval(() => tick((n) => n + 1), 500);
+    const wake = () => tick((n) => n + 1);
+    document.addEventListener('visibilitychange', wake);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', wake); };
   }, [running]);
   useEffect(() => {
-    if (left > 0 || !running) return;
-    setRunning(false);
+    if (!running || left > 0) return;
+    const next = phase === 'focus' ? 'break' : 'focus';
+    setEndsAt(null);
+    setPhase(next);
+    setPausedLeft(lengthOf(preset, next));
     if (phase === 'focus') {
       logFocusSession({ minutes: PRESETS[preset][0], at: new Date().toISOString() });
       track('focus_session', { minutes: PRESETS[preset][0] });
       toast.success(`Pomodoro done — ${PRESETS[preset][0]} min logged. Take ${PRESETS[preset][1]} minutes.`);
-      setPhase('break');
     } else {
       toast('Break over — ready for another block?');
-      setPhase('focus');
     }
-  }, [left, running, phase, preset, logFocusSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [left, running]);
+
+  const setPreset = (i) => { setPresetRaw(i); setEndsAt(null); setPhase('focus'); setPausedLeft(lengthOf(i, 'focus')); };
+  const toggle = () => {
+    if (running) { setPausedLeft(left); setEndsAt(null); }
+    else setEndsAt(Date.now() + left * 1000);
+  };
+  const reset = () => { setEndsAt(null); setPausedLeft(total); };
 
   const today = new Date().toDateString();
   const todayMin = (state.focusSessions || []).filter((s) => new Date(s.at).toDateString() === today).reduce((a, s) => a + s.minutes, 0);
@@ -92,8 +115,8 @@ export function PomodoroTimer() {
           <div className="text-[13px] font-medium text-slate-800 inline-flex items-center gap-1.5">{phase === 'focus' ? 'Focus' : <><Coffee className="w-4 h-4" /> Break</>}</div>
           <div className="text-[12px] text-slate-500">{todayMin} focused min today</div>
           <div className="flex gap-1.5 mt-2">
-            <button onClick={() => { if (!running && !startedRef.current) startedRef.current = Date.now(); setRunning((v) => !v); }} className="btn-violet inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold" data-testid="focus-toggle">{running ? <><Pause className="w-3.5 h-3.5" /> Pause</> : <><Play className="w-3.5 h-3.5" /> {left === total ? 'Start' : 'Resume'}</>}</button>
-            <button onClick={() => { setRunning(false); setLeft(total); }} className="btn-outline-dark inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12.5px]"><RotateCcw className="w-3.5 h-3.5" /> Reset</button>
+            <button onClick={toggle} className="btn-violet inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold" data-testid="focus-toggle">{running ? <><Pause className="w-3.5 h-3.5" /> Pause</> : <><Play className="w-3.5 h-3.5" /> {left === total ? 'Start' : 'Resume'}</>}</button>
+            <button onClick={reset} className="btn-outline-dark inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12.5px]"><RotateCcw className="w-3.5 h-3.5" /> Reset</button>
           </div>
         </div>
       </div>

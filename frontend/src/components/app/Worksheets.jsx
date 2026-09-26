@@ -532,6 +532,7 @@ export default function Worksheets({ go }) {
   const [duration, setDuration] = useState(challengePick ? 15 : examMinutes);
   const [pastPapers, setPastPapers] = useState(false);
   const [aiGenerated, setAiGenerated] = useState(true);
+  const [customRequest, setCustomRequest] = useState(''); // InfinitySheets+: extra instructions for the AI
 
   const [stage, setStage] = useState('build');
   const [questions, setQuestions] = useState([]);
@@ -846,7 +847,7 @@ export default function Worksheets({ go }) {
       if (need > 0) {
         setGenerating(true);
         try {
-          generated = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, count: need });
+          generated = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, count: need, instructions: plus ? customRequest : '' });
         } catch (e) {
           toast.error(`${e.message || 'The AI could not write questions'}${pastPapers ? ' — using past-paper questions instead.' : ''}`);
         } finally {
@@ -872,7 +873,7 @@ export default function Worksheets({ go }) {
             : length - qs.length;
           let more = [];
           try {
-            more = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: sheetType, difficulty: recap ? 'Easy' : effDifficulty, count: missing, avoid: qs.map((q) => q.q) });
+            more = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: sheetType, difficulty: recap ? 'Easy' : effDifficulty, count: missing, avoid: qs.map((q) => q.q), instructions: plus ? customRequest : '' });
           } catch (e) {
             break; // rate-limited or offline — keep what we have
           }
@@ -1678,7 +1679,8 @@ export default function Worksheets({ go }) {
   const isDurationDefault = duration === examMinutes;
 
   return (
-    <div className="max-w-[820px]">
+    <div className="flex flex-col xl:flex-row gap-6 items-start">
+    <div className="max-w-[820px] w-full min-w-0">
       <p className="text-[14px] text-zinc-500 mb-6">Create targeted practice. Choose a subject you&apos;re studying, pick one or more topics, and dial in the format.</p>
       {challengePick && (
         <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3 text-[13px] text-slate-700 flex flex-wrap items-center gap-2" data-testid="ws-challenge-pick">
@@ -1974,6 +1976,45 @@ export default function Worksheets({ go }) {
         </div>
       )}
     </div>
+    <CustomRequestPanel value={customRequest} onChange={setCustomRequest} plus={plus} aiOn={aiGenerated} />
+    </div>
+  );
+}
+
+// Right-hand panel on the builder: tell the AI how to tweak the sheet
+// ("only data-analysis questions", "use cricket for the contexts", "harder
+// graphs"). InfinitySheets+ only; free users see it greyed and get the
+// upgrade banner. It applies to AI-written questions.
+const REQUEST_IDEAS = ['Only calculation questions', 'Use real-world sports contexts', 'Include a graph to interpret', 'Focus on the parts I usually get wrong'];
+function CustomRequestPanel({ value, onChange, plus, aiOn }) {
+  return (
+    <aside className="w-full xl:w-[320px] xl:shrink-0 xl:sticky xl:top-4 rounded-2xl border border-zinc-200 p-5" data-testid="ws-custom-request">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[10px] tracking-[0.14em] uppercase font-semibold text-zinc-500 inline-flex items-center gap-1.5"><Wand2 className="w-3.5 h-3.5 text-violet-500" /> Custom request</div>
+        <PlusBadge />
+      </div>
+      <p className="text-[12.5px] text-slate-500 mt-2 leading-relaxed">Tell the AI how to tweak this worksheet — the kind of questions, contexts, focus or style you want.</p>
+      <div className="relative mt-3">
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value.slice(0, 500))}
+          onFocus={(e) => { if (!plus) { e.target.blur(); openPlusBanner('customRequest'); } }}
+          readOnly={!plus}
+          rows={5}
+          placeholder="e.g. Make every question use data from a table, and include one long 6-mark explain question."
+          className={`input-base w-full resize-y text-[13px] leading-relaxed ${plus ? '' : 'opacity-60 cursor-pointer'}`}
+          data-testid="ws-custom-request-input"
+        />
+      </div>
+      <div className="flex flex-wrap gap-1.5 mt-2.5">
+        {REQUEST_IDEAS.map((idea) => (
+          <button key={idea} type="button" onClick={() => { if (!plus) { openPlusBanner('customRequest'); return; } onChange(value ? `${value.trim()} ${idea}.` : `${idea}.`); }} className="text-[11.5px] px-2 py-1 rounded-md border border-zinc-200 text-slate-600 hover:border-violet-300 hover:text-violet-700">{idea}</button>
+        ))}
+      </div>
+      <div className="text-[11.5px] text-slate-400 mt-3">
+        {!plus ? 'An InfinitySheets+ feature.' : aiOn ? `${value.length}/500 · applied when you press Create.` : 'Tick “Accurate to you” so the AI writes the questions — requests apply to those.'}
+      </div>
+    </aside>
   );
 }
 

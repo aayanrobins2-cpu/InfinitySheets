@@ -192,7 +192,8 @@ export default function StartStudying({ go, subjectParam }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search all subjects (Mathematics, Calculus, Biology…)"
-            className="input-base w-full pl-10 pr-9"
+            className="input-base w-full"
+            style={{ paddingLeft: 42, paddingRight: 36 }}
             aria-label="Search subjects"
             data-testid="study-search-input"
           />

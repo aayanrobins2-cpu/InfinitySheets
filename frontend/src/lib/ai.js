@@ -284,7 +284,7 @@ function readQuestions(text) {
   return recoverQuestions(text);
 }
 
-export async function generateQuestions({ board, ibLevel, subject, topics, answerType, difficulty, count, avoid = [] }) {
+export async function generateQuestions({ board, ibLevel, subject, topics, answerType, difficulty, count, avoid = [], instructions = '' }) {
   const n = Math.max(1, Math.min(60, count || 5));
   const batches = [];
   for (let left = n, i = 0; left > 0; left -= GENERATE_BATCH, i += 1) batches.push({ size: Math.min(GENERATE_BATCH, left), i });
@@ -301,6 +301,7 @@ export async function generateQuestions({ board, ibLevel, subject, topics, answe
       'They must be brand-new questions in the exact style this exam uses. Never reproduce a past-paper question; vary the contexts and numbers. Every question needs a correct answer and a marking scheme, and "marks" must match the scheme.',
       batches.length > 1 ? `This is batch ${i + 1} of ${batches.length}; make these questions different from the other batches by leaning on different topics and contexts.` : '',
       avoidLine,
+      String(instructions || '').trim() ? `The student asked for this — follow it as long as the questions stay on the syllabus, in this exam's style, and correct: "${String(instructions).trim().slice(0, 500)}"` : '',
       'For multiple choice, "a" is the 0-based INDEX of the correct option (0 = first), and options have no "A." / "B." labels.',
       `Reply as {"questions": [...]}. ${QUESTION_SHAPE}. Use "answerType": "${answerType}" for every question.`,
     ].filter(Boolean).join('\n');
