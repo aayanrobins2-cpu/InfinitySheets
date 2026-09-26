@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { PlusName } from './PlusUpgradeBanner';
 import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
 import { useApp } from '../../context/AppContext';
@@ -918,7 +919,7 @@ function NotesFlashcardsCard({ notes, flashcards, plus, go }) {
     <button type="button" onClick={() => go('flashcards')} className="w-full text-left rounded-2xl border border-[color:var(--color-border)] bg-white p-5 hover:border-violet-300 transition-colors" data-testid="dash-notes-flashcards">
       <div className="flex items-center justify-between gap-2">
         <div className="eyebrow-muted inline-flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Notes &amp; flashcards</div>
-        {!plus && <span className="text-[11px] text-violet-700 font-semibold">InfinitySheets<span className="brand-plus-text font-extrabold">+</span></span>}
+        {!plus && <span className="text-[11px] text-violet-700 font-semibold"><PlusName /></span>}
       </div>
       {empty ? (
         <div className="text-[13px] text-slate-500 mt-2">Not enough data yet &mdash; upload your notes or make a flashcard deck to see them here.</div>

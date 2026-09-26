@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { isPlus, PLUS_PITCH, PLUS_PRICING, PLUS_CHECKOUT_URLS } from '../../lib/entitlements';
-import { PlusMark } from './PlusUpgradeBanner';
+import { PlusMark, PlusName } from './PlusUpgradeBanner';
 
 // The InfinitySheets+ payment page (#plus). The student picks monthly or
 // yearly and is sent to the hosted checkout for that plan. Card details are
@@ -33,7 +33,7 @@ export default function PlusCheckout() {
       <div className="grid lg:grid-cols-[1.1fr_1fr] gap-6 items-start">
         <div className="rounded-2xl border border-violet-300/50 bg-white p-6">
           <div className="text-[11px] tracking-[0.14em] uppercase font-semibold text-violet-600">What you get</div>
-          <div className="mt-2 text-[30px] font-semibold tracking-tight text-slate-900">InfinitySheets<PlusMark className="text-[30px]" /></div>
+          <div className="mt-2 text-[30px] font-semibold tracking-tight text-slate-900"><PlusName /></div>
           <ul className="mt-5 flex flex-col gap-2.5">
             {PLUS_PITCH.map((f) => (
               <li key={f} className="flex items-start gap-2.5">
@@ -47,7 +47,7 @@ export default function PlusCheckout() {
         <div className="rounded-2xl border border-[color:var(--color-border)] bg-white p-6">
           {already ? (
             <div className="text-center py-6" data-testid="plus-already">
-              <div className="text-[18px] font-semibold text-slate-900">You already have InfinitySheets<PlusMark className="text-[18px]" /></div>
+              <div className="text-[18px] font-semibold text-slate-900">You already have <PlusName /></div>
               <p className="text-[13px] text-slate-500 mt-2">Every feature is unlocked on this account.</p>
             </div>
           ) : (

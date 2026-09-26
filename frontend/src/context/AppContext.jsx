@@ -266,6 +266,15 @@ export function AppProvider({ children }) {
     root.style.setProperty('--glass-alpha-pct', `${Math.round((off ? 1 : alpha) * 100)}%`);
     root.style.setProperty('--glass-alpha-strong', off ? '1' : Math.min(1, alpha + 0.1).toFixed(3));
     root.style.setProperty('--glass-blur', off ? '0px' : `${Math.round(30 * (i / 50) * 10) / 10}px`);
+    // The top bar and sidebar are real glass: the slider also turns up how
+    // clear they are, the colour pulled through (saturation), the sheen on
+    // the surface and the ambient colour behind the app that they refract.
+    const g = off ? 0 : i / 100;
+    root.style.setProperty('--chrome-alpha', off ? '1' : (dark ? 0.78 - 0.5 * g : 0.8 - 0.5 * g).toFixed(3));
+    root.style.setProperty('--chrome-blur', off ? '0px' : `${Math.round(8 + 32 * g)}px`);
+    root.style.setProperty('--chrome-sat', off ? '100%' : `${Math.round(120 + 100 * g)}%`);
+    root.style.setProperty('--chrome-sheen', off ? '0' : (0.06 + 0.22 * g).toFixed(3));
+    root.style.setProperty('--ambient', off ? '0' : (0.35 + 0.65 * g).toFixed(3));
     root.classList.toggle('no-glass', off);
   }, [state.settings?.glass, state.settings?.glassOff, state.theme]);
 

@@ -1,4 +1,4 @@
-import { openPlusBanner } from './PlusUpgradeBanner';
+import { openPlusBanner, PlusName } from './PlusUpgradeBanner';
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { toast } from 'sonner';
@@ -34,7 +34,7 @@ export default function SettingsView() {
         {isPlus(state) ? (
           <div className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-2 text-[13px] font-semibold" data-testid="plus-status"><SparklesIcon className="w-4 h-4" /> {state.user?.role === 'admin' ? 'Active (included with admin)' : 'Active'}</div>
         ) : (
-          <button type="button" onClick={() => openPlusBanner()} className="inline-flex items-center gap-2 rounded-lg bg-slate-50 text-slate-700 border border-[color:var(--color-border)] px-3 py-2 text-[13px] font-medium hover:border-violet-300" data-testid="plus-status">Free plan — see what InfinitySheets<span className="brand-plus-text font-extrabold">+</span> includes</button>
+          <button type="button" onClick={() => openPlusBanner()} className="inline-flex items-center gap-2 rounded-lg bg-slate-50 text-slate-700 border border-[color:var(--color-border)] px-3 py-2 text-[13px] font-medium hover:border-violet-300" data-testid="plus-status">Free plan — see what <PlusName /> includes</button>
         )}
       </Section>
 

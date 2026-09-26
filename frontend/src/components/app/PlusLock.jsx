@@ -3,7 +3,7 @@ import { Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { toast } from 'sonner';
 import { isPlus, PLUS_FEATURES, FREE_ALLOWANCE, freeUsesLeft, recordUse, allowanceText } from '../../lib/entitlements';
-import { openPlusBanner, PlusMark } from './PlusUpgradeBanner';
+import { openPlusBanner, PlusMark, PlusName } from './PlusUpgradeBanner';
 
 // One place to show and enforce InfinitySheets+ locks.
 export function usePlus() {
@@ -57,7 +57,7 @@ export function PlusLock({ feature, children, className = '' }) {
         data-testid={`plus-lock-${feature}`}
       >
         <span className="inline-flex items-center rounded-full bg-violet-600 text-white px-2.5 py-1 text-[11px] font-semibold shadow">
-          InfinitySheets<PlusMark className="text-[12px]" />
+          <PlusName />
         </span>
       </button>
     </div>
@@ -70,9 +70,9 @@ export function PlusUpgradeScreen({ feature }) {
   return (
     <div className="max-w-[560px] mx-auto mt-10 rounded-2xl border border-violet-200 bg-violet-50/50 p-8 text-center" data-testid="plus-upgrade">
       <div className="w-14 h-14 rounded-2xl bg-violet-600 text-white flex items-center justify-center mx-auto mb-4"><Sparkles className="w-7 h-7" /></div>
-      <h2 className="text-[20px] font-semibold text-slate-900">{label} is part of InfinitySheets<PlusMark className="text-[20px]" /></h2>
+      <h2 className="text-[20px] font-semibold text-slate-900">{label} is part of <PlusName /></h2>
       <p className="text-[13.5px] text-slate-600 mt-2 leading-snug">InfinitySheets+ unlocks the AI-powered tools — study plans, the coach, flashcards, worksheet diagnosis, ask-a-doubt, custom courses and more than {6} subjects.</p>
-      <button type="button" onClick={() => openPlusBanner(feature)} className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-violet-600 text-white px-4 py-2 text-[13px] font-semibold hover:bg-violet-700" data-testid="plus-upgrade-cta">See what InfinitySheets<PlusMark className="text-[14px]" /> includes</button>
+      <button type="button" onClick={() => openPlusBanner(feature)} className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-violet-600 text-white px-4 py-2 text-[13px] font-semibold hover:bg-violet-700" data-testid="plus-upgrade-cta">See what <PlusName /> includes</button>
     </div>
   );
 }
@@ -94,7 +94,7 @@ export function PlusPreview({ feature, children }) {
   if (open) {
     return (
       <div data-testid={`plus-pass-${feature}`}>
-        <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/80 px-4 py-2 text-[12.5px] text-violet-900">Free pass for today. {allowanceText(feature)} Unlimited with InfinitySheets<PlusMark />.</div>
+        <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/80 px-4 py-2 text-[12.5px] text-violet-900">Free pass for today. {allowanceText(feature)} Unlimited with <PlusName />.</div>
         {children}
       </div>
     );
@@ -104,7 +104,7 @@ export function PlusPreview({ feature, children }) {
     <div className="relative" data-testid={`plus-preview-${feature}`}>
       <div className="sticky top-2 z-20 mb-4 rounded-xl border border-violet-200 bg-violet-50/95 backdrop-blur px-4 py-2.5 flex items-center gap-2 text-[13px] text-violet-900 shadow-sm">
         <PlusMark className="text-[15px] shrink-0" />
-        <span className="flex-1"><b>{label}</b> is part of InfinitySheets<PlusMark />. {allowanceText(feature)}</span>
+        <span className="flex-1"><b>{label}</b> is part of <PlusName />. {allowanceText(feature)}</span>
         {left > 0 && <button type="button" onClick={takePass} className="shrink-0 rounded-lg bg-violet-600 text-white px-3 py-1 text-[12px] font-semibold hover:bg-violet-700" data-testid={`plus-try-${feature}`}>Try it free</button>}
       </div>
       <div className="opacity-50 grayscale-[0.35] select-none pointer-events-none" aria-hidden="true">{children}</div>

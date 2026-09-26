@@ -1,4 +1,4 @@
-import { openPlusBanner } from './PlusUpgradeBanner';
+import { openPlusBanner, PlusName } from './PlusUpgradeBanner';
 import { setWorksheetJob } from '../../lib/worksheetJob';
 import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
@@ -1598,7 +1598,7 @@ export default function Worksheets({ go, active = true }) {
                 <DiagnosisPanel sheet={result} autoRun testid="worksheet-diagnosis" />
               ) : (
                 <button type="button" onClick={() => { if (requirePlus('diagnosis')) setFreeDiagnosis(result); }} className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:bg-violet-50" data-testid="diagnosis-locked">
-                  {usesLeft('diagnosis') > 0 ? <>Get your AI diagnosis &mdash; {usesLeft('diagnosis')} free today, unlimited with InfinitySheets<span className="brand-plus-text font-extrabold">+</span>.</> : <>AI worksheet diagnosis is an InfinitySheets<span className="brand-plus-text font-extrabold">+</span> feature. Your free one for today is used.</>}
+                  {usesLeft('diagnosis') > 0 ? <>Get your AI diagnosis &mdash; {usesLeft('diagnosis')} free today, unlimited with <PlusName />.</> : <>AI worksheet diagnosis is an <PlusName /> feature. Your free one for today is used.</>}
                 </button>
               )}
             </div>

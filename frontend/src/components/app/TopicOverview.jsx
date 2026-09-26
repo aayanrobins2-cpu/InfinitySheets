@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { PlusName } from './PlusUpgradeBanner';
 import { ArrowLeft, ExternalLink, Sparkles, RefreshCw, Loader2, FileText, Link2, Settings as SettingsIcon, Lock } from 'lucide-react';
 import { usePlus } from './PlusLock';
 import { useApp } from '../../context/AppContext';
@@ -100,7 +101,7 @@ export default function TopicOverview({ subject, topic, go }) {
             testid="topic-chat"
           />
           ) : (
-            <button type="button" onClick={() => { if (requirePlus('askDoubt')) setAskOpen(true); }} className="card-soft p-5 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:border-violet-300" data-testid="ask-doubt-locked">{usesLeft('askDoubt') > 0 ? <>Ask a doubt &mdash; {usesLeft('askDoubt')} free today, unlimited with InfinitySheets<span className="brand-plus-text font-extrabold">+</span>.</> : <>Ask a doubt is an InfinitySheets<span className="brand-plus-text font-extrabold">+</span> feature. Today&rsquo;s free ones are used.</>}</button>
+            <button type="button" onClick={() => { if (requirePlus('askDoubt')) setAskOpen(true); }} className="card-soft p-5 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:border-violet-300" data-testid="ask-doubt-locked">{usesLeft('askDoubt') > 0 ? <>Ask a doubt &mdash; {usesLeft('askDoubt')} free today, unlimited with <PlusName />.</> : <>Ask a doubt is an <PlusName /> feature. Today&rsquo;s free ones are used.</>}</button>
           )}
         </div>
 

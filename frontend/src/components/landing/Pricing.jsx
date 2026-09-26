@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check, ArrowRight, Sparkles } from 'lucide-react';
 import { PLUS_PITCH } from '../../lib/entitlements';
-import { PlusMark } from '../app/PlusUpgradeBanner';
+import { PlusMark, PlusName } from '../app/PlusUpgradeBanner';
 import Reveal from './Reveal';
 import { DoodleGradCap } from '../decor/StudyDoodles';
 import Emphasis from './Emphasis';
@@ -38,7 +38,7 @@ export default function Pricing() {
           <Reveal from="scale" delay={0.1}>
             <div className="relative h-full rounded-3xl p-8 liquid-glass-clear shadow-2xl shadow-slate-900/10 border border-violet-300/40" data-testid="pricing-plus">
               <div className="text-[11px] tracking-[0.14em] uppercase font-semibold text-violet-600 inline-flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> For going further</div>
-              <div className="mt-3 text-[44px] leading-[1.1] font-semibold tracking-tight text-slate-900">InfinitySheets<PlusMark className="text-[44px]" /></div>
+              <div className="mt-3 text-[44px] leading-[1.1] font-semibold tracking-tight text-slate-900"><PlusName /></div>
               <div className="text-[15px] text-slate-500 mt-1">Everything in Free, no ads, and:</div>
               <ul className="mt-6 flex flex-col gap-3">
                 {PLUS_PITCH.filter((f) => !/^No ads/.test(f)).map((f) => (

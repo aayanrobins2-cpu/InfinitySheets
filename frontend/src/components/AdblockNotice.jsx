@@ -4,7 +4,7 @@ import { isPlus, PLUS_PITCH } from '../lib/entitlements';
 import { useApp } from '../context/AppContext';
 import { detectVpn } from '../lib/vpn';
 import { detectAdblock } from '../lib/adblock';
-import { PlusMark } from './app/PlusUpgradeBanner';
+import { PlusMark, PlusName } from './app/PlusUpgradeBanner';
 
 // The two things that stop ads paying for the site — an ad blocker, or a VPN
 // that makes the traffic worthless to advertisers — put up a wall. It cannot
@@ -84,13 +84,13 @@ function Wall({ kind }) {
                 Ads help us fund our mission, and ads shown through a VPN are worth
                 roughly nothing to us &mdash; because, as it turns out, putting a website on the
                 internet is <span className="font-semibold text-slate-700">preetttttyyyyyyy</span> expensive.
-                But it&rsquo;s fine if you love your VPN. Just get InfinitySheets<PlusMark />.
+                But it&rsquo;s fine if you love your VPN. Just get <PlusName />.
               </>
             ) : (
               <>
                 Ads help us fund our mission, because, as it turns out, putting a website
                 on the internet is <span className="font-semibold text-slate-700">preetttttyyyyyyy</span> expensive.
-                But it&rsquo;s fine if you hate ads. Just get InfinitySheets<PlusMark />.
+                But it&rsquo;s fine if you hate ads. Just get <PlusName />.
               </>
             )}
           </p>
@@ -98,9 +98,9 @@ function Wall({ kind }) {
 
         {/* The InfinitySheets+ banner, right in the wall. */}
         <div className="mt-5 rounded-2xl border border-[color:var(--color-border)] p-5" data-testid="wall-plus-banner">
-          <div className="text-[11px] tracking-[0.14em] uppercase font-semibold text-blue-600">InfinitySheets<PlusMark className="text-[13px] align-middle ml-0.5" /></div>
+          <div className="text-[11px] tracking-[0.14em] uppercase font-semibold text-blue-600"><PlusName /></div>
           <div className="text-[24px] leading-tight font-semibold tracking-tight text-slate-900 mt-1">
-            InfinitySheets<PlusMark className="text-[24px]" />
+            <PlusName />
           </div>
           <div className="text-[13px] text-slate-500 mt-1">No ads, and everything below unlocked.</div>
           <ul className="mt-4 flex flex-col gap-2">
@@ -117,7 +117,7 @@ function Wall({ kind }) {
             className="btn-violet mt-5 w-full py-2.5 rounded-lg text-[14px] font-semibold inline-flex items-center justify-center gap-1.5"
             data-testid={isVpn ? 'vpn-plus' : 'adblock-plus'}
           >
-            <Sparkles className="w-4 h-4" /> Get InfinitySheets<PlusMark className="text-[15px]" />
+            <Sparkles className="w-4 h-4" /> Get <PlusName />
           </button>
           {askedPlus && (
             <p className="text-[12px] text-slate-500 mt-2 text-center" data-testid="wall-plus-soon" role="status">

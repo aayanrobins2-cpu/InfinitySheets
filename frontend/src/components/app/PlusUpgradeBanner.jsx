@@ -15,6 +15,11 @@ export function openPlusBanner(feature) {
 }
 
 // The shiny "+" used everywhere a padlock used to be.
+// "InfinitySheets+" as one gold wordmark with the moving sheen.
+export function PlusName({ className = '' }) {
+  return <span className={`plus-gold ${className}`}>InfinitySheets+</span>;
+}
+
 export function PlusMark({ className = '' }) {
   return <span className={`brand-plus-text font-extrabold ${className}`} aria-hidden="true">+</span>;
 }
@@ -64,7 +69,7 @@ export default function PlusUpgradeBanner() {
         </div>
 
         <div className="flex items-baseline gap-3 mt-2">
-          <span className="text-[44px] leading-none font-semibold tracking-tight text-slate-900">InfinitySheets<PlusMark className="text-[44px]" /></span>
+          <span className="text-[44px] leading-none font-semibold tracking-tight text-slate-900"><PlusName /></span>
         </div>
         <div className="text-[14px] text-slate-500 mt-1.5">Everything below, unlocked.</div>
 
@@ -83,7 +88,7 @@ export default function PlusUpgradeBanner() {
           className="mt-7 inline-flex items-center justify-center gap-2 w-full py-3 rounded-lg text-[15px] font-medium bg-blue-500 hover:bg-blue-400 text-white transition-colors"
           data-testid="plus-banner-cta"
         >
-          Get InfinitySheets<PlusMark className="text-[15px]" /> <ArrowRight className="w-4 h-4" />
+          Get <PlusName /> <ArrowRight className="w-4 h-4" />
         </a>
         <button
           type="button"

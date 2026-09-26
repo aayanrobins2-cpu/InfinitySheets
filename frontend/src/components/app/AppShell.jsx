@@ -207,6 +207,8 @@ export default function AppShell({ hash }) {
 
   return (
     <div className="h-screen overflow-hidden section-bg flex relative">
+      {/* Slow ambient colour the glass chrome refracts. */}
+      <div className="app-ambient" aria-hidden="true" />
       {/* Mobile scrim — dim the app when the drawer is open so the page
           content becomes clearly "behind" the sidebar. */}
       {isMobile && sidebarOpen && (
