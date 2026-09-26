@@ -1,4 +1,5 @@
 import { openPlusBanner } from './PlusUpgradeBanner';
+import { setWorksheetJob } from '../../lib/worksheetJob';
 import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -423,7 +424,7 @@ function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerTy
 
 /* ================== Main component ================== */
 
-export default function Worksheets({ go }) {
+export default function Worksheets({ go, active = true }) {
   const { state, recordWorksheet, updateWorksheet, saveDraftWorksheet, clearDraftWorksheet, tagMistakeReason, addPendingSubmission, removePendingSubmission } = useApp();
   const { isPlus: plus, requirePlus, usesLeft } = usePlus();
   const [freeDiagnosis, setFreeDiagnosis] = useState(null); // sheet a free user spent today's diagnosis on
@@ -943,10 +944,38 @@ export default function Worksheets({ go }) {
     return out;
   };
 
+  // Leaving the page while the AI writes doesn't stop it: the builder stays
+  // mounted in the background (AppShell), and a sheet that finishes while the
+  // student is elsewhere waits for them — it only starts (and its timer only
+  // runs) once they come back.
+  const activeRef = useRef(active);
+  activeRef.current = active;
+  const readyRef = useRef(null);
   const start = async () => {
     if (generating) return;
-    const qs = await assembleQuestions({ withReviews: true });
+    setWorksheetJob('generating');
+    let qs = null;
+    try { qs = await assembleQuestions({ withReviews: true }); } finally { if (!qs) setWorksheetJob('idle'); }
     if (!qs) return;
+    if (!activeRef.current) {
+      readyRef.current = qs;
+      setWorksheetJob('ready');
+      toast.success('Your worksheet is ready', { description: `${subject} · ${qs.length} questions`, duration: 12000, action: { label: 'Open it', onClick: () => go('worksheets') } });
+      return;
+    }
+    setWorksheetJob('idle');
+    begin(qs);
+  };
+  useEffect(() => {
+    if (active && readyRef.current) {
+      const qs = readyRef.current;
+      readyRef.current = null;
+      setWorksheetJob('idle');
+      begin(qs);
+    }
+  }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const begin = (qs) => {
     draftIdRef.current = `draft_${Date.now()}`;
     setQuestions(qs);
     // For MCQ, -1 means unanswered. For typed/exam, empty string.
@@ -1939,12 +1968,12 @@ export default function Worksheets({ go }) {
           {generating ? <><Loader2 className="w-5 h-5 animate-spin" /> Writing original questions…</> : 'Create interactive worksheet'}
         </button>
         <button
-          onClick={() => { if (requirePlus('pdf')) downloadPDF(); }}
+          onClick={downloadPDF}
           disabled={generating}
           data-testid="ws-download-pdf"
           className="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-[14px] font-medium bg-white text-slate-800 border border-slate-300 hover:border-blue-500 hover:text-blue-700 transition-colors disabled:opacity-70"
         >
-          <Download className="w-5 h-5" /> Download as PDF {!plus && <PlusBadge />}
+          <Download className="w-5 h-5" /> Download as PDF
         </button>
       </div>
       {aiGenerated && aiOn && (

@@ -30,7 +30,7 @@ export default function SettingsView() {
     <div className="max-w-[820px] flex flex-col gap-5">
       <p className="text-[14px] text-slate-500">Manage your account, study preferences, and how the app behaves.</p>
 
-      <Section title="InfinitySheets+" icon={SparklesIcon} subtitle="The AI-powered tier — study plans, coach, flashcards, diagnosis, ask-a-doubt, PDF export, custom courses and more than 6 subjects.">
+      <Section title="InfinitySheets+" icon={SparklesIcon} subtitle="The AI-powered tier — study plans, coach, flashcards, diagnosis, ask-a-doubt, custom courses and more than 6 subjects.">
         {isPlus(state) ? (
           <div className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-2 text-[13px] font-semibold" data-testid="plus-status"><SparklesIcon className="w-4 h-4" /> {state.user?.role === 'admin' ? 'Active (included with admin)' : 'Active'}</div>
         ) : (

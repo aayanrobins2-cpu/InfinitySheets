@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ChevronLeft, ChevronRight, X, Sparkles, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Sparkles, MousePointerClick, CheckCircle2 } from 'lucide-react';
 
 // Each step navigates the real app to a route, then shows a floating tooltip
 // describing what the user is seeing. Optionally highlights a sidebar nav item.
@@ -15,6 +15,7 @@ const STEPS = [
   },
   {
     route: 'dashboard',
+    task: { spot: '[data-testid="days-until-exam"]', text: 'Tap your exam countdown to open the full exam timetable.', on: 'click', stay: true },
     target: 'dashboard',
     eyebrow: 'Step 1',
     title: 'Your dashboard',
@@ -31,6 +32,7 @@ const STEPS = [
   },
   {
     route: 'study',
+    task: { spot: '[data-testid="study-search-input"]', text: 'Type a subject into the search box.', on: 'input' },
     target: 'study',
     eyebrow: 'Step 3',
     title: 'Start Studying',
@@ -39,6 +41,7 @@ const STEPS = [
   },
   {
     route: 'worksheets',
+    task: { spot: '[data-testid="ws-subject"]', text: 'Choose the subject for your first worksheet.', on: 'change' },
     target: 'worksheets',
     eyebrow: 'Step 4',
     title: 'Build a worksheet',
@@ -95,6 +98,7 @@ const STEPS = [
   },
   {
     route: 'settings',
+    task: { spot: '[data-testid="header-theme-toggle"]', text: 'Try switching between light and dark mode.', on: 'click' },
     target: 'settings',
     eyebrow: 'Step 11',
     title: 'Settings',
@@ -103,6 +107,16 @@ const STEPS = [
   },
 ];
 
+const MOBILE = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+const hashRoute = () => (window.location.hash || '#dashboard').slice(1).split('?')[0] || 'dashboard';
+
+// Interactive tour. Each step has two parts:
+//   1. "Go there" — the sidebar item glows and the student clicks it (on a
+//      phone, where the sidebar is hidden, the tour navigates for them).
+//   2. "Try it" — once on the page, a real control is spotlighted with a small
+//      task (tap the countdown, search a subject, pick a subject…). Doing it
+//      ticks the step off; Next / Skip are always there too.
+// Arrow keys move between steps, Esc closes.
 export default function TutorialOverlay() {
   const { finishTutorial, state } = useApp();
   const [i, setI] = useState(0);
@@ -114,109 +128,179 @@ export default function TutorialOverlay() {
   const [steps] = useState(() => ((state.courses || []).length ? STEPS : STEPS.filter((s) => s.route !== 'course-overview')));
   const step = steps[i];
   const isLast = i === steps.length - 1;
+  const [route, setRoute] = useState(hashRoute);
+  const [done, setDone] = useState({}); // step index → task completed
+  const arrived = route === step.route;
 
-  // Navigate to the step's route when step changes
   useEffect(() => {
-    if (step?.route) window.location.hash = `#${step.route}`;
+    const onHash = () => setRoute(hashRoute());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  // Steps with no sidebar item (course overview), and phones, navigate for the student.
+  useEffect(() => {
+    if (!step?.route || hashRoute() === step.route) return;
+    const nav = document.querySelector(`[data-nav-key="${step.route}"]`);
+    if (MOBILE() || !nav || step.route === 'course-overview' || i === 0) window.location.hash = `#${step.route}`;
   }, [i, step]);
 
-  // Pulse-highlight the corresponding sidebar nav item
-  useEffect(() => {
-    const els = document.querySelectorAll('[data-nav-key]');
-    els.forEach((el) => el.classList.remove('tut-highlight'));
-    if (!step?.target) return;
-    const active = document.querySelector(`[data-nav-key="${step.target}"]`);
-    if (active) active.classList.add('tut-highlight');
-    return () => { if (active) active.classList.remove('tut-highlight'); };
-  }, [step]);
+  // What to spotlight: the sidebar item until they get there, then the task.
+  const spotSel = !arrived ? `[data-nav-key="${step.target}"]` : (step.task && !done[i] ? step.task.spot : null);
 
-  // Position the floating tooltip near the highlighted sidebar item
-  const [pos, setPos] = useState({ top: 120, left: 250 });
+  // Glow on the sidebar item (existing style).
   useEffect(() => {
-    const compute = () => {
-      const target = document.querySelector(`[data-nav-key="${step.target}"]`);
-      if (!target) return;
-      const r = target.getBoundingClientRect();
-      const top = Math.max(20, Math.min(window.innerHeight - 340, r.top - 20));
-      const left = Math.min(window.innerWidth - 420, r.right + 18);
-      setPos({ top, left });
-    };
-    compute();
-    const id = setTimeout(compute, 30);
-    window.addEventListener('resize', compute);
-    window.addEventListener('scroll', compute, true);
-    return () => {
-      clearTimeout(id);
-      window.removeEventListener('resize', compute);
-      window.removeEventListener('scroll', compute, true);
-    };
-  }, [step]);
+    document.querySelectorAll('.tut-highlight').forEach((el) => el.classList.remove('tut-highlight'));
+    if (arrived || !step?.target) return undefined;
+    const el = document.querySelector(`[data-nav-key="${step.target}"]`);
+    if (el) el.classList.add('tut-highlight');
+    return () => { if (el) el.classList.remove('tut-highlight'); };
+  }, [step, arrived]);
 
-  const close = () => finishTutorial();
-  const next = () => isLast ? close() : setI((v) => v + 1);
+  // Track the spotlight target's box, and detect the task being done.
+  const [box, setBox] = useState(null);
+  useEffect(() => {
+    let el = null;
+    let off = () => {};
+    const attach = () => {
+      const found = spotSel ? document.querySelector(spotSel) : null;
+      if (found === el) return;
+      off();
+      el = found;
+      if (!el) { setBox(null); return; }
+      if (arrived && step.task) {
+        const ev = step.task.on || 'click';
+        const hit = () => setDone((d) => ({ ...d, [i]: true }));
+        el.addEventListener(ev, hit, true);
+        off = () => el && el.removeEventListener(ev, hit, true);
+      }
+    };
+    const measure = () => {
+      attach();
+      if (!el) { setBox(null); return; }
+      const r = el.getBoundingClientRect();
+      setBox(r.width ? { top: r.top, left: r.left, width: r.width, height: r.height } : null);
+    };
+    measure();
+    if (el && arrived) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const id = setInterval(measure, 250); // pages render in after navigation
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => { clearInterval(id); off(); window.removeEventListener('resize', measure); window.removeEventListener('scroll', measure, true); };
+  }, [spotSel, arrived, i, step]);
+
+  const close = () => { document.querySelectorAll('.tut-highlight').forEach((el) => el.classList.remove('tut-highlight')); finishTutorial(); };
+  const next = () => (isLast ? close() : setI((v) => v + 1));
   const back = () => setI((v) => Math.max(0, v - 1));
+
+  // Doing the task moves the tour on by itself (unless the task itself
+  // navigates somewhere worth a look — then the student presses Next).
+  useEffect(() => {
+    if (!done[i] || step.task?.stay) return undefined;
+    const t = setTimeout(() => { if (!isLast) setI((v) => v + 1); }, 900);
+    return () => clearTimeout(t);
+  }, [done, i]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+      if (e.key === 'ArrowRight') next();
+      else if (e.key === 'ArrowLeft') back();
+      else if (e.key === 'Escape') close();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Card position: beside the spotlight when there is room, else bottom-right.
+  const W = 380;
+  let pos = { right: 24, bottom: 24 };
+  if (box && !MOBILE()) {
+    const vw = window.innerWidth; const vh = window.innerHeight;
+    if (box.left + box.width + 18 + W < vw) pos = { left: box.left + box.width + 18, top: Math.max(16, Math.min(vh - 360, box.top - 10)) };
+    else if (box.top + box.height + 16 + 300 < vh) pos = { left: Math.max(16, Math.min(vw - W - 16, box.left)), top: box.top + box.height + 14 };
+    else pos = { left: Math.max(16, Math.min(vw - W - 16, box.left)), top: Math.max(16, box.top - 330) };
+  }
+
+  const stage = !arrived ? 'go' : step.task ? (done[i] ? 'done' : 'try') : 'look';
 
   return (
     <>
-      {/* very light backdrop, click-through where possible */}
-      <div className="fixed inset-0 z-40 pointer-events-none" aria-hidden="true">
-        <div className="absolute inset-0 bg-slate-900/15 backdrop-blur-[1px]" />
-      </div>
+      {/* Spotlight: dims the page except the thing to click. Clicks pass through. */}
+      {box ? (
+        <div className="fixed z-40 pointer-events-none rounded-xl ring-2 ring-blue-400 transition-all duration-300"
+          style={{ top: box.top - 6, left: box.left - 6, width: box.width + 12, height: box.height + 12, boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.35)' }} aria-hidden="true">
+          <span className="absolute inset-0 rounded-xl ring-4 ring-blue-400/40 animate-ping" />
+        </div>
+      ) : (
+        <div className="fixed inset-0 z-40 pointer-events-none bg-slate-900/15" aria-hidden="true" />
+      )}
 
-      {/* arrow + tooltip */}
-      <div ref={wrapRef} className="fixed z-50 w-[400px] max-w-[92vw] animate-tut-in" style={{ top: pos.top, left: pos.left }}>
-        <div className="relative">
-          {/* arrow pointing left toward sidebar */}
-          <span className="hidden md:block absolute -left-2.5 top-7 w-6 h-6 rotate-45 bg-white border-l border-b border-[color:var(--color-border)]" />
-          <div className="relative bg-white border border-[color:var(--color-border)] rounded-2xl overflow-hidden">
-            <div className="h-1 w-full bg-slate-100">
-              <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${((i + 1) / steps.length) * 100}%` }} />
+      <div ref={wrapRef} className="fixed z-50 max-w-[92vw] animate-tut-in" style={{ width: W, ...pos }} role="dialog" aria-label={`Tour: ${step.title}`} key={i}>
+        <div className="relative bg-white border border-[color:var(--color-border)] rounded-2xl overflow-hidden shadow-2xl">
+          <div className="h-1 w-full bg-slate-100">
+            <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${((i + (stage === 'done' || stage === 'look' ? 1 : 0.5)) / steps.length) * 100}%` }} />
+          </div>
+          <div className="p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] tracking-[0.16em] uppercase font-semibold text-blue-600">{step.eyebrow}</div>
+                <div className="text-[18px] font-semibold tracking-tight text-slate-900 mt-1">{step.title}</div>
+              </div>
+              <button onClick={close} className="w-7 h-7 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center transition-colors" aria-label="Close tutorial">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[10px] tracking-[0.16em] uppercase font-semibold text-blue-600">{step.eyebrow}</div>
-                  <div className="text-[18px] font-semibold tracking-tight text-slate-900 mt-1">{step.title}</div>
-                </div>
-                <button onClick={close} className="w-7 h-7 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center transition-colors" aria-label="Close tutorial">
-                  <X className="w-5 h-5" />
+
+            {stage === 'go' ? (
+              <div className="mt-3 rounded-xl bg-blue-50 border border-blue-200 px-3.5 py-3 text-[13.5px] text-blue-900 flex items-start gap-2" data-testid="tut-go">
+                <MousePointerClick className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>Click <b>{step.title.replace(/^Your /, '').replace(/^Add your /, '')}</b> in the sidebar to go there.</span>
+              </div>
+            ) : (
+              <>
+                <p className="text-[13.5px] text-slate-600 mt-2 leading-relaxed">{step.body}</p>
+                <ul className="mt-3 flex flex-col gap-1">
+                  {step.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2 text-[13px] text-slate-700">
+                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+                {step.task && (
+                  <div className={`mt-3 rounded-xl px-3.5 py-3 text-[13px] flex items-start gap-2 border transition-colors ${done[i] ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-violet-50 border-violet-200 text-violet-900'}`} data-testid="tut-task">
+                    {done[i] ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <MousePointerClick className="w-4 h-4 mt-0.5 shrink-0" />}
+                    <span><b>{done[i] ? 'Nice — done!' : 'Try it:'}</b> {step.task.text}</span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          <div className="px-5 py-3 border-t border-[color:var(--color-border)] flex items-center justify-between gap-3 bg-slate-50/60">
+            <div className="flex items-center gap-1.5">
+              {steps.map((s, idx) => (
+                <button key={s.title} onClick={() => setI(idx)} aria-label={`Go to step ${idx + 1}`}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${idx === i ? 'bg-blue-600' : (done[idx] || idx < i ? 'bg-blue-300' : 'bg-slate-300')}`} />
+              ))}
+              <span className="ml-2 text-[11.5px] text-slate-500 tabular-nums">{i + 1} / {steps.length}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={close} className="text-[12.5px] text-slate-500 hover:text-slate-800 transition-colors">Skip</button>
+              {i > 0 && (
+                <button onClick={back} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[12.5px] border border-[color:var(--color-border)] bg-white hover:bg-slate-100 text-slate-700 transition-colors">
+                  <ChevronLeft className="w-4 h-4" /> Back
                 </button>
-              </div>
-              <p className="text-[13.5px] text-slate-600 mt-2 leading-relaxed">{step.body}</p>
-              <ul className="mt-3 flex flex-col gap-1">
-                {step.bullets.map((b) => (
-                  <li key={b} className="flex items-start gap-2 text-[13px] text-slate-700">
-                    <span className="mt-1 w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="px-5 py-3 border-t border-[color:var(--color-border)] flex items-center justify-between gap-3 bg-slate-50/60">
-              <div className="flex items-center gap-1.5">
-                {STEPS.map((s, idx) => (
-                  <button key={s.title} onClick={() => setI(idx)} aria-label={`Go to step ${idx + 1}`}
-                    className={`w-1.5 h-1.5 rounded-full transition-colors ${idx === i ? 'bg-blue-600' : (idx < i ? 'bg-blue-300' : 'bg-slate-300')}`} />
-                ))}
-                <span className="ml-2 text-[11.5px] text-slate-500 tabular-nums">{i + 1} / {steps.length}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={close} className="text-[12.5px] text-slate-500 hover:text-slate-800 transition-colors">Skip</button>
-                {i > 0 && (
-                  <button onClick={back} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[12.5px] border border-[color:var(--color-border)] bg-white hover:bg-slate-100 text-slate-700 transition-colors">
-                    <ChevronLeft className="w-4 h-4" /> Back
-                  </button>
-                )}
-                {!isLast ? (
-                  <button onClick={next} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[12.5px] font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-                    Next <ChevronRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button onClick={next} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[12.5px] font-medium bg-blue-600 text-white hover:opacity-95 transition-opacity">
-                    <Sparkles className="w-4 h-4" /> Finish tour
-                  </button>
-                )}
-              </div>
+              )}
+              {!isLast ? (
+                <button onClick={next} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[12.5px] font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors" data-testid="tut-next">
+                  {stage === 'go' || stage === 'try' ? 'Skip step' : 'Next'} <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button onClick={next} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-[12.5px] font-medium bg-blue-600 text-white hover:opacity-95 transition-opacity">
+                  <Sparkles className="w-4 h-4" /> Finish tour
+                </button>
+              )}
             </div>
           </div>
         </div>

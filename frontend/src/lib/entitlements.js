@@ -26,7 +26,6 @@ export const PLUS_PITCH = [
   'AI study plan & coach, rebuilt around every exam date',
   'AI diagnosis after every worksheet — what went wrong and why',
   'Ask a doubt on any question, any topic',
-  'Save any worksheet as a PDF',
   'Custom requests — tell the AI how to tweak any worksheet',
   'Worksheets that draw on the notes you upload',
   'Custom courses built from your own material',
@@ -40,7 +39,6 @@ export const PLUS_FEATURES = {
   aiPlan: 'AI study plan & coach',
   askDoubt: 'Ask a doubt',
   diagnosis: 'AI worksheet diagnosis',
-  pdf: 'Saving a worksheet as PDF',
   customCourse: 'Custom courses',
   customRequest: 'Custom requests to tweak a worksheet',
   notesInWorksheets: 'Worksheets built from your own notes',
@@ -58,7 +56,6 @@ export const FREE_ALLOWANCE = {
   flashcards: { kind: 'daily', n: 1 },
   askDoubt: { kind: 'daily', n: 2 },
   diagnosis: { kind: 'daily', n: 1 },
-  pdf: { kind: 'daily', n: 1 },
   customRequest: { kind: 'daily', n: 1 },
   notesInWorksheets: { kind: 'daily', n: 1 },
 };

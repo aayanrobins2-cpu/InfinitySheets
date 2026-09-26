@@ -71,7 +71,7 @@ export function PlusUpgradeScreen({ feature }) {
     <div className="max-w-[560px] mx-auto mt-10 rounded-2xl border border-violet-200 bg-violet-50/50 p-8 text-center" data-testid="plus-upgrade">
       <div className="w-14 h-14 rounded-2xl bg-violet-600 text-white flex items-center justify-center mx-auto mb-4"><Sparkles className="w-7 h-7" /></div>
       <h2 className="text-[20px] font-semibold text-slate-900">{label} is part of InfinitySheets<PlusMark className="text-[20px]" /></h2>
-      <p className="text-[13.5px] text-slate-600 mt-2 leading-snug">InfinitySheets+ unlocks the AI-powered tools — study plans, the coach, flashcards, worksheet diagnosis, ask-a-doubt, PDF export, custom courses and more than {6} subjects.</p>
+      <p className="text-[13.5px] text-slate-600 mt-2 leading-snug">InfinitySheets+ unlocks the AI-powered tools — study plans, the coach, flashcards, worksheet diagnosis, ask-a-doubt, custom courses and more than {6} subjects.</p>
       <button type="button" onClick={() => openPlusBanner(feature)} className="mt-5 inline-flex items-center gap-1.5 rounded-lg bg-violet-600 text-white px-4 py-2 text-[13px] font-semibold hover:bg-violet-700" data-testid="plus-upgrade-cta">See what InfinitySheets<PlusMark className="text-[14px]" /> includes</button>
     </div>
   );

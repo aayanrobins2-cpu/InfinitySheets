@@ -20,6 +20,7 @@ import TopicOverview from './TopicOverview';
 import ResourcesPage from '../landing/ResourcesPage';
 import Sidebar from './shell/Sidebar';
 import PlusCheckout from './PlusCheckout';
+import { getWorksheetJob, subscribeWorksheetJob } from '../../lib/worksheetJob';
 import TopHeader from './shell/TopHeader';
 import NotesFlashcards from './NotesFlashcards';
 import RouteBoundary from './RouteBoundary';
@@ -127,6 +128,8 @@ export default function AppShell({ hash }) {
   const PLUS_NAV = { flashcards: 'flashcards', recommendations: 'aiPlan' };
   const NAV = (isAdmin ? [...BASE_NAV, ADMIN_ITEM] : BASE_NAV).map((n) => (PLUS_NAV[n.key] && !plus ? { ...n, locked: true } : n));
   const ALL_ITEMS = [...NAV, ...HIDDEN_ROUTES];
+  const [wsJob, setWsJob] = useState(getWorksheetJob());
+  useEffect(() => subscribeWorksheetJob(setWsJob), []);
   const current = ALL_ITEMS.find((n) => n.key === active) || NAV[0];
 
   // Sidebar collapse state — persisted so it survives refreshes on desktop.
@@ -263,8 +266,15 @@ export default function AppShell({ hash }) {
         />
         <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-7 max-w-[1280px]">
           <RouteBoundary routeKey={current.key}>
-            {PLUS_NAV[current.key] && !plus ? <PlusPreview feature={PLUS_NAV[current.key]}>{renderRoute(current.key, params, go, isAdmin)}</PlusPreview> : renderRoute(current.key, params, go, isAdmin)}
+            {current.key === 'worksheets' ? null : PLUS_NAV[current.key] && !plus ? <PlusPreview feature={PLUS_NAV[current.key]}>{renderRoute(current.key, params, go, isAdmin)}</PlusPreview> : renderRoute(current.key, params, go, isAdmin)}
           </RouteBoundary>
+          {/* The worksheet builder lives in its own slot so it can keep writing
+              a sheet in the background while another page is open. */}
+          {(current.key === 'worksheets' || wsJob !== 'idle') && (
+            <div className={current.key === 'worksheets' ? '' : 'hidden'} aria-hidden={current.key !== 'worksheets'}>
+              <RouteBoundary routeKey="worksheets"><Worksheets go={go} active={current.key === 'worksheets'} /></RouteBoundary>
+            </div>
+          )}
         </div>
       </main>
 
