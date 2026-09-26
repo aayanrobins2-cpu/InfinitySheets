@@ -5,6 +5,7 @@ import { syllabusLink } from '../../../data/syllabus';
 import { boardName, topicGroups } from '../../../lib/subjects';
 import { papersFor } from '../../../lib/paperTypes';
 import { askAi, isAiEnabled } from '../../../lib/ai';
+import { presetFor, presetMarks, examFormatText } from '../../../lib/examPresets';
 
 /**
  * Right-hand sidebar on the SubjectOverview page.
@@ -99,7 +100,8 @@ export default function SubjectSidePanels({ subject, board, ibLevel }) {
 // short paper list shows while it loads, and stays if AI is off.
 function ExamFormat({ subject, board, ibLevel, papers }) {
   const { state } = useApp();
-  const key = `exam_format:v1:${board}:${subject}:${ibLevel || ''}`;
+  const key = `exam_format:v2:${board}:${subject}:${ibLevel || ''}`;
+  const preset = presetFor(board);
   const [detail, setDetail] = useState(() => { try { return JSON.parse(window.localStorage.getItem(key) || 'null'); } catch (_) { return null; } });
   const [loading, setLoading] = useState(false);
   const aiOn = isAiEnabled(state);
@@ -111,11 +113,12 @@ function ExamFormat({ subject, board, ibLevel, papers }) {
     const content = [
       `Explain how ${subject} (${boardName(board)}${ibLevel ? ` ${ibLevel}` : ''}) is examined, for a student preparing for it.`,
       `Its papers/sections are: ${papers.map((p) => `${p.label} (${p.hint})`).join('; ')}.`,
+      `InfinitySheets' model of the paper (use it as a starting point, correct it where the official specification differs): ${examFormatText(board)}.`,
       'For EACH paper give: duration, total marks, % of the final grade, the question types and how many, what the questions test, and one tip on what examiners reward. Only state facts you are confident are in the current official specification; say "varies" rather than guess.',
       'Then give 2-3 overall points (e.g. calculators, command words, how grades are set).',
       'Reply with JSON only: {"papers": [{"label": string, "facts": [short strings like "2 hr 15 min", "80 marks", "50% of grade"], "about": "2-3 sentences", "tip": "1 sentence"}], "overall": [strings]}',
     ].join('\n');
-    askAi({ mode: 'chat', context: { board, subject, ibLevel }, messages: [{ role: 'user', content }] })
+    askAi({ mode: 'examformat', context: { board, subject, ibLevel }, messages: [{ role: 'user', content }] })
       .then((text) => {
         const m = /\{[\s\S]*\}/.exec(text || '');
         const parsed = m ? JSON.parse(m[0]) : null;
@@ -128,9 +131,26 @@ function ExamFormat({ subject, board, ibLevel, papers }) {
     return () => { alive = false; };
   }, [key, detail, aiOn]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // The paper's shape, always shown (no AI needed): sections, counts, marks, time.
+  const formatBlock = preset && (
+    <div className="rounded-xl bg-slate-50 border border-[color:var(--color-border)] p-3.5 mb-3" data-testid="exam-format-structure">
+      <div className="text-[12.5px] font-semibold text-slate-900">{preset.name}</div>
+      <div className="text-[11.5px] text-slate-500 mt-0.5">{preset.minutes} min · {presetMarks(preset)} marks</div>
+      <ul className="mt-2 flex flex-col gap-1">
+        {preset.sections.map((s) => (
+          <li key={s.name} className="text-[12px] text-slate-700 flex items-baseline justify-between gap-3">
+            <span>{s.name}</span>
+            <span className="text-slate-500 tabular-nums shrink-0">{s.count} × {s.marksEach} mark{s.marksEach === 1 ? '' : 's'}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
   if (!detail) {
     return (
       <>
+        {formatBlock}
         <ul className="flex flex-col gap-1.5">
           {papers.map((p) => (
             <li key={p.id} className="text-[13px] text-slate-700 flex items-baseline gap-2">
@@ -145,6 +165,7 @@ function ExamFormat({ subject, board, ibLevel, papers }) {
   }
   return (
     <div className="flex flex-col gap-3" data-testid="exam-format-detail">
+      {formatBlock}
       {detail.papers.map((p, i) => (
         <div key={`${p.label}-${i}`} className="rounded-xl border border-[color:var(--color-border)] p-3.5">
           <div className="text-[13.5px] font-semibold text-slate-900">{p.label}</div>

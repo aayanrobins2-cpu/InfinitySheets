@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bot, Send, Loader2, Settings as SettingsIcon } from 'lucide-react';
+import { Send, Loader2, Settings as SettingsIcon } from 'lucide-react';
+import InfinityBot from '../../InfinityBot';
 import { useApp } from '../../../context/AppContext';
 import { askAi, isAiEnabled } from '../../../lib/ai';
 
@@ -145,7 +146,7 @@ export default function AiChat({ title = 'Ask a doubt', subtitle, context = {}, 
     <div className={`rounded-2xl border border-[color:var(--color-border)] bg-white flex flex-col ${className}`} data-testid={testid}>
       <div className="px-5 pt-4 pb-3 border-b border-[color:var(--color-border)] flex items-start gap-3">
         <span className="w-9 h-9 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
-          <Bot className="w-5 h-5" />
+          <InfinityBot className="w-6 h-6" title="InfinityBot" />
         </span>
         <div className="min-w-0">
           <div className="text-[15px] font-semibold text-slate-900">{title}</div>

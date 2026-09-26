@@ -71,7 +71,7 @@ export function sheetFidelity(w, examMinutes) {
  */
 export function predictionMargin(worksheets, { board } = {}) {
   const examMinutes = examMinutesFor(board);
-  const rows = (worksheets || []).map((w) => ({ f: sheetFidelity(w, examMinutes), s: Number(w?.score) || 0 }));
+  const rows = (worksheets || []).filter((w) => followsExamFormat(w, examMinutes)).map((w) => ({ f: sheetFidelity(w, examMinutes), s: Number(w?.score) || 0 }));
   const evidence = rows.reduce((t, r) => t + r.f * r.f, 0);
   const base = 30 / Math.sqrt(1 + 1.8 * evidence);
   let scatter = 0;
@@ -115,10 +115,23 @@ export function predictedScore(worksheets, opts) {
  * real exam; before that `score` is still computed (for trends) but the UI
  * shows what is missing instead.
  */
-export function predictedBreakdown(worksheets, { board } = {}) {
+/**
+ * A sheet counts towards the predicted grade only when it follows the real
+ * exam's format: an exam simulation (the paper's sections, counts and marks),
+ * or a sheet at least as hard and as long as the real paper. Short drills and
+ * easy practice never move the grade.
+ */
+export function followsExamFormat(w, examMinutes) {
+  return !!w?.simulation || isExamSitting(w, examMinutes);
+}
+
+export function predictedBreakdown(allWorksheets, { board } = {}) {
   const examMinutes = examMinutesFor(board);
-  const empty = { score: 0, baseScore: 0, improvementBonus: 0, latestAdj: 0, hasImprovement: false, count: 0, ready: false, sittings: 0, examMinutes, bestFidelity: 0 };
-  if (!worksheets || worksheets.length === 0) return empty;
+  const practised = (allWorksheets || []).length;
+  const worksheets = (allWorksheets || []).filter((w) => followsExamFormat(w, examMinutes));
+  // `count` = exam-format sheets; `practised` = every sheet in the subject.
+  const empty = { score: 0, baseScore: 0, improvementBonus: 0, latestAdj: 0, hasImprovement: false, count: 0, practised, ready: false, sittings: 0, examMinutes, bestFidelity: 0 };
+  if (worksheets.length === 0) return empty;
 
   // Sort by date desc (newest first). Fall back to insertion order if no date.
   const sorted = [...worksheets].sort((a, b) => {
@@ -165,7 +178,8 @@ export function predictedBreakdown(worksheets, { board } = {}) {
     latestAdj: Math.round(latestAdj),
     hasImprovement: improvementBonus > 0,
     count: sorted.length,
-    ready: sittings > 0,
+    practised,
+    ready: sorted.length > 0,
     sittings,
     examMinutes,
     bestFidelity: Math.round(bestFidelity * 100) / 100,
@@ -175,7 +189,7 @@ export function predictedBreakdown(worksheets, { board } = {}) {
 // Short copy for the "not ready yet" state.
 export function readinessHint(bd) {
   const mins = bd?.examMinutes || 90;
-  return `Sit one exam-level sheet of ${mins} min or more to unlock`;
+  return `Not enough data yet — sit an exam simulation, or an exam-level sheet of ${mins} min or more`;
 }
 
 // -----------------------------------------------------------------------------

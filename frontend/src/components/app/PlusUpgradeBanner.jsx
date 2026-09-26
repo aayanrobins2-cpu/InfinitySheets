@@ -78,7 +78,7 @@ export default function PlusUpgradeBanner() {
         </ul>
 
         <a
-          href="#settings"
+          href="#plus"
           onClick={() => setOpen(false)}
           className="mt-7 inline-flex items-center justify-center gap-2 w-full py-3 rounded-lg text-[15px] font-medium bg-blue-500 hover:bg-blue-400 text-white transition-colors"
           data-testid="plus-banner-cta"

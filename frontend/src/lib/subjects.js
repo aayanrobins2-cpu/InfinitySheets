@@ -277,3 +277,28 @@ export function rankByPopularity(list) {
     .sort((a, b) => a.r - b.r || a.name.length - b.name.length || a.i - b.i)
     .map((x) => x.name);
 }
+
+/**
+ * Each course subject with its course's status ('Active' | 'On hold' |
+ * 'Completed'). A subject in several courses counts as active if any of
+ * those courses is active.
+ */
+export function subjectStatuses(courses) {
+  const out = {};
+  (courses || []).forEach((c) => {
+    const status = c.status || 'Active';
+    const subs = Array.isArray(c.subjects) ? c.subjects : (c.subject ? [c.subject] : []);
+    subs.forEach((entry) => {
+      const name = typeof entry === 'string' ? entry : entry?.subject;
+      if (!name) return;
+      if (!out[name] || status === 'Active') out[name] = status;
+    });
+  });
+  return out;
+}
+
+/** Subjects the student is actively studying (not on hold / completed). */
+export function activeSubjectsOnly(subjects, courses) {
+  const st = subjectStatuses(courses);
+  return (subjects || []).filter((s) => !st[s] || st[s] === 'Active');
+}

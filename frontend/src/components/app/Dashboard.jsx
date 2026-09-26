@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
 import { useApp } from '../../context/AppContext';
+import { isPlus } from '../../lib/entitlements';
 import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, RotateCcw, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
@@ -162,7 +164,7 @@ function SubmissionsDueCard({ submissions, onScan, onCancel, onClearDue }) {
               <button type="button" onClick={() => onScan(s.id)} className="btn-violet inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold shrink-0" data-testid={`submission-scan-${s.id}`}>
                 <Upload className="w-3.5 h-3.5" /> Scan
               </button>
-              <button type="button" aria-label="Remove" onClick={() => onCancel(s.id)} className="w-7 h-7 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center shrink-0" data-testid={`submission-remove-${s.id}`}><X className="w-4 h-4" /></button>
+              <button type="button" aria-label="Remove" onClick={() => { if (confirmDelete('this worksheet submission')) onCancel(s.id); }} className="w-7 h-7 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center shrink-0" data-testid={`submission-remove-${s.id}`}><X className="w-4 h-4" /></button>
             </li>
           );
         })}
@@ -173,6 +175,7 @@ function SubmissionsDueCard({ submissions, onScan, onCancel, onClearDue }) {
 
 export default function Dashboard({ go }) {
   const { state, clearDraftWorksheet, updateSettings, updateCourse, removePendingSubmission, setSubmissionDue } = useApp();
+  const plus = isPlus(state);
   // Memoised: a fresh `[]` fallback each render would invalidate every useMemo below.
   // Only subjects still in the student's courses count towards the dashboard.
   const ws = useMemo(() => activeWorksheets(state.worksheets, state.courses, state.user?.subjects, primaryTrack(state.courses, state.user?.examTrack)), [state.worksheets, state.courses, state.user?.subjects, state.user?.examTrack]);
@@ -262,9 +265,10 @@ export default function Dashboard({ go }) {
     // after many sheets that look like the real exam.
     const margins = entries.map((e) => {
       const list = ws.filter((w) => sheetBelongs(w, e, entries));
-      return list.length ? predictionMargin(list, { board: e.board }) : null;
+      // Only subjects that have a real prediction (an exam-format sheet).
+      return list.length && predictedBreakdown(list, { board: e.board }).ready ? predictionMargin(list, { board: e.board }) : null;
     }).filter((m) => m !== null);
-    if (!margins.length) return null;
+    if (!margins.length) return ws.length ? 'none' : null;
     return Math.round(margins.reduce((a, b) => a + b, 0) / margins.length);
   }, [ws, entries]);
 
@@ -375,8 +379,8 @@ export default function Dashboard({ go }) {
             overallAccuracy !== null && (
               <div className="mt-2 pt-2 border-t border-[color:var(--color-border)] flex items-baseline justify-between gap-2">
                 <span className="text-[10px] tracking-[0.14em] uppercase font-semibold text-slate-500" title="How far the final grade could plausibly differ from the predicted grade">Accuracy</span>
-                <span className="text-[15px] font-semibold text-slate-900 tabular-nums">
-                  &plusmn;{overallAccuracy}%
+                <span className={`tabular-nums ${overallAccuracy === 'none' ? 'text-[12px] text-slate-400' : 'text-[15px] font-semibold text-slate-900'}`}>
+                  {overallAccuracy === 'none' ? 'Not enough data' : <>&plusmn;{overallAccuracy}%</>}
                 </span>
               </div>
             )
@@ -474,7 +478,7 @@ export default function Dashboard({ go }) {
       <>
       <div className="grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2"><WeeklySummaryCard worksheets={ws} /></div>
-        <PlusLock feature="reviewDue"><ReviewDueTile worksheets={ws} onStart={() => go('worksheets')} /></PlusLock>
+        <ReviewDueTile worksheets={ws} onStart={() => go('worksheets')} />
       </div>
       </>
     ) },
@@ -496,6 +500,9 @@ export default function Dashboard({ go }) {
         <PomodoroTimer />
       </div>
       </>
+    ) },
+    { id: 'notes', label: 'Notes & flashcards', node: (
+      <NotesFlashcardsCard notes={state.notes || []} flashcards={state.flashcards} plus={plus} go={go} />
     ) },
     { id: 'badges', label: 'Badges', node: (
       <>
@@ -894,5 +901,35 @@ function PerformanceLineChart({ subjects, series, totalX }) {
         ))}
       </div>
     </div>
+  );
+}
+
+// Notes & flashcards at a glance: how many notes are uploaded and how many
+// flashcards are due, with a way in. (The page is InfinitySheets+; free users
+// get their daily free pass there.)
+function NotesFlashcardsCard({ notes, flashcards, plus, go }) {
+  const cards = Object.values(flashcards?.cards || {});
+  const now = Date.now();
+  const due = cards.filter((c) => !c?.due || new Date(c.due).getTime() <= now).length;
+  const pdfs = notes.filter((n) => n.kind !== 'audio').length;
+  const audio = notes.length - pdfs;
+  const empty = !notes.length && !cards.length;
+  return (
+    <button type="button" onClick={() => go('flashcards')} className="w-full text-left rounded-2xl border border-[color:var(--color-border)] bg-white p-5 hover:border-violet-300 transition-colors" data-testid="dash-notes-flashcards">
+      <div className="flex items-center justify-between gap-2">
+        <div className="eyebrow-muted inline-flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Notes &amp; flashcards</div>
+        {!plus && <span className="text-[11px] text-violet-700 font-semibold">InfinitySheets<span className="brand-plus-text font-extrabold">+</span></span>}
+      </div>
+      {empty ? (
+        <div className="text-[13px] text-slate-500 mt-2">Not enough data yet &mdash; upload your notes or make a flashcard deck to see them here.</div>
+      ) : (
+        <div className="grid grid-cols-3 gap-3 mt-3">
+          <div><div className="text-[20px] font-semibold text-slate-900 tabular-nums">{pdfs}</div><div className="text-[11px] uppercase tracking-wide text-slate-500">PDF notes</div></div>
+          <div><div className="text-[20px] font-semibold text-slate-900 tabular-nums">{audio}</div><div className="text-[11px] uppercase tracking-wide text-slate-500">Audio notes</div></div>
+          <div><div className="text-[20px] font-semibold text-slate-900 tabular-nums">{due}</div><div className="text-[11px] uppercase tracking-wide text-slate-500">Cards due</div></div>
+        </div>
+      )}
+      <div className="text-[12px] text-violet-700 font-medium mt-3">Open Notes &amp; Flashcards &rarr;</div>
+    </button>
   );
 }

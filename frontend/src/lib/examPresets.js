@@ -104,3 +104,16 @@ export function simulationScore(sheet) {
   const pct = max ? Math.round((got / max) * 100) : 0;
   return { got, max, pct, grade: formatGrade(pct, sim.board) };
 }
+
+/**
+ * The exam's format in one line, e.g. "IB · Paper 1 + Paper 2 style, 90 min,
+ * 34 marks: Paper 1 · short response — 8 × 2 marks (typed response); …".
+ * Shown on the subject page and given to every AI that writes questions, so
+ * sheets follow the real paper's shape.
+ */
+export function examFormatText(board) {
+  const p = presetFor(board);
+  if (!p) return '';
+  const secs = p.sections.map((s) => `${s.name} — ${s.count} × ${s.marksEach} mark${s.marksEach === 1 ? '' : 's'} (${s.type.toLowerCase()}${s.negative ? `, −${s.negative} for a wrong answer` : ''})`);
+  return `${p.name}, ${p.minutes} min, ${presetMarks(p)} marks: ${secs.join('; ')}`;
+}

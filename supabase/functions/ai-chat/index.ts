@@ -66,6 +66,11 @@ function systemPrompt(mode: string, ctx: Record<string, unknown>) {
   if (mode === "plan") {
     return `${base}\n\nYou build a study plan from the student's performance data and exam date. Reply with a single JSON object and nothing else: {"summary": "one sentence", "days": [{"day": "Mon", "date": "YYYY-MM-DD", "tasks": [{"subject": string, "topic": string, "minutes": integer, "what": "one specific action"}]}]}. Weakest topics first, spaced repetition later in the week, never more than 3 tasks per day.`;
   }
+  if (mode === "examformat") {
+    return `${base}
+
+You explain exactly how this subject's exam is structured, paper by paper, from the current official specification: duration, total marks, weighting, question types and counts, calculator rules, and what the questions test. Never guess a figure you are not confident of — write "varies" instead. Reply with a single JSON object and nothing else.`;
+  }
   if (mode === "flashcards") {
     return `${base}\n\nYou write revision flashcards for this exam: the definitions, formulas, laws, facts and traps a student must know for a topic, phrased exactly as the mark scheme rewards. Never write practice questions. Reply with a single JSON object and nothing else.`;
   }
@@ -126,7 +131,7 @@ const BALANCED_CHAIN = ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.7
 const FAST_CHAIN = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
 const TIER: Record<string, string[]> = {
   extract: SMART_CHAIN, assess: SMART_CHAIN, mark: SMART_CHAIN, diagnose: SMART_CHAIN, "course-search": SMART_CHAIN, multiply: SMART_CHAIN,
-  plan: BALANCED_CHAIN, solution: BALANCED_CHAIN, syllabus: BALANCED_CHAIN, generate: BALANCED_CHAIN,
+  plan: BALANCED_CHAIN, examformat: BALANCED_CHAIN, solution: BALANCED_CHAIN, syllabus: BALANCED_CHAIN, generate: BALANCED_CHAIN,
 };
 function chainFor(mode: string) { return TIER[mode] || FAST_CHAIN; }
 
@@ -186,11 +191,11 @@ async function cacheBumpHit(id: string) {
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
-const MODES = new Set(["overview", "chat", "recommend", "diagnose", "transcribe", "mark", "generate", "extract", "assess", "solution", "plan", "syllabus", "flashcards", "course-search", "blurt", "multiply"]);
-const JSON_MODES = new Set(["mark", "generate", "extract", "assess", "plan", "syllabus", "flashcards", "blurt", "multiply"]);
+const MODES = new Set(["overview", "chat", "recommend", "diagnose", "transcribe", "mark", "generate", "extract", "assess", "solution", "plan", "syllabus", "flashcards", "course-search", "blurt", "multiply", "examformat"]);
+const JSON_MODES = new Set(["examformat", "mark", "generate", "extract", "assess", "plan", "syllabus", "flashcards", "blurt", "multiply"]);
 const FILE_MODES = new Set(["transcribe", "extract", "assess", "syllabus"]);
 // Modes that read an attached file when one is sent (blurting from PDF notes).
-const OPTIONAL_FILE_MODES = new Set(["blurt"]);
+const OPTIONAL_FILE_MODES = new Set(["blurt", "generate"]);
 type FileIn = { mimeType: string; data: string; label?: string };
 function cleanFiles(list: unknown, max = 6): FileIn[] {
   return (Array.isArray(list) ? list : []).slice(0, max)

@@ -122,7 +122,7 @@ export function settingsToRow(state, userId) {
     onboarding_done: state.onboardingDone ?? false,
     tutorial_done: state.tutorialDone ?? false,
     // Small per-user blobs that do not deserve their own table.
-    data: { flashcards: state.flashcards || null, studyPlan: state.studyPlan || null, badges: state.badges || null, reminderHour: s.reminderHour ?? 18, askMistakeReason: s.askMistakeReason !== false, glass: typeof s.glass === 'number' ? s.glass : 50, glassOff: !!s.glassOff, plan: s.plan === 'plus' ? 'plus' : 'free', dashboardCards: s.dashboardCards || null, aiEnabled: s.aiEnabled !== false, consent: state.consent || null, focusSessions: state.focusSessions || [], pendingSubmissions: (state.pendingSubmissions || []).slice(-20), notes: (state.notes || []).slice(0, 200) },
+    data: { flashcards: state.flashcards || null, studyPlan: state.studyPlan || null, badges: state.badges || null, reminderHour: s.reminderHour ?? 18, askMistakeReason: s.askMistakeReason !== false, glass: typeof s.glass === 'number' ? s.glass : 50, glassOff: !!s.glassOff, plan: s.plan === 'plus' ? 'plus' : 'free', dashboardCards: s.dashboardCards || null, aiEnabled: s.aiEnabled !== false, plusUsage: s.plusUsage || {}, school: s.school || null, consent: state.consent || null, focusSessions: state.focusSessions || [], pendingSubmissions: (state.pendingSubmissions || []).slice(-20), notes: (state.notes || []).slice(0, 200) },
     updated_at: nowISO(),
   };
 }
@@ -145,6 +145,8 @@ export function rowToSettingsState(row) {
       plan: extra.plan === 'plus' ? 'plus' : 'free',
       dashboardCards: extra.dashboardCards || null,
       aiEnabled: extra.aiEnabled !== false,
+      plusUsage: extra.plusUsage && typeof extra.plusUsage === 'object' ? extra.plusUsage : {},
+      school: extra.school || null,
       dailyGoal: row.daily_goal ?? 10,
       weeklyGoal: row.weekly_goal ?? 50,
       frequency: row.frequency ?? '3-4 per week',
@@ -427,4 +429,11 @@ export async function subjectPopularity() {
   const { data, error } = await supabase.rpc('subject_popularity');
   if (error) throw error;
   return Array.isArray(data) ? data : [];
+}
+
+// School codes: look up one code (the table itself can't be listed).
+export async function redeemSchoolCode(code) {
+  const { data, error } = await supabase.rpc('redeem_school_code', { p_code: code });
+  if (error) throw error;
+  return Array.isArray(data) ? data[0] || null : data || null;
 }

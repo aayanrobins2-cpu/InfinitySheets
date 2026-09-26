@@ -5,8 +5,31 @@ import { analyticsForPrompt } from './worksheetAnalytics';
 import { dataUrlParts } from './images';
 import { snapTopic, guessTopicFromText } from './topicSnap';
 import { detectChains } from './chains';
+import { examFormatText } from './examPresets';
 
 export const AI_FUNCTION = 'ai-chat';
+
+// What every personal assistant should know about the student: which courses
+// are active, on hold or completed, and their school's notes (school code).
+// Set by AppContext whenever courses change. Never sent with the shared,
+// cached topic overviews or the admin tools.
+let studentNote = '';
+const PERSONAL_MODES = new Set(['chat', 'plan', 'diagnose', 'assess', 'generate', 'flashcards', 'blurt', 'solution', 'multiply']);
+export function setAiStudentContext({ courses = [], school = null } = {}) {
+  const lines = [];
+  const byStatus = { Active: [], 'On hold': [], Completed: [] };
+  (courses || []).forEach((c) => {
+    const status = byStatus[c.status] ? c.status : 'Active';
+    const subs = (Array.isArray(c.subjects) ? c.subjects : []).map((e) => (typeof e === 'string' ? e : e?.subject)).filter(Boolean);
+    if (subs.length) byStatus[status].push(`${c.name || c.track || 'Course'}: ${subs.join(', ')}`);
+  });
+  if (byStatus['On hold'].length || byStatus.Completed.length) {
+    lines.push(`Student's courses — active: ${byStatus.Active.join('; ') || 'none'}; ON HOLD: ${byStatus['On hold'].join('; ') || 'none'}; completed: ${byStatus.Completed.join('; ') || 'none'}.`);
+    lines.push('Courses on hold are paused by the student: do not schedule, recommend or push work for them unless the student explicitly asks about them. Completed courses need no further study.');
+  }
+  if (school?.name) lines.push(`The student's school: ${school.name}${school.notes ? ` — ${school.notes}` : ''}. Tailor advice to it where relevant.`);
+  studentNote = lines.join('\n');
+}
 
 // One switch in Settings turns every assistant off (topic pages, recommendations).
 export function isAiEnabled(state) {
@@ -30,6 +53,10 @@ async function readErrorMessage(error) {
 export async function askAi({ mode = 'chat', context = {}, messages = [], force = false, images = [], files = [] }) {
   if (!isSupabaseConfigured) {
     throw new Error('AI needs the Supabase connection (set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY).');
+  }
+  if (studentNote && PERSONAL_MODES.has(mode) && messages.length) {
+    const last = messages.length - 1;
+    messages = messages.map((m, i) => (i === last && m.role === 'user' ? { ...m, content: `${m.content}\n\n[About this student]\n${studentNote}` } : m));
   }
   const { data, error } = await supabase.functions.invoke(AI_FUNCTION, {
     body: { mode, context, force, files: [...(files || []), ...(images || [])].map(({ mimeType, data, label }) => ({ mimeType, data, label })), messages: messages.map((m) => ({ role: m.role, content: m.content })) },
@@ -284,7 +311,7 @@ function readQuestions(text) {
   return recoverQuestions(text);
 }
 
-export async function generateQuestions({ board, ibLevel, subject, topics, answerType, difficulty, count, avoid = [], instructions = '' }) {
+export async function generateQuestions({ board, ibLevel, subject, topics, answerType, difficulty, count, avoid = [], instructions = '', notes = [] }) {
   const n = Math.max(1, Math.min(60, count || 5));
   const batches = [];
   for (let left = n, i = 0; left > 0; left -= GENERATE_BATCH, i += 1) batches.push({ size: Math.min(GENERATE_BATCH, left), i });
@@ -298,14 +325,16 @@ export async function generateQuestions({ board, ibLevel, subject, topics, answe
     const content = [
       `Write ${size} original ${answerType} questions for ${subject} (${board}${ibLevel ? ` ${ibLevel}` : ''}) at ${difficulty} difficulty.`,
       `Topics to cover (spread the questions across them, each tagged with exactly one): ${order.join('; ')}.`,
+      examFormatText(board) ? `The real exam's format: ${examFormatText(board)}. Match its question styles, mark values and command words.` : '',
       'They must be brand-new questions in the exact style this exam uses. Never reproduce a past-paper question; vary the contexts and numbers. Every question needs a correct answer and a marking scheme, and "marks" must match the scheme.',
       batches.length > 1 ? `This is batch ${i + 1} of ${batches.length}; make these questions different from the other batches by leaning on different topics and contexts.` : '',
       avoidLine,
+      notes.length ? `The student's own study notes are attached (${notes.map((f) => f.label).join(', ')}). Base the questions on what these notes cover, so the sheet tests what they have been studying — while keeping every question on the syllabus and in this exam's style.` : '',
       String(instructions || '').trim() ? `The student asked for this — follow it as long as the questions stay on the syllabus, in this exam's style, and correct: "${String(instructions).trim().slice(0, 500)}"` : '',
       'For multiple choice, "a" is the 0-based INDEX of the correct option (0 = first), and options have no "A." / "B." labels.',
       `Reply as {"questions": [...]}. ${QUESTION_SHAPE}. Use "answerType": "${answerType}" for every question.`,
     ].filter(Boolean).join('\n');
-    const text = await askAi({ mode: 'generate', context: { board, ibLevel, subject, topic: order.join(', ') }, messages: [{ role: 'user', content }] });
+    const text = await askAi({ mode: 'generate', context: { board, ibLevel, subject, topic: order.join(', ') }, messages: [{ role: 'user', content }], files: notes });
     return readQuestions(text);
   };
 

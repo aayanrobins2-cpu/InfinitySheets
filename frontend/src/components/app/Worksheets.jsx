@@ -1,6 +1,8 @@
 import { openPlusBanner } from './PlusUpgradeBanner';
+import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { downloadNoteFile } from '../../lib/dataStore';
 import { useApp } from '../../context/AppContext';
 import { TOPICS, QUESTION_BANK, EXAM_DURATIONS } from '../../data/mock';
 import { enrolledSubjects, questionsForSubject, resolvedTopics, topicGroups, primaryTrack, subjectEntries } from '../../lib/subjects';
@@ -423,7 +425,8 @@ function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerTy
 
 export default function Worksheets({ go }) {
   const { state, recordWorksheet, updateWorksheet, saveDraftWorksheet, clearDraftWorksheet, tagMistakeReason, addPendingSubmission, removePendingSubmission } = useApp();
-  const { isPlus: plus, requirePlus } = usePlus();
+  const { isPlus: plus, requirePlus, usesLeft } = usePlus();
+  const [freeDiagnosis, setFreeDiagnosis] = useState(null); // sheet a free user spent today's diagnosis on
   const tagReason = (sheetId, i, reason) => { tagMistakeReason(sheetId, i, reason); if (reason) trackEvent('mistake_tagged', { reason }); };
   const track = primaryTrack(state.courses, state.user?.examTrack);
   const examMinutes = EXAM_DURATIONS[track] || 60;
@@ -534,6 +537,8 @@ export default function Worksheets({ go }) {
   const [pastPapers, setPastPapers] = useState(false);
   const [aiGenerated, setAiGenerated] = useState(true);
   const [customRequest, setCustomRequest] = useState(''); // InfinitySheets+: extra instructions for the AI
+  const [useNotes, setUseNotes] = useState(false);         // InfinitySheets+: build from the student's uploaded notes
+  const subjectNotes = useMemo(() => (state.notes || []).filter((n) => n.subject === subject && n.kind !== 'audio' && n.path), [state.notes, subject]);
 
   const [stage, setStage] = useState('build');
   const [questions, setQuestions] = useState([]);
@@ -813,6 +818,10 @@ export default function Worksheets({ go }) {
   // Validate the builder, ask the AI for original questions when that source
   // is ticked, and assemble the sheet. Resolves to null when validation fails.
   const assembleQuestions = async ({ withReviews }) => {
+    // A custom request costs a free user their daily free one (+ is unlimited).
+    const request = customRequest.trim() && aiGenerated && (plus || requirePlus('customRequest')) ? customRequest : '';
+    // The student's own PDF notes for this subject go to the AI with the request.
+    const notes = useNotes && aiGenerated && subjectNotes.length && (plus || requirePlus('notesInWorksheets')) ? await loadNotesForAi(subjectNotes) : [];
     // A picked past paper is taken as-is, in its printed order.
     if (paperPick && paperPick.ids?.length) {
       const byId = new Map((state.pastPapers || []).map((p) => [p.id, p]));
@@ -848,7 +857,7 @@ export default function Worksheets({ go }) {
       if (need > 0) {
         setGenerating(true);
         try {
-          generated = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, count: need, instructions: plus ? customRequest : '' });
+          generated = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, count: need, instructions: request, notes });
         } catch (e) {
           toast.error(`${e.message || 'The AI could not write questions'}${pastPapers ? ' — using past-paper questions instead.' : ''}`);
         } finally {
@@ -874,7 +883,7 @@ export default function Worksheets({ go }) {
             : length - qs.length;
           let more = [];
           try {
-            more = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: sheetType, difficulty: recap ? 'Easy' : effDifficulty, count: missing, avoid: qs.map((q) => q.q), instructions: plus ? customRequest : '' });
+            more = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: sheetType, difficulty: recap ? 'Easy' : effDifficulty, count: missing, avoid: qs.map((q) => q.q), instructions: request, notes });
           } catch (e) {
             break; // rate-limited or offline — keep what we have
           }
@@ -1556,10 +1565,12 @@ export default function Worksheets({ go }) {
         ) : (
           <>
             <div className="mb-5">
-              {plus ? (
+              {plus || freeDiagnosis === result ? (
                 <DiagnosisPanel sheet={result} autoRun testid="worksheet-diagnosis" />
               ) : (
-                <button type="button" onClick={() => openPlusBanner('diagnosis')} className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:bg-violet-50" data-testid="diagnosis-locked">AI worksheet diagnosis is an InfinitySheets<span className="brand-plus-text font-extrabold">+</span> feature.</button>
+                <button type="button" onClick={() => { if (requirePlus('diagnosis')) setFreeDiagnosis(result); }} className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:bg-violet-50" data-testid="diagnosis-locked">
+                  {usesLeft('diagnosis') > 0 ? <>Get your AI diagnosis &mdash; {usesLeft('diagnosis')} free today, unlimited with InfinitySheets<span className="brand-plus-text font-extrabold">+</span>.</> : <>AI worksheet diagnosis is an InfinitySheets<span className="brand-plus-text font-extrabold">+</span> feature. Your free one for today is used.</>}
+                </button>
               )}
             </div>
             <div className="mb-5">
@@ -1854,6 +1865,15 @@ export default function Worksheets({ go }) {
               testid="ws-ai-generated"
             />
           </div>
+          {subjectNotes.length > 0 && (
+            <label className={`mt-2.5 flex items-start gap-2.5 rounded-lg border px-3 py-2.5 cursor-pointer ${useNotes ? 'border-violet-300 bg-violet-50/60' : 'border-[color:var(--color-border)]'}`} data-testid="ws-use-notes">
+              <input type="checkbox" className="mt-0.5" checked={useNotes} onChange={(e) => { if (e.target.checked && !plus && usesLeft('notesInWorksheets') <= 0) { openPlusBanner('notesInWorksheets'); return; } setUseNotes(e.target.checked); }} />
+              <span className="text-[12.5px] text-slate-700">
+                <span className="font-medium">Use my notes</span> <PlusBadge /> &mdash; the AI builds the questions from your {subjectNotes.length} uploaded {subject} note{subjectNotes.length === 1 ? '' : 's'}.
+                {!plus && <span className="block text-slate-500 text-[11.5px] mt-0.5">{usesLeft('notesInWorksheets') > 0 ? '1 free sheet from your notes a day.' : 'Today’s free one is used — unlimited with InfinitySheets+.'}</span>}
+              </span>
+            </label>
+          )}
           {pastPapers && ppAvailable === 0 && (
             <div className="text-[11.5px] text-amber-700 mt-2 inline-flex items-center gap-1.5"><AlertCircle className="w-4 h-4" /> {ppDone.done + ppDone.review > 0 ? 'You have already done every past-paper question for this selection — the ones you missed come back as reviews.' : 'No past-paper questions match this subject / topic / answer type. Uploads live on the Admin page.'}</div>
           )}
@@ -1941,7 +1961,7 @@ export default function Worksheets({ go }) {
                 <div className="text-[12.5px] text-slate-600 mt-0.5">{paper.questions.length} questions · {paper.topics.join(', ')} · {fmtDuration(paper.duration)}. Do it on paper, then scan or upload your answers and the AI marks them.</div>
               </div>
             </div>
-            <button onClick={discardPaper} className="text-slate-400 hover:text-rose-600" title="Discard this paper session" data-testid="paper-discard"><Trash2 className="w-4 h-4" /></button>
+            <button onClick={() => { if (confirmDelete('this paper session')) discardPaper(); }} className="text-slate-400 hover:text-rose-600" title="Discard this paper session" data-testid="paper-discard"><Trash2 className="w-4 h-4" /></button>
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -1977,7 +1997,7 @@ export default function Worksheets({ go }) {
         </div>
       )}
     </div>
-    <CustomRequestPanel value={customRequest} onChange={setCustomRequest} plus={plus} aiOn={aiGenerated} />
+    <CustomRequestPanel value={customRequest} onChange={setCustomRequest} plus={plus} left={usesLeft('customRequest')} aiOn={aiGenerated} />
     </div>
   );
 }
@@ -1987,7 +2007,8 @@ export default function Worksheets({ go }) {
 // graphs"). InfinitySheets+ only; free users see it greyed and get the
 // upgrade banner. It applies to AI-written questions.
 const REQUEST_IDEAS = ['Only calculation questions', 'Use real-world sports contexts', 'Include a graph to interpret', 'Focus on the parts I usually get wrong'];
-function CustomRequestPanel({ value, onChange, plus, aiOn }) {
+function CustomRequestPanel({ value, onChange, plus, left, aiOn }) {
+  const can = plus || left > 0;
   return (
     <aside className="w-full xl:w-[320px] xl:shrink-0 xl:sticky xl:top-4 rounded-2xl border border-zinc-200 p-5" data-testid="ws-custom-request">
       <div className="flex items-center justify-between gap-2">
@@ -1999,21 +2020,21 @@ function CustomRequestPanel({ value, onChange, plus, aiOn }) {
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value.slice(0, 500))}
-          onFocus={(e) => { if (!plus) { e.target.blur(); openPlusBanner('customRequest'); } }}
-          readOnly={!plus}
+          onFocus={(e) => { if (!can) { e.target.blur(); openPlusBanner('customRequest'); } }}
+          readOnly={!can}
           rows={5}
           placeholder="e.g. Make every question use data from a table, and include one long 6-mark explain question."
-          className={`input-base w-full resize-y text-[13px] leading-relaxed ${plus ? '' : 'opacity-60 cursor-pointer'}`}
+          className={`input-base w-full resize-y text-[13px] leading-relaxed ${can ? '' : 'opacity-60 cursor-pointer'}`}
           data-testid="ws-custom-request-input"
         />
       </div>
       <div className="flex flex-wrap gap-1.5 mt-2.5">
         {REQUEST_IDEAS.map((idea) => (
-          <button key={idea} type="button" onClick={() => { if (!plus) { openPlusBanner('customRequest'); return; } onChange(value ? `${value.trim()} ${idea}.` : `${idea}.`); }} className="text-[11.5px] px-2 py-1 rounded-md border border-zinc-200 text-slate-600 hover:border-violet-300 hover:text-violet-700">{idea}</button>
+          <button key={idea} type="button" onClick={() => { if (!can) { openPlusBanner('customRequest'); return; } onChange(value ? `${value.trim()} ${idea}.` : `${idea}.`); }} className="text-[11.5px] px-2 py-1 rounded-md border border-zinc-200 text-slate-600 hover:border-violet-300 hover:text-violet-700">{idea}</button>
         ))}
       </div>
       <div className="text-[11.5px] text-slate-400 mt-3">
-        {!plus ? 'An InfinitySheets+ feature.' : aiOn ? `${value.length}/500 · applied when you press Create.` : 'Tick “Accurate to you” so the AI writes the questions — requests apply to those.'}
+        {!plus ? (left > 0 ? `${left} free custom request today (used when you press Create) — unlimited with InfinitySheets+.` : 'An InfinitySheets+ feature. Today’s free one is used.') : aiOn ? `${value.length}/500 · applied when you press Create.` : 'Tick “Accurate to you” so the AI writes the questions — requests apply to those.'}
       </div>
     </aside>
   );
@@ -2143,4 +2164,28 @@ function CheckboxCard({ label, icon, checked, onChange, testid }) {
       <span className="min-w-0 leading-snug">{label}</span>
     </button>
   );
+}
+
+// The student's PDF notes, as files the AI can read: newest first, at most 2
+// and 8 MB in total, so the request stays small.
+async function loadNotesForAi(notes) {
+  const out = [];
+  let bytes = 0;
+  const newest = [...notes].sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  for (const n of newest) {
+    if (out.length >= 2) break;
+    try {
+      const blob = await downloadNoteFile(n.path);
+      if (!blob || bytes + blob.size > 8 * 1024 * 1024) continue;
+      const data = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).split(',')[1] || '');
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+      bytes += blob.size;
+      out.push({ mimeType: blob.type || n.mime || 'application/pdf', data, label: `NOTES: ${n.name || 'notes'}` });
+    } catch (_) { /* skip a note that can't be read */ }
+  }
+  return out;
 }

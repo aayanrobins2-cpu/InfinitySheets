@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { confirmDelete } from '../../lib/confirm';
 import { Plus, X, ChevronDown, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
@@ -92,7 +93,7 @@ export default function ExamDatesSettings() {
                           <input className="input-base py-1 text-[13px]" value={ex.name} aria-label="Exam name" onChange={(e) => saveExams(r.course, r.name, r.exams.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)))} />
                           <input type="date" min={today()} value={ex.date} aria-label={`Date for ${ex.name}`} className="input-base !w-auto py-1 text-[13px]" data-testid={`exam-date-${r.name.replace(/\s+/g, '-')}-${i}`} onChange={(e) => saveExams(r.course, r.name, r.exams.map((x, k) => (k === i ? { ...x, date: e.target.value } : x)))} />
                           <div className="text-[12px] text-slate-500 tabular-nums sm:text-right min-w-[64px]">{d !== null ? `${d} ${d === 1 ? 'day' : 'days'}` : 'No date'}</div>
-                          <button type="button" aria-label={`Remove ${ex.name}`} onClick={() => { saveExams(r.course, r.name, r.exams.filter((_, k) => k !== i)); toast.success(`${ex.name} removed`); }} className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center"><X className="w-4 h-4" /></button>
+                          <button type="button" aria-label={`Remove ${ex.name}`} onClick={() => { if (!confirmDelete(`the exam “${ex.name}”`)) return; saveExams(r.course, r.name, r.exams.filter((_, k) => k !== i)); toast.success(`${ex.name} removed`); }} className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center"><X className="w-4 h-4" /></button>
                         </li>
                       );
                     })}

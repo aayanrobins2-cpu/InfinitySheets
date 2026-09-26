@@ -1,4 +1,5 @@
 import { subjectMark } from '../../lib/subjects';
+import SchoolCodeCard from './SchoolCodeCard';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { EXAM_TRACKS, SUBJECTS, SUBJECT_INFO } from '../../data/mock';
@@ -221,6 +222,8 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
                     </div>
                   </div>
                 </button>
+                {/* Bottom-right: link the account to a school with its code (free). */}
+                <SchoolCodeCard />
               </div>
             </div>
           )}

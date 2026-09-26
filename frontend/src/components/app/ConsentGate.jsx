@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Bot, Check } from 'lucide-react';
+import { ShieldCheck, Check } from 'lucide-react';
+import InfinityBot from '../InfinityBot';
 import { useApp } from '../../context/AppContext';
 import { track } from '../../lib/analytics';
 
@@ -48,7 +49,7 @@ export default function ConsentGate() {
               <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${ai ? 'left-[18px]' : 'left-0.5'}`} />
             </button>
             <div>
-              <div className="text-[13.5px] font-medium text-slate-900 inline-flex items-center gap-1.5"><Bot className="w-4 h-4 text-slate-600" /> Use the AI helpers</div>
+              <div className="text-[13.5px] font-medium text-slate-900 inline-flex items-center gap-1.5"><InfinityBot className="w-4 h-4 text-violet-600" /> Use the AI helpers</div>
               <div className="text-[12px] text-slate-600 mt-0.5 leading-snug">With this on, the questions you answer, your typed answers and any photos of working you upload are sent to Google Gemini to write questions, mark work and explain mistakes. Nothing is used to train Google's models under the terms we use, and we never send your name or email. Off = every AI feature is hidden and nothing leaves the app.</div>
             </div>
           </label>

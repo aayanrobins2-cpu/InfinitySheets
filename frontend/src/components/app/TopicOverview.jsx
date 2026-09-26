@@ -1,4 +1,3 @@
-import { openPlusBanner } from './PlusUpgradeBanner';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ExternalLink, Sparkles, RefreshCw, Loader2, FileText, Link2, Settings as SettingsIcon, Lock } from 'lucide-react';
 import { usePlus } from './PlusLock';
@@ -17,7 +16,8 @@ import AiChat, { MarkdownLite } from './ai/AiChat';
  * Route: #topic?subject=<subject>&topic=<topic>
  */
 export default function TopicOverview({ subject, topic, go }) {
-  const { isPlus: plus } = usePlus();
+  const { isPlus: plus, requirePlus, usesLeft } = usePlus();
+  const [askOpen, setAskOpen] = useState(false); // a free user spent a free doubt session
   const { state } = useApp();
   const examTrack = primaryTrack(state.courses, state.user?.examTrack);
   const boards = useMemo(() => subjectBoards(state.courses, examTrack), [state.courses, examTrack]);
@@ -85,7 +85,7 @@ export default function TopicOverview({ subject, topic, go }) {
         {/* Left: AI overview + doubts */}
         <div className="flex flex-col gap-5 min-w-0">
           <Overview context={context} />
-          {plus ? (
+          {plus || askOpen ? (
           <AiChat
             title="Ask a doubt"
             subtitle={`Knows what ${boardName(board)} examiners want for ${topic}.`}
@@ -100,7 +100,7 @@ export default function TopicOverview({ subject, topic, go }) {
             testid="topic-chat"
           />
           ) : (
-            <button type="button" onClick={() => openPlusBanner('askDoubt')} className="card-soft p-5 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:border-violet-300" data-testid="ask-doubt-locked">Ask a doubt is an InfinitySheets<span className="brand-plus-text font-extrabold">+</span> feature.</button>
+            <button type="button" onClick={() => { if (requirePlus('askDoubt')) setAskOpen(true); }} className="card-soft p-5 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:border-violet-300" data-testid="ask-doubt-locked">{usesLeft('askDoubt') > 0 ? <>Ask a doubt &mdash; {usesLeft('askDoubt')} free today, unlimited with InfinitySheets<span className="brand-plus-text font-extrabold">+</span>.</> : <>Ask a doubt is an InfinitySheets<span className="brand-plus-text font-extrabold">+</span> feature. Today&rsquo;s free ones are used.</>}</button>
           )}
         </div>
 

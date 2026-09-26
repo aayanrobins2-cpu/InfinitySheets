@@ -354,7 +354,7 @@ function SubjectPredictedRow({ s, color, info, label, name, board, p, d, ws, isH
             <div className={`text-[18px] font-semibold ${p.ready === false ? 'text-slate-400' : tone.text} tabular-nums leading-tight`} title={p.ready === false ? `Unlocks after one exam-level sheet of ${p.examMinutes || 90} min or more` : undefined}>
               {noPred || p.ready === false ? '\u2014' : (p.grade?.label ?? `${p.predicted}%`)}
             </div>
-            {p.ready === false && <div className="text-[10px] text-amber-700 font-medium" data-testid="predicted-locked">Sit a {p.examMinutes || 90}-min exam-level sheet to unlock</div>}
+            {p.ready === false && <div className="text-[10px] text-amber-700 font-medium" data-testid="predicted-locked">Not enough data — needs an exam simulation or a {p.examMinutes || 90}-min exam-level sheet</div>}
           </div>
           {d.hasEnough ? <DeltaPill delta={d.delta} /> : <span className="text-[11.5px] text-slate-400">2+ needed</span>}
         </div>
@@ -540,13 +540,12 @@ function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectD
           const color = SUBJECT_COLORS[allSubjects.indexOf(s) % SUBJECT_COLORS.length];
           const lastX = xFor(pts.length - 1);
           const predX = w - padR + 6;
-          const predY = yFor(p.predicted);
+          const locked = p.ready === false;
+          // No exam-format sheet yet: no prediction, just a note at the end of the line.
+          const predY = locked ? yFor(pts[pts.length - 1].score) : yFor(p.predicted);
           const op = opacityFor(s);
           const name = labelOf ? labelOf(s) : s;
-          const locked = p.ready === false;
-          // Before a full-length exam-level sheet the grade is provisional —
-          // still shown, marked as such, never a bare "locked".
-          const gradeLabel = p.grade?.label ?? `${p.predicted}%`;
+          const gradeLabel = locked ? 'Not enough data' : (p.grade?.label ?? `${p.predicted}%`);
           return (
             <g
               key={`pred-${s}`}
@@ -568,7 +567,7 @@ function LineChart({ series, subjects, allSubjects, predictedBySubject, subjectD
                 {gradeLabel}
               </text>
               <text x={predX + 8} y={predY + 10} fontSize="8.5" fill="#64748b">
-                {name.length > 18 ? name.slice(0, 18) + '\u2026' : name}{locked ? ' \u00b7 provisional' : ''}
+                {name.length > 18 ? name.slice(0, 18) + '\u2026' : name}
               </text>
             </g>
           );

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
 import { Laptop, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,7 +43,7 @@ export default function DeviceList() {
               <div className="text-[11.5px] text-slate-500">Last used {fmtDate(d.lastSeen)}</div>
             </div>
             {!d.current && (
-              <button type="button" onClick={() => remove(d)} disabled={busy === d.id} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center disabled:opacity-50" aria-label={`Sign out ${d.label}`} data-testid={`device-remove-${d.id}`}>
+              <button type="button" onClick={() => { if (confirmDelete('this device')) remove(d); }} disabled={busy === d.id} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center disabled:opacity-50" aria-label={`Sign out ${d.label}`} data-testid={`device-remove-${d.id}`}>
                 {busy === d.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               </button>
             )}

@@ -2,7 +2,8 @@ import { openPlusBanner } from './PlusUpgradeBanner';
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { toast } from 'sonner';
-import { User, Sliders, Accessibility, GraduationCap, AlertTriangle, Save, RotateCcw, Trash2, Sun, Moon, Keyboard, BookOpen, Calendar, Bot, Laptop } from 'lucide-react';
+import { User, Sliders, Accessibility, GraduationCap, AlertTriangle, Save, RotateCcw, Trash2, Sun, Moon, Keyboard, BookOpen, Calendar, Laptop } from 'lucide-react';
+import InfinityBot from '../InfinityBot';
 import { EXAM_TRACKS, SUBJECTS } from '../../data/mock';
 import { primaryTrack, enrolledSubjects } from '../../lib/subjects';
 import { RemindersSection } from './ReminderSettings';
@@ -232,11 +233,11 @@ function Preferences({ settings, updateSettings }) {
 function AiSection({ settings, updateSettings }) {
   const on = settings.aiEnabled !== false;
   return (
-    <Section title="AI assistants" icon={Bot} subtitle="The topic overviews, doubt-clearing tutor and the worksheet diagnoses and study coach in Smart Learning.">
+    <Section title="AI assistants" icon={InfinityBot} subtitle="The topic overviews, doubt-clearing tutor and the worksheet diagnoses and study coach in Smart Learning.">
       <Toggle
         checked={on}
         onChange={(v) => { updateSettings({ aiEnabled: v }); toast.success(v ? 'AI assistants enabled' : 'All AI assistants turned off'); }}
-        label={<span className="inline-flex items-center gap-1.5"><Bot className="w-4 h-4 text-slate-600" /> Enable AI assistants</span>}
+        label={<span className="inline-flex items-center gap-1.5"><InfinityBot className="w-4 h-4 text-violet-600" /> Enable AI assistants</span>}
         hint="Turning this off hides every AI chatbot and AI overview across the app. Your questions are sent to Google Gemini only while this is on."
         testid="pref-ai"
       />

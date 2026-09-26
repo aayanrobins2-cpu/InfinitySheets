@@ -1,4 +1,5 @@
 import { primaryTrack, topicsFor, rankByPopularity, resolvedTopics } from '../../lib/subjects';
+import { confirmDelete } from '../../lib/confirm';
 import { papersFor } from '../../lib/paperTypes';
 import { findDuplicates } from '../../lib/duplicates';
 import { detectChains, chainGroups } from '../../lib/chains';
@@ -463,7 +464,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
             <div className="flex items-center justify-between gap-2 mb-2">
               <div className="text-[12.5px] font-semibold text-amber-900">{dupGroups.length ? `${dupGroups.length} group${dupGroups.length === 1 ? '' : 's'} of duplicates · ${dupExtras} extra question${dupExtras === 1 ? '' : 's'}` : 'No duplicates found in this category'}</div>
               {dupExtras > 0 && (
-                <button type="button" onClick={() => { dupGroups.forEach((g) => g.items.slice(1).forEach((q) => removePastPaper(q.id))); toast.success(`Removed ${dupExtras} duplicate question${dupExtras === 1 ? '' : 's'}`); }} className="text-[12px] font-semibold text-rose-700 hover:text-rose-900" data-testid="admin-dup-remove-all">Remove all extras (keep first of each)</button>
+                <button type="button" onClick={() => { if (!confirmDelete(`${dupExtras} duplicate questions`)) return; dupGroups.forEach((g) => g.items.slice(1).forEach((q) => removePastPaper(q.id))); toast.success(`Removed ${dupExtras} duplicate question${dupExtras === 1 ? '' : 's'}`); }} className="text-[12px] font-semibold text-rose-700 hover:text-rose-900" data-testid="admin-dup-remove-all">Remove all extras (keep first of each)</button>
               )}
             </div>
             <div className="flex flex-col gap-2 max-h-[360px] overflow-auto pr-1">
@@ -476,7 +477,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
                         <span className="text-slate-900">{q.q}</span>
                         <div className="text-[11px] text-slate-500 mt-0.5">{q.topic || '—'}{q.year ? ` · ${q.year}` : ''}{q.paper ? ` · ${q.paper}` : ''}{q.answerType ? ` · ${q.answerType}` : ''}{i === 0 ? ' · kept' : ''}</div>
                       </div>
-                      {i > 0 && <button type="button" onClick={() => removePastPaper(q.id)} className="text-[11.5px] font-semibold text-rose-700 hover:text-rose-900 shrink-0" data-testid={`admin-dup-remove-${q.id}`}>Remove</button>}
+                      {i > 0 && <button type="button" onClick={() => { if (confirmDelete('this question')) removePastPaper(q.id); }} className="text-[11.5px] font-semibold text-rose-700 hover:text-rose-900 shrink-0" data-testid={`admin-dup-remove-${q.id}`}>Remove</button>}
                     </div>
                   ))}
                 </div>

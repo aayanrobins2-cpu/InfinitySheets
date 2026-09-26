@@ -1,4 +1,5 @@
 import { subjectMark } from '../../lib/subjects';
+import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
@@ -60,7 +61,7 @@ function CourseCard({ course, onRemove, onUpdate }) {
           <div className="text-[15.5px] font-semibold text-slate-900 leading-tight">{c.name}</div>
           <div className="text-[12px] text-slate-500 mt-0.5">{c.subjects.length} subject{c.subjects.length === 1 ? '' : 's'}</div>
         </div>
-        <button onClick={() => { onRemove(c.id); toast.success('Course removed'); }} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors" aria-label="Remove course">
+        <button onClick={() => { if (!confirmDelete(`the course “${c.name || 'this course'}”`)) return; onRemove(c.id); toast.success('Course removed'); }} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors" aria-label="Remove course">
           <Trash2 className="w-5 h-5" />
         </button>
       </div>

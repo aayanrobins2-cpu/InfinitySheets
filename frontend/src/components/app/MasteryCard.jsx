@@ -17,7 +17,7 @@ export default function MasteryCard({ worksheets, subjects, topicsFor, go }) {
       <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
         <div>
           <div className="eyebrow-muted mb-0.5 inline-flex items-center gap-1.5"><Award className="w-3.5 h-3.5" /> Topic mastery</div>
-          <div className="text-[15px] font-semibold text-slate-900">{active} · {summary.avg}/100 average</div>
+          <div className="text-[15px] font-semibold text-slate-900">{active} · {rows.some((r) => r.n) ? `${summary.avg}/100 average` : 'Not enough data yet'}</div>
           <div className="text-[12px] text-slate-500 mt-0.5">{LEVELS.slice(1).map((l) => `${summary.counts[l.key] || 0} ${l.label.toLowerCase()}`).join(' · ')}</div>
         </div>
         {subjects.length > 1 && (

@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { setAiStudentContext } from '../lib/ai';
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { SUBJECTS } from '../data/mock';
 import { SEED_PAST_PAPERS } from '../data/pastPapers';
@@ -178,6 +179,9 @@ export function AppProvider({ children }) {
       }));
     }
   }, []);
+
+  // Every assistant knows which courses are on hold / completed, and the school.
+  useEffect(() => { setAiStudentContext({ courses: state.courses, school: state.settings?.school }); }, [state.courses, state.settings?.school]);
 
   // Analytics provider (a no-op until a key is configured).
   useEffect(() => { initAnalytics(); }, []);

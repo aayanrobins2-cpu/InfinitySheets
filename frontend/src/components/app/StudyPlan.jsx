@@ -3,7 +3,7 @@ import { CalendarDays, Loader2, RefreshCw, Check, Sparkles, Send } from 'lucide-
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
 import { buildStudyPlan, tweakStudyPlan, isAiEnabled } from '../../lib/ai';
-import { enrolledSubjects, primaryTrack, subjectBoards } from '../../lib/subjects';
+import { enrolledSubjects, primaryTrack, subjectBoards, activeSubjectsOnly } from '../../lib/subjects';
 import { track } from '../../lib/analytics';
 import { fmtDate, isoDay, startOfWeek, WEEKDAYS } from '../../lib/dates';
 
@@ -14,7 +14,8 @@ export default function StudyPlan({ weaknesses = [], go }) {
   const [busy, setBusy] = useState(false);
   const plan = state.studyPlan;
   const aiOn = isAiEnabled(state);
-  const subjects = useMemo(() => enrolledSubjects(state.courses, state.user?.subjects, state.user?.examTrack), [state.courses, state.user?.subjects, state.user?.examTrack]);
+  // Only subjects in active courses — on-hold and completed ones are left out of the plan.
+  const subjects = useMemo(() => activeSubjectsOnly(enrolledSubjects(state.courses, state.user?.subjects, state.user?.examTrack), state.courses), [state.courses, state.user?.subjects, state.user?.examTrack]);
   const daysToExam = state.settings?.examDate ? Math.ceil((new Date(state.settings.examDate).getTime() - Date.now()) / 86400000) : null;
   const stale = plan?.createdAt && Date.now() - new Date(plan.createdAt).getTime() > 7 * 24 * 60 * 60 * 1000;
 
@@ -22,7 +23,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
   // have several: Paper 1, Paper 2, a mock).
   const allExams = () => {
     const exams = [];
-    (state.courses || []).forEach((c) => (Array.isArray(c.subjects) ? c.subjects : []).forEach((e) => {
+    (state.courses || []).filter((c) => (c.status || 'Active') === 'Active').forEach((c) => (Array.isArray(c.subjects) ? c.subjects : []).forEach((e) => {
       const entry = typeof e === 'string' ? { subject: e } : e;
       const list = Array.isArray(entry.exams) && entry.exams.length ? entry.exams : (entry.examDate ? [{ name: 'Exam', date: entry.examDate }] : []);
       list.forEach((x) => { if (x.date) exams.push({ subject: entry.subject, name: x.name || 'Exam', date: x.date }); });

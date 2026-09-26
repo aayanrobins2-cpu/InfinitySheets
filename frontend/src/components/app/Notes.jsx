@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { confirmDelete } from '../../lib/confirm';
 import { fmtDate, fmtDateTime } from '../../lib/dates';
 import { FileText, Mic, Square, Upload, Trash2, Loader2, Play, Pause, ExternalLink, Music } from 'lucide-react';
 import { toast } from 'sonner';
@@ -138,7 +139,7 @@ function PdfRow({ n, onRemove }) {
         <Meta n={n} />
       </div>
       <button type="button" onClick={open} disabled={opening} className="w-8 h-8 rounded-md text-slate-500 hover:text-violet-700 hover:bg-violet-50 flex items-center justify-center" aria-label="Open">{opening ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}</button>
-      <button type="button" onClick={onRemove} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center" aria-label="Remove"><Trash2 className="w-4 h-4" /></button>
+      <button type="button" onClick={() => { if (confirmDelete(`“${n.name || 'this note'}”`)) onRemove(); }} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center" aria-label="Remove"><Trash2 className="w-4 h-4" /></button>
     </div>
   );
 }
@@ -168,7 +169,7 @@ function AudioRow({ n, onRemove }) {
           <div className="text-[13.5px] font-medium text-slate-900 truncate">{n.name}</div>
           <Meta n={n} />
         </div>
-        <button type="button" onClick={onRemove} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center" aria-label="Remove"><Trash2 className="w-4 h-4" /></button>
+        <button type="button" onClick={() => { if (confirmDelete(`“${n.name || 'this note'}”`)) onRemove(); }} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center" aria-label="Remove"><Trash2 className="w-4 h-4" /></button>
       </div>
       {url && <audio ref={ref} src={url} controls className="w-full mt-2 h-9" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />}
     </div>

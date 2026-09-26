@@ -19,6 +19,7 @@ import CourseOverview from './CourseOverview';
 import TopicOverview from './TopicOverview';
 import ResourcesPage from '../landing/ResourcesPage';
 import Sidebar from './shell/Sidebar';
+import PlusCheckout from './PlusCheckout';
 import TopHeader from './shell/TopHeader';
 import NotesFlashcards from './NotesFlashcards';
 import RouteBoundary from './RouteBoundary';
@@ -55,6 +56,7 @@ const HIDDEN_ROUTES = [
   { key: 'topic', label: 'Topic overview', Icon: GraduationCap },
   // Reachable from the landing footer / topic pages even though it left the sidebar.
   { key: 'resources', label: 'Free Resources', Icon: BookOpen },
+  { key: 'plus', label: 'InfinitySheets+', Icon: Sparkles },
 ];
 
 const SIDEBAR_STORAGE_KEY = 'infinitysheets_sidebar_open';
@@ -108,6 +110,7 @@ function renderRoute(activeKey, params, go, isAdmin) {
     case 'flashcards': return <NotesFlashcards go={go} />;
     case 'groups': return <Groups />;
     case 'resources': return <ResourcesPage embedded />;
+    case 'plus': return <PlusCheckout />;
     case 'admin': return isAdmin ? <AdminPlaceholder /> : <Dashboard go={go} />;
     case 'course-overview': return <CourseOverview courseId={params.id} go={go} />;
     case 'topic': return <TopicOverview subject={params.subject} topic={params.topic} go={go} />;

@@ -1,20 +1,31 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { isPlus, PLUS_FEATURES } from '../../lib/entitlements';
+import { toast } from 'sonner';
+import { isPlus, PLUS_FEATURES, FREE_ALLOWANCE, freeUsesLeft, recordUse, allowanceText } from '../../lib/entitlements';
 import { openPlusBanner, PlusMark } from './PlusUpgradeBanner';
 
 // One place to show and enforce InfinitySheets+ locks.
 export function usePlus() {
-  const { state } = useApp();
+  const { state, updateSettings } = useApp();
   const plus = isPlus(state);
-  // Returns true when allowed; otherwise shows the upgrade prompt and returns false.
+  // Returns true when allowed. A free user spends one of their free uses
+  // (see FREE_ALLOWANCE); once those are gone the upgrade banner opens and
+  // it returns false.
   const requirePlus = (featureKey) => {
     if (plus) return true;
+    const left = freeUsesLeft(state, featureKey);
+    if (left > 0) {
+      updateSettings({ plusUsage: recordUse(state.settings?.plusUsage, featureKey) });
+      const rule = FREE_ALLOWANCE[featureKey];
+      toast(`${PLUS_FEATURES[featureKey] || 'InfinitySheets+ feature'}: ${rule.kind === 'once' ? 'your one free use' : `free use, ${left - 1} left today`}. Unlimited with InfinitySheets+.`);
+      return true;
+    }
     openPlusBanner(featureKey);   // the full upgrade banner, listing everything
     return false;
   };
-  return { isPlus: plus, requirePlus };
+  const usesLeft = (featureKey) => freeUsesLeft(state, featureKey);
+  return { isPlus: plus, requirePlus, usesLeft };
 }
 
 // Small "InfinitySheets+" lock chip shown next to a locked control. It
@@ -69,17 +80,35 @@ export function PlusUpgradeScreen({ feature }) {
 // A locked page a free user can still look at: the real page renders greyed
 // out and non-interactive under a click-catching overlay, with a sticky lock
 // banner. Scrolling works, so they can see everything the tier offers.
+const PASS_KEY = 'infinitysheets_plus_pass';
+const passDay = () => new Date().toDateString();
+function hasPass(feature) { try { return JSON.parse(window.localStorage.getItem(PASS_KEY) || '{}')[feature] === passDay(); } catch (_) { return false; } }
+function givePass(feature) { try { const p = JSON.parse(window.localStorage.getItem(PASS_KEY) || '{}'); p[feature] = passDay(); window.localStorage.setItem(PASS_KEY, JSON.stringify(p)); } catch (_) { /* ignore */ } }
+
 export function PlusPreview({ feature, children }) {
-  const { requirePlus } = usePlus();
+  const { requirePlus, usesLeft } = usePlus();
+  const [open, setOpen] = React.useState(() => hasPass(feature));
   const label = PLUS_FEATURES[feature] || 'This feature';
+  const left = usesLeft(feature);
+  // A free use opens the whole page for the rest of today.
+  if (open) {
+    return (
+      <div data-testid={`plus-pass-${feature}`}>
+        <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/80 px-4 py-2 text-[12.5px] text-violet-900">Free pass for today. {allowanceText(feature)} Unlimited with InfinitySheets<PlusMark />.</div>
+        {children}
+      </div>
+    );
+  }
+  const takePass = () => { if (requirePlus(feature)) { givePass(feature); setOpen(true); } };
   return (
     <div className="relative" data-testid={`plus-preview-${feature}`}>
       <div className="sticky top-2 z-20 mb-4 rounded-xl border border-violet-200 bg-violet-50/95 backdrop-blur px-4 py-2.5 flex items-center gap-2 text-[13px] text-violet-900 shadow-sm">
         <PlusMark className="text-[15px] shrink-0" />
-        <span><b>{label}</b> is part of InfinitySheets<PlusMark />. Have a look around — upgrade to use it.</span>
+        <span className="flex-1"><b>{label}</b> is part of InfinitySheets<PlusMark />. {allowanceText(feature)}</span>
+        {left > 0 && <button type="button" onClick={takePass} className="shrink-0 rounded-lg bg-violet-600 text-white px-3 py-1 text-[12px] font-semibold hover:bg-violet-700" data-testid={`plus-try-${feature}`}>Try it free</button>}
       </div>
       <div className="opacity-50 grayscale-[0.35] select-none pointer-events-none" aria-hidden="true">{children}</div>
-      <button type="button" aria-label={`${label} — InfinitySheets+ only`} onClick={() => requirePlus(feature)} className="absolute inset-0 z-10 cursor-not-allowed bg-transparent" />
+      <button type="button" aria-label={`${label} — InfinitySheets+ only`} onClick={() => (left > 0 ? takePass() : requirePlus(feature))} className="absolute inset-0 z-10 cursor-not-allowed bg-transparent" />
     </div>
   );
 }

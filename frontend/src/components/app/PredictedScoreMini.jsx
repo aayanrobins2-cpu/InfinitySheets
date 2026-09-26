@@ -103,7 +103,7 @@ export default function PredictedScoreMini({ predictedBySubject, visibleSubjects
       <div className="tile tile-royal" data-testid="predicted-grade-locked">
         <div className="eyebrow-muted tile-accent">{label}</div>
         <div className="text-[20px] font-semibold mt-1 text-slate-400">&mdash;</div>
-        <div className="text-[11px] text-slate-500 mt-1">{first ? `Sit one exam-level sheet of ${first.examMinutes || 90} min or more in ${first.label || first.subject} to unlock.` : 'Complete a worksheet in any subject to unlock.'}</div>
+        <div className="text-[11px] text-slate-500 mt-1">Not enough data yet. {first ? `Only exam-format sheets count — sit an exam simulation, or an exam-level sheet of ${first.examMinutes || 90} min or more, in ${first.label || first.subject}.` : 'Only sheets that follow the exam format count towards it.'}</div>
         {footer}
       </div>
     );
