@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { fmtDate } from '../../lib/dates';
 import { BookMarked, Upload, Loader2, Check, X, Flag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
@@ -125,7 +126,7 @@ export function FlagQueue() {
               <li key={f.id} className="py-2.5 flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] text-slate-800 line-clamp-2">{f.question}</div>
-                  <div className="text-[11.5px] text-slate-500 mt-0.5">{f.subject || 'Unknown subject'} · <span className="font-semibold text-rose-700">{f.reason}</span>{f.note ? ` · “${f.note}”` : ''} · {new Date(f.created_at).toLocaleDateString()}{(counts[f.question_id || f.question] || 0) > 1 ? ` · ${counts[f.question_id || f.question]} reports` : ''}{f.question_id ? '' : ' · AI-generated (not in bank)'}</div>
+                  <div className="text-[11.5px] text-slate-500 mt-0.5">{f.subject || 'Unknown subject'} · <span className="font-semibold text-rose-700">{f.reason}</span>{f.note ? ` · “${f.note}”` : ''} · {fmtDate(f.created_at)}{(counts[f.question_id || f.question] || 0) > 1 ? ` · ${counts[f.question_id || f.question]} reports` : ''}{f.question_id ? '' : ' · AI-generated (not in bank)'}</div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {f.question_id && <button onClick={() => remove(f)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-rose-200 text-rose-700 text-[12px] hover:bg-rose-50"><Trash2 className="w-3.5 h-3.5" /> Delete question</button>}

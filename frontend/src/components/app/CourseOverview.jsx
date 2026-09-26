@@ -1,4 +1,5 @@
 import React from 'react';
+import { fmtDate } from '../../lib/dates';
 import { useApp } from '../../context/AppContext';
 import { EXAM_TRACKS, SUBJECT_INFO, TOPIC_SUMMARY } from '../../data/mock';
 import { topicsFor, subjectMark } from '../../lib/subjects';
@@ -46,7 +47,7 @@ function SubjectBlock({ s, board, onStudy }) {
           <div className="w-11 h-11 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-[20px]">{info.emoji}</div>
           <div className="min-w-0">
             <div className="text-[16px] font-semibold text-slate-900 truncate">{s.subject}</div>
-            <div className="text-[12px] text-slate-500 mt-0.5">{topics.length} {topics.length === 1 ? 'topic' : 'topics'}{s.examDate ? ` · exam on ${new Date(s.examDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}</div>
+            <div className="text-[12px] text-slate-500 mt-0.5">{topics.length} {topics.length === 1 ? 'topic' : 'topics'}{s.examDate ? ` · exam on ${fmtDate(s.examDate)}` : ''}</div>
           </div>
         </div>
         <div className="flex items-center gap-2">

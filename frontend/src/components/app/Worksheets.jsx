@@ -1,4 +1,5 @@
 import { openPlusBanner } from './PlusUpgradeBanner';
+import { fmtDate } from '../../lib/dates';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { TOPICS, QUESTION_BANK, EXAM_DURATIONS } from '../../data/mock';
@@ -284,7 +285,7 @@ function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerTy
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(12);
   doc.setTextColor(71, 85, 105);
-  const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  const dateStr = fmtDate(new Date());
   const topicStr = (topics || []).join(', ') || '-';
   const metaLines = [
     `${subject}  -  ${topicStr}`,

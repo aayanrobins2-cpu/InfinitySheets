@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import InfinityBackground from '../decor/InfinityBackground';
 import SubjectOverview from './SubjectOverview';
 import CreateWorksheetButton from './CreateWorksheetButton';
+import MasteryCard from './MasteryCard';
+import { activeWorksheets, resolvedTopics } from '../../lib/subjects';
 
 const toneBadge = {
   primary: 'bg-blue-100 text-blue-700',
@@ -45,6 +47,7 @@ export default function StartStudying({ go, subjectParam }) {
   const list = useMemo(() => enrolledSubjects(courses, userSubjects, track), [courses, userSubjects, track]);
   const boards = useMemo(() => subjectBoards(courses, track), [courses, track]);
 
+  const masteryWs = useMemo(() => activeWorksheets(state.worksheets, courses, userSubjects, track), [state.worksheets, courses, userSubjects, track]);
   const [query, setQuery] = useState('');
   const trimmed = query.trim().toLowerCase();
 
@@ -273,6 +276,12 @@ export default function StartStudying({ go, subjectParam }) {
               )}
             </section>
           </>
+        )}
+        {/* How well each topic is going, per subject (moved from the dashboard). */}
+        {list.length > 0 && (
+          <div className="mt-8" data-testid="study-mastery">
+            <MasteryCard worksheets={masteryWs} subjects={list} topicsFor={(sub) => resolvedTopics(state.syllabusTopics, boards[sub]?.board || track, sub)} go={go} />
+          </div>
         )}
       </div>
 

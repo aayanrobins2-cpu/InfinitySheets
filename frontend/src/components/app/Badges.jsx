@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { fmtDate } from '../../lib/dates';
 import { Award, ChevronDown } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { BADGES, computeBadges, nextBadge } from '../../lib/badges';
@@ -28,7 +29,7 @@ export default function Badges({ compact = false }) {
       </div>
       <div className="flex flex-wrap gap-1.5 mt-3">
         {BADGES.filter((b) => unlocked[b.id]).map((b) => (
-          <span key={b.id} title={`${b.how}${stamps[b.id] ? ` · ${new Date(stamps[b.id]).toLocaleDateString()}` : ''}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-900 text-[12px] font-medium" data-testid={`badge-${b.id}`}>
+          <span key={b.id} title={`${b.how}${stamps[b.id] ? ` · ${fmtDate(stamps[b.id])}` : ''}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-900 text-[12px] font-medium" data-testid={`badge-${b.id}`}>
             <span>{b.emoji}</span> {b.name}
           </span>
         ))}

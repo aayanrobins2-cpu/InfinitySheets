@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { fmtDate } from '../../../lib/dates';
 import { Stethoscope, Loader2, RefreshCw, Settings as SettingsIcon, ChevronDown } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { diagnoseWorksheet, isAiEnabled } from '../../../lib/ai';
@@ -50,7 +51,7 @@ export default function DiagnosisPanel({ sheet, autoRun = false, compact = false
   }, [autoRun, enabled, saved]);
 
   if (!live) return null;
-  const when = saved?.createdAt ? new Date(saved.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null;
+  const when = saved?.createdAt ? fmtDate(saved.createdAt) : null;
 
   return (
     <div className="rounded-2xl border border-[color:var(--color-border)] bg-white" data-testid={testid}>
@@ -65,7 +66,7 @@ export default function DiagnosisPanel({ sheet, autoRun = false, compact = false
           </div>
           <div className="text-[12.5px] text-slate-500 mt-0.5">
             {compact
-              ? `${new Date(live.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}${saved ? ' · diagnosed' : ' · not diagnosed yet'}`
+              ? `${fmtDate(live.date)}${saved ? ' · diagnosed' : ' · not diagnosed yet'}`
               : saved ? `Where you went wrong and what to do next${when ? ` · ${when}` : ''}.` : 'The AI goes through every question you missed and what would have scored.'}
           </div>
         </div>

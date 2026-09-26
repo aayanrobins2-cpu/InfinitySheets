@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { fmtDate } from '../../lib/dates';
 import { useApp } from '../../context/AppContext';
-import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, Mail, Upload, FileText } from 'lucide-react';
+import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, RotateCcw, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
 import { predictedBreakdown, formatGrade, scoreToIBGrade, predictionMargin } from '../../lib/predictedGrade';
@@ -17,7 +18,6 @@ import { recommendedTopics } from '../../lib/studyStats';
 import AdSlot from '../ads/AdSlot';
 import Badges from './Badges';
 import { DailyChallengeCard, PomodoroTimer } from './DashboardExtras';
-import MasteryCard from './MasteryCard';
 
 
 const SUBJECT_TONE_BADGE = {
@@ -338,7 +338,7 @@ export default function Dashboard({ go }) {
   const fallbackDays = fallbackDate ? Math.max(0, Math.ceil((new Date(fallbackDate + 'T00:00:00').getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : null;
   const nearest = courseExams[0];
   const examCountdown = nearest ? nearest.days : fallbackDays;
-  const examLabel = nearest ? nearest.name : (fallbackDate ? new Date(fallbackDate).toLocaleDateString() : null);
+  const examLabel = nearest ? nearest.name : (fallbackDate ? fmtDate(fallbackDate) : null);
 
   // Random greeting — picked once per mount, so it changes every refresh.
   const [greeting] = useState(() => pickGreeting(state.user?.name));
@@ -497,11 +497,6 @@ export default function Dashboard({ go }) {
       </div>
       </>
     ) },
-    { id: 'mastery', label: 'Topic mastery', node: (
-      <>
-      <MasteryCard worksheets={ws} subjects={mySubjects} topicsFor={(sub) => resolvedTopics(state.syllabusTopics, mySubjectBoards[sub]?.board || studyTrack, sub)} go={go} />
-      </>
-    ) },
     { id: 'badges', label: 'Badges', node: (
       <>
       <Badges compact />
@@ -525,7 +520,7 @@ export default function Dashboard({ go }) {
                 <div key={c.name + c.date} className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-[color:var(--color-border)]">
                   <div className="min-w-0">
                     <div className="text-[13.5px] font-medium text-slate-900 truncate">{c.name}</div>
-                    <div className="text-[11.5px] text-slate-500">{new Date(c.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                    <div className="text-[11.5px] text-slate-500">{fmtDate(c.date)}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-[16px] font-semibold tabular-nums text-slate-900">{c.days}</div>
@@ -820,37 +815,19 @@ export default function Dashboard({ go }) {
       <div className="flex items-center gap-3">
         <CreateWorksheetButton onClick={() => go('worksheets')} className="px-5 py-2.5" />
         <button onClick={() => go('study')} className="btn-outline-dark px-5 py-2.5 rounded-lg text-[14px] font-medium">Browse subjects</button>
+        {/* Puts every card back in its original order (and shows hidden ones). */}
+        <button
+          type="button"
+          onClick={() => { if (!cardPrefs) { toast('The dashboard is already in its original order.'); return; } savePrefs(null); toast.success('Dashboard reset to its original order.'); }}
+          className="ml-auto btn-outline-dark inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[13.5px] font-medium"
+          data-testid="dashboard-reset"
+        >
+          <RotateCcw className="w-4 h-4" /> Reset dashboard
+        </button>
       </div>
-      <ComplaintButton user={state.user} />
     </div>
   );
 }
-
-// Small "Have a complaint?" link at the foot of the dashboard: opens the
-// student's mail app with a pre-filled message to the team.
-const COMPLAINT_EMAIL = 'aayan.robins@gmail.com';
-function ComplaintButton({ user }) {
-  const subject = encodeURIComponent('InfinitySheets complaint');
-  const body = encodeURIComponent(`Hi,
-
-I have a complaint about InfinitySheets:
-
-
-
-— ${user?.name || 'A student'}${user?.email ? ` (${user.email})` : ''}`);
-  return (
-    <div className="pt-6 mt-2 border-t border-[color:var(--color-border)] flex justify-center">
-      <a
-        href={`mailto:${COMPLAINT_EMAIL}?subject=${subject}&body=${body}`}
-        className="inline-flex items-center gap-1.5 text-[12.5px] text-slate-500 hover:text-slate-900 transition-colors"
-        data-testid="complaint-button"
-      >
-        <Mail className="w-4 h-4" /> Have a complaint?
-      </a>
-    </div>
-  );
-}
-
 
 function PerformanceLineChart({ subjects, series, totalX }) {
   const w = 800;

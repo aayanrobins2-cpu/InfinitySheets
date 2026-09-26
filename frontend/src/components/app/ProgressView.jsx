@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { fmtDate } from '../../lib/dates';
 import { useApp } from '../../context/AppContext';
 import { SUBJECT_INFO } from '../../data/mock';
 import { TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react';
@@ -618,7 +619,7 @@ function formatShortDate(d) {
   try {
     const dt = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
     if (isNaN(dt.getTime())) return String(d);
-    return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    return fmtDate(dt);
   } catch (_) {
     return String(d);
   }

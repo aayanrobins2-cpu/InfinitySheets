@@ -2,6 +2,7 @@ import React from 'react';
 import { Moon, Sun, PanelLeftOpen, Search } from 'lucide-react';
 import CreateWorksheetButton from '../CreateWorksheetButton';
 import SyncBadge from './SyncBadge';
+import ComplaintLink from './ComplaintLink';
 
 /**
  * Page header shown at the top of every dashboard page.
@@ -33,6 +34,7 @@ export default function TopHeader({ title, activeKey, isDark, courseCount, onTog
             <Search className="w-3.5 h-3.5" /> Search <kbd className="text-[10px] px-1 rounded bg-slate-100 border border-slate-200">⌘K</kbd>
           </button>
         )}
+        <ComplaintLink />
         <SyncBadge status={syncStatus} />
         <button
           onClick={onToggleTheme}

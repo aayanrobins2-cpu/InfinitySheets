@@ -67,7 +67,7 @@ export function weeklySummary(worksheets = [], now = Date.now()) {
 
 /**
  * Per-day activity for the last `weeks` weeks, oldest first, aligned so the
- * grid starts on a Sunday. Each cell: { date (Date), key, count, questions }.
+ * grid starts on a Monday. Each cell: { date (Date), key, count, questions }.
  */
 export function activityCalendar(worksheets = [], { weeks = 16, now = Date.now() } = {}) {
   const counts = {};
@@ -80,7 +80,7 @@ export function activityCalendar(worksheets = [], { weeks = 16, now = Date.now()
   const today = new Date(now); today.setHours(0, 0, 0, 0);
   const end = new Date(today);
   const start = new Date(end.getTime() - (weeks * 7 - 1) * DAY);
-  start.setDate(start.getDate() - start.getDay());          // back to Sunday
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // back to Monday
   const days = [];
   for (let d = new Date(start); d <= end; d = new Date(d.getTime() + DAY)) {
     const k = dayKey(d);

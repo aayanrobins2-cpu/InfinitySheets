@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { fmtDate } from '../../lib/dates';
 import { Laptop, Trash2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { listDevices, releaseDevice } from '../../lib/deviceAccounts';
@@ -38,7 +39,7 @@ export default function DeviceList() {
               <div className="text-[13.5px] font-medium text-slate-900 truncate">
                 {d.label}{d.current && <span className="ml-2 align-middle px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold">This device</span>}
               </div>
-              <div className="text-[11.5px] text-slate-500">Last used {new Date(d.lastSeen).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+              <div className="text-[11.5px] text-slate-500">Last used {fmtDate(d.lastSeen)}</div>
             </div>
             {!d.current && (
               <button type="button" onClick={() => remove(d)} disabled={busy === d.id} className="w-8 h-8 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center disabled:opacity-50" aria-label={`Sign out ${d.label}`} data-testid={`device-remove-${d.id}`}>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { fmtDateTime } from '../../lib/dates';
 import { useApp } from '../../context/AppContext';
 import { FileText, AlertTriangle, PlayCircle } from 'lucide-react';
 import EmptyStateScene from '../decor/EmptyStateScene';
@@ -112,7 +113,7 @@ export default function WorksheetHistory() {
               <div className="min-w-0">
                 <div className="text-[15px] font-semibold text-slate-900">{w.topic}</div>
                 <div className="text-[12.5px] text-slate-500 mt-1">
-                  {new Date(w.date).toLocaleString()} &middot; {w.difficulty} &middot; {w.length} {w.length === 1 ? 'question' : 'questions'}
+                  {fmtDateTime(w.date)} &middot; {w.difficulty} &middot; {w.length} {w.length === 1 ? 'question' : 'questions'}
                   {w.analytics?.totalActiveMs ? <> &middot; {fmtMs(w.analytics.totalActiveMs)} active</> : null}
                 </div>
               </div>

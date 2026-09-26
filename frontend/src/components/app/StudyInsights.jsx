@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { fmtDate } from '../../lib/dates';
 import { CalendarDays, Flame, RotateCcw, TrendingDown, TrendingUp, Minus, Timer, Sparkles, ArrowRight } from 'lucide-react';
 import { bestProjection } from '../../lib/streakProjection';
 import { weeklySummary, activityCalendar, timingTrends } from '../../lib/studyStats';
@@ -84,13 +85,13 @@ export function StreakHeatmap({ worksheets, streak }) {
           </div>
           <div className="flex gap-[3px]">
             <div className="flex flex-col gap-[3px] text-[9px] text-slate-400 w-6 shrink-0">
-              {['', 'Mon', '', 'Wed', '', 'Fri', ''].map((d, i) => <span key={i} className="h-3 leading-3">{d}</span>)}
+              {['Mon', '', 'Wed', '', 'Fri', '', 'Sun'].map((d, i) => <span key={i} className="h-3 leading-3">{d}</span>)}
             </div>
             {cal.weeks.map((wk, i) => (
               <div key={i} className="flex flex-col gap-[3px]">
                 {wk.map((d) => {
                   const l = level(d);
-                  return <div key={d.key} title={d.future ? '' : `${d.date.toLocaleDateString()} · ${d.count} sheet${d.count === 1 ? '' : 's'}, ${d.questions} questions`} className={`w-3 h-3 rounded-[2px] ${l < 0 ? 'bg-transparent' : cls[l]}`} />;
+                  return <div key={d.key} title={d.future ? '' : `${fmtDate(d.date)} · ${d.count} sheet${d.count === 1 ? '' : 's'}, ${d.questions} questions`} className={`w-3 h-3 rounded-[2px] ${l < 0 ? 'bg-transparent' : cls[l]}`} />;
                 })}
               </div>
             ))}
@@ -114,7 +115,7 @@ export function ReviewDueTile({ worksheets, onStart }) {
         {due.length
           ? `Question${due.length === 1 ? '' : 's'} you missed before, ready for their next spaced review${due.some((r) => r.overdueDays > 2) ? ' — some overdue' : ''}.`
           : next
-            ? `Nothing due. Next review ${new Date(next.due).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}.`
+            ? `Nothing due. Next review ${fmtDate(next.due)}.`
             : 'Miss a question and it comes back after 1, 3, 7 and 14 days.'}
       </div>
       {due.length > 0 && (
@@ -181,7 +182,7 @@ export function TimingTrendsCard({ worksheets, subject }) {
             {xt.map((v) => <text key={v} x={x(v)} y={H - 8} fontSize="10" textAnchor="middle" className="fill-slate-500">{fmtMs(v)}</text>)}
             {t.points.map((p) => (
               <circle key={p.id} cx={x(p.paceMs)} cy={y(p.accuracy)} r={Math.min(9, 4 + (p.n || 5) / 5)} className={p.accuracy >= 0.7 ? 'fill-emerald-500/70' : p.accuracy >= 0.4 ? 'fill-amber-400/70' : 'fill-rose-500/70'}>
-                <title>{`${p.subject} · ${p.topic}\n${new Date(p.date).toLocaleDateString()} · ${fmtMs(p.paceMs)} per question · ${pct(p.accuracy)}`}</title>
+                <title>{`${p.subject} · ${p.topic}\n${fmtDate(p.date)} · ${fmtMs(p.paceMs)} per question · ${pct(p.accuracy)}`}</title>
               </circle>
             ))}
             <text x={(PL + W - PR) / 2} y={H - 18} fontSize="10" textAnchor="middle" className="fill-slate-400">seconds per question →</text>

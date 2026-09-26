@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { fmtDate, fmtDateTime } from '../../lib/dates';
 import { FileText, Mic, Square, Upload, Trash2, Loader2, Play, Pause, ExternalLink, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
@@ -46,7 +47,7 @@ export default function Notes({ subject, topics, board }) {
     try {
       const id = uid();
       const path = await uploadNoteFile(userId, id, file, extFor(file));
-      addNote({ id, subject, topic: topic || null, kind, name: file.name || (kind === 'audio' ? `Audio note ${new Date().toLocaleString()}` : 'Notes.pdf'), path, size: file.size, mime: file.type || null, createdAt: new Date().toISOString(), ...extra });
+      addNote({ id, subject, topic: topic || null, kind, name: file.name || (kind === 'audio' ? `Audio note ${fmtDateTime(new Date())}` : 'Notes.pdf'), path, size: file.size, mime: file.type || null, createdAt: new Date().toISOString(), ...extra });
       track('note_added', { kind, subject });
       toast.success(kind === 'pdf' ? 'Notes saved' : 'Audio note saved');
     } catch (e) {
@@ -85,7 +86,7 @@ export default function Notes({ subject, topics, board }) {
         <input ref={audioInput} type="file" accept="audio/*" className="hidden" onChange={onAudioFile} data-testid="notes-audio-input" />
         <button type="button" onClick={() => pdfInput.current?.click()} disabled={busy} className="btn-violet inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold disabled:opacity-60" data-testid="notes-add-pdf">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} Add PDF notes</button>
         <button type="button" onClick={() => audioInput.current?.click()} disabled={busy} className="btn-outline-dark inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] disabled:opacity-60" data-testid="notes-add-audio"><Upload className="w-4 h-4" /> Upload audio</button>
-        <Recorder disabled={busy} onDone={(blob, seconds) => save(new File([blob], `Audio note ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.${/ogg/.test(blob.type) ? 'ogg' : /mp4/.test(blob.type) ? 'm4a' : 'webm'}`, { type: blob.type }), 'audio', { durationSec: seconds })} />
+        <Recorder disabled={busy} onDone={(blob, seconds) => save(new File([blob], `Audio note ${fmtDate(new Date())} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.${/ogg/.test(blob.type) ? 'ogg' : /mp4/.test(blob.type) ? 'm4a' : 'webm'}`, { type: blob.type }), 'audio', { durationSec: seconds })} />
       </div>
 
       {mine.length === 0 ? (
@@ -118,7 +119,7 @@ export default function Notes({ subject, topics, board }) {
 }
 
 function Meta({ n }) {
-  return <div className="text-[11.5px] text-slate-500 mt-0.5">{n.topic || 'Whole subject'} · {fmtSize(n.size || 0)}{n.durationSec ? ` · ${fmtDur(n.durationSec)}` : ''} · {new Date(n.createdAt).toLocaleDateString()}</div>;
+  return <div className="text-[11.5px] text-slate-500 mt-0.5">{n.topic || 'Whole subject'} · {fmtSize(n.size || 0)}{n.durationSec ? ` · ${fmtDur(n.durationSec)}` : ''} · {fmtDate(n.createdAt)}</div>;
 }
 
 function PdfRow({ n, onRemove }) {

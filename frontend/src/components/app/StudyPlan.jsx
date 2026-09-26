@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { buildStudyPlan, tweakStudyPlan, isAiEnabled } from '../../lib/ai';
 import { enrolledSubjects, primaryTrack, subjectBoards } from '../../lib/subjects';
 import { track } from '../../lib/analytics';
+import { fmtDate, isoDay, startOfWeek, WEEKDAYS } from '../../lib/dates';
 
 // AI study plan for the week: weakest topics first, spaced reviews later,
 // tasks tick off and persist with the student's settings.
@@ -78,6 +79,35 @@ export default function StudyPlan({ weaknesses = [], go }) {
     finally { setBusy(false); }
   };
 
+  // Lay the plan onto real Monday-first weeks. Days the AI dated are placed by
+  // date; undated ones by their weekday name, from the plan's first week.
+  const planWeeks = useMemo(() => {
+    if (!plan?.days?.length) return [];
+    const byIso = {};
+    const firstDated = plan.days.find((d) => d.date)?.date;
+    const base = startOfWeek(firstDated || plan.createdAt || new Date());
+    plan.days.forEach((d, di) => {
+      let iso = d.date ? isoDay(d.date) : null;
+      if (!iso) {
+        const w = WEEKDAYS.findIndex((n) => String(d.day || '').toLowerCase().startsWith(n.slice(0, 3).toLowerCase()));
+        if (w >= 0) { const x = new Date(base); x.setDate(x.getDate() + w); iso = isoDay(x); }
+      }
+      if (iso && byIso[iso] === undefined) byIso[iso] = di;
+    });
+    const isos = Object.keys(byIso).sort();
+    if (!isos.length) return [];
+    const todayIso = isoDay(new Date());
+    const weeks = [];
+    for (let wk = startOfWeek(isos[0]); isoDay(wk) <= isos[isos.length - 1]; wk.setDate(wk.getDate() + 7)) {
+      weeks.push(WEEKDAYS.map((name, n) => {
+        const x = new Date(wk); x.setDate(x.getDate() + n);
+        const iso = isoDay(x);
+        return { name, iso, di: byIso[iso] ?? null, today: iso === todayIso };
+      }));
+    }
+    return weeks;
+  }, [plan]);
+
   const done = plan ? plan.days.reduce((s, d) => s + d.tasks.filter((t) => t.done).length, 0) : 0;
   const total = plan ? plan.days.reduce((s, d) => s + d.tasks.length, 0) : 0;
 
@@ -98,27 +128,42 @@ export default function StudyPlan({ weaknesses = [], go }) {
         ) : <div className="text-[12px] text-slate-500">Turn on the AI in Settings to build a plan.</div>}
       </div>
       {plan && (
-        <div className="grid lg:grid-cols-[1fr_300px] gap-4 items-start">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-          {plan.days.map((d, di) => (
-            <div key={di} className="rounded-xl border border-[color:var(--color-border)] bg-slate-50/60 p-3">
-              <div className="text-[12px] font-semibold text-slate-800 mb-1.5">{d.day}{d.date ? <span className="font-normal text-slate-500"> · {d.date.slice(5)}</span> : null}</div>
-              <ul className="space-y-1.5">
-                {d.tasks.map((t, ti) => (
-                  <li key={ti} className="flex items-start gap-2">
-                    <button type="button" onClick={() => togglePlanTask(di, ti)} className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 ${t.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-300'}`} data-testid={`plan-task-${di}-${ti}`}>{t.done && <Check className="w-3 h-3" />}</button>
-                    <button type="button" onClick={() => { try { window.sessionStorage.setItem('preselect_subject', t.subject); window.sessionStorage.setItem('preselect_topic', t.topic); } catch (e) { /* ignore */ } go('worksheets'); }} className={`text-left text-[12px] leading-snug ${t.done ? 'line-through text-slate-400' : 'text-slate-700 hover:text-violet-800'}`}>
-                      <span className="font-medium">{t.topic}</span> <span className="text-slate-500">· {t.subject} · {t.minutes} min</span>
-                      <span className="block text-slate-500">{t.what}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+        <>
+        {/* A fixed Monday-to-Sunday week: every day has its column, with its
+            date, whether or not the plan put anything on it. */}
+        <div className="overflow-x-auto -mx-1 px-1 pb-1">
+          {planWeeks.map((week) => (
+            <div key={week[0].iso} className="grid grid-cols-7 gap-2 min-w-[840px] mb-2" data-testid="plan-week">
+              {week.map((cell) => (
+                <div key={cell.iso} className={`rounded-xl border p-2.5 min-h-[120px] ${cell.di === null ? 'border-dashed border-[color:var(--color-border)] opacity-70' : 'border-[color:var(--color-border)] bg-slate-50/60'} ${cell.today ? 'ring-2 ring-violet-400/60' : ''}`}>
+                  <div className="text-[12px] font-semibold text-slate-800">{cell.name}</div>
+                  <div className="text-[11px] text-slate-500 mb-1.5 tabular-nums">{fmtDate(cell.iso)}</div>
+                  {cell.di === null || !plan.days[cell.di].tasks.length ? (
+                    <div className="text-[11px] text-slate-400">{cell.di === null ? '—' : 'Rest'}</div>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {plan.days[cell.di].tasks.map((t, ti) => {
+                        const di = cell.di;
+                        return (
+                          <li key={ti} className="flex items-start gap-1.5">
+                            <button type="button" onClick={() => togglePlanTask(di, ti)} className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 ${t.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-slate-300'}`} data-testid={`plan-task-${di}-${ti}`}>{t.done && <Check className="w-3 h-3" />}</button>
+                            <button type="button" onClick={() => { try { window.sessionStorage.setItem('preselect_subject', t.subject); window.sessionStorage.setItem('preselect_topic', t.topic); } catch (e) { /* ignore */ } go('worksheets'); }} className={`text-left text-[11.5px] leading-snug min-w-0 ${t.done ? 'line-through text-slate-400' : 'text-slate-700 hover:text-violet-800'}`}>
+                              <span className="font-medium">{t.topic}</span>
+                              <span className="block text-slate-500">{t.subject} · {t.minutes} min</span>
+                              <span className="block text-slate-500 mt-0.5">{t.what}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
           ))}
         </div>
         {aiOn && (
-          <aside className="rounded-xl border border-violet-200 bg-violet-50/40 p-3 flex flex-col gap-2" data-testid="plan-tweak">
+          <aside className="mt-5 pt-5 border-t border-[color:var(--color-border)] flex flex-col gap-2 max-w-[640px]" data-testid="plan-tweak">
             <div className="text-[12.5px] font-semibold text-violet-900 inline-flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-violet-600" /> Tweak it further</div>
             <div className="text-[11.5px] text-slate-600">Tell the AI how to change the timetable — e.g. “only my midterm topics”, “nothing on Sundays”, “more chemistry, shorter sessions”.</div>
             {chat.length > 0 && (
@@ -140,7 +185,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
             </div>
           </aside>
         )}
-        </div>
+        </>
       )}
     </div>
   );
