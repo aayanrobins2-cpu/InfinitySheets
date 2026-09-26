@@ -243,6 +243,14 @@ export default function StartStudying({ go, subjectParam }) {
               )}
             </section>
 
+            {/* How well each topic is going, per subject — between the subjects
+                you take and the ones you could add. */}
+            {list.length > 0 && (
+              <div className="mb-8" data-testid="study-mastery">
+                <MasteryCard worksheets={masteryWs} subjects={list} topicsFor={(sub) => resolvedTopics(state.syllabusTopics, boards[sub]?.board || track, sub)} go={go} />
+              </div>
+            )}
+
             <section data-testid="subjects-not-taken">
               <div className="flex items-center gap-2 mb-3">
                 <h3 className="text-[15px] font-semibold text-slate-900">Subjects Not Taken</h3>
@@ -276,12 +284,6 @@ export default function StartStudying({ go, subjectParam }) {
               )}
             </section>
           </>
-        )}
-        {/* How well each topic is going, per subject (moved from the dashboard). */}
-        {list.length > 0 && (
-          <div className="mt-8" data-testid="study-mastery">
-            <MasteryCard worksheets={masteryWs} subjects={list} topicsFor={(sub) => resolvedTopics(state.syllabusTopics, boards[sub]?.board || track, sub)} go={go} />
-          </div>
         )}
       </div>
 
