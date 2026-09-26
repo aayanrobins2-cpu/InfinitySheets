@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, Mail, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
-import { predictedBreakdown, formatGrade, scoreToIBGrade } from '../../lib/predictedGrade';
+import { predictedBreakdown, formatGrade, scoreToIBGrade, predictionMargin } from '../../lib/predictedGrade';
 import { effectiveStreak } from '../../lib/streak';
 import { SUBJECT_INFO } from '../../data/mock';
 import { enrolledSubjects, subjectBoards, boardName, activeWorksheets, primaryTrack, resolvedTopics, subjectMark, subjectEntries, sheetBelongs } from '../../lib/subjects';
@@ -117,17 +117,17 @@ function LatestDiagnosisStat({ sheet, go }) {
 }
 
 // Read-only countdown; exam dates are edited in Settings.
-function DaysStat({ days, subLabel, onEdit }) {
+function DaysStat({ days, subLabel, onEdit, onOpen }) {
   const has = days !== null && days !== undefined;
   return (
-    <div className="tile tile-violet flex flex-col min-h-[104px]" data-testid="days-until-exam">
+    <div className="tile tile-violet flex flex-col min-h-[104px] cursor-pointer" data-testid="days-until-exam" role="button" tabIndex={0} title="See your full exam timetable" onClick={onOpen} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}>
       <div className="eyebrow-muted tile-accent">Days until exam</div>
       <div className="text-[26px] font-semibold mt-1 text-slate-900 tabular-nums leading-tight">
         {has ? days : '\u2014'}
         {has && <span className="text-[12px] font-medium text-slate-500 ml-1">{days === 1 ? 'day' : 'days'}</span>}
       </div>
       {subLabel && <div className="text-[11px] text-slate-500 mt-0.5 truncate">{subLabel}</div>}
-      {!has && <button type="button" onClick={onEdit} className="text-[11px] text-violet-700 hover:text-violet-900 mt-0.5 text-left" data-testid="days-edit">Set a date in Settings</button>}
+      {!has && <button type="button" onClick={(e) => { e.stopPropagation(); onEdit(); }} className="text-[11px] text-violet-700 hover:text-violet-900 mt-0.5 text-left" data-testid="days-edit">Set a date in Settings</button>}
     </div>
   );
 }
@@ -258,19 +258,15 @@ export default function Dashboard({ go }) {
   // Requires at least 2 worksheets (need scatter). Clamped to 1..20 pp so the
   // number always feels sensible and never disappears into 0 or blows up.
   const overallAccuracy = useMemo(() => {
-    if (ws.length < 2) return null;
-    const scores = ws.map((w) => Number(w.score) || 0);
-    const n = scores.length;
-    const mean = scores.reduce((s, v) => s + v, 0) / n;
-    // Sample standard deviation (Bessel's correction: divide by n-1).
-    const variance = scores.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1);
-    const sigma = Math.sqrt(variance);
-    const stdError = sigma / Math.sqrt(n);
-    // Use ~1 × SE for a snug "typical" band — feels honest at study-app
-    // sample sizes without ballooning to ±20 with only 3 worksheets.
-    const margin = Math.round(stdError);
-    return Math.max(1, Math.min(20, margin));
-  }, [ws]);
+    // Average of each subject's margin (see predictionMargin): tight only
+    // after many sheets that look like the real exam.
+    const margins = entries.map((e) => {
+      const list = ws.filter((w) => sheetBelongs(w, e, entries));
+      return list.length ? predictionMargin(list, { board: e.board }) : null;
+    }).filter((m) => m !== null);
+    if (!margins.length) return null;
+    return Math.round(margins.reduce((a, b) => a + b, 0) / margins.length);
+  }, [ws, entries]);
 
   // Chronological worksheet series per subject — mirrors what the Progress
   // page's LineChart consumes, so the dashboard preview matches the full view.
@@ -358,6 +354,8 @@ export default function Dashboard({ go }) {
     () => subjectBoards(state.courses, studyTrack),
     [state.courses, studyTrack],
   );
+  // The countdown opens the full exam timetable (Settings → Exam dates).
+  const openTimetable = () => { try { window.sessionStorage.setItem('open_exam_dates', '1'); } catch (_) { /* ignore */ } go('settings'); };
   const openSubject = (s) => { window.location.hash = `#study?subject=${encodeURIComponent(s)}`; };
 
   // ---- Card manager (Samsung Health style): show / hide / reorder ----------
@@ -365,7 +363,8 @@ export default function Dashboard({ go }) {
     { id: 'stats', label: 'Days, grade, diagnosis, goal', node: (
       <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <DaysStat days={examCountdown} subLabel={examLabel} onEdit={() => go('settings')} />
+        <DaysStat days={examCountdown} subLabel={examLabel} onEdit={openTimetable} onOpen={openTimetable} />
+        <div className="contents cursor-pointer" onClick={() => go('progress')} title="See your predicted grades" data-testid="predicted-grade-link">
         <PredictedScoreMini
           predictedBySubject={predictedBySubject}
           visibleSubjects={visibleSubjects}
@@ -383,6 +382,7 @@ export default function Dashboard({ go }) {
             )
           }
         />
+        </div>
         <LatestDiagnosisStat sheet={latestDiagnosed} go={go} />
         <div className="tile tile-orange" data-testid="weekly-goal">
           <div className="text-[10px] tracking-[0.14em] uppercase font-semibold tile-accent">Weekly goal</div>

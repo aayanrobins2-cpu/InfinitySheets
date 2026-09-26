@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, X, ChevronDown, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
@@ -22,7 +22,15 @@ export default function ExamDatesSettings() {
   const courses = state.courses || [];
   const [adding, setAdding] = useState(null); // `${courseId}|${subject}` being added to
   const [draft, setDraft] = useState({ name: '', date: '' });
-  const [open, setOpen] = useState(false);
+  // Opened straight from the dashboard countdown → expand and scroll to it.
+  const [open, setOpen] = useState(() => { try { return window.sessionStorage.getItem('open_exam_dates') === '1'; } catch (_) { return false; } });
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem('open_exam_dates') !== '1') return;
+      window.sessionStorage.removeItem('open_exam_dates');
+    } catch (_) { return; }
+    setTimeout(() => document.querySelector('[data-testid="exam-dates"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }, []);
 
   const saveExams = (course, subjectName, exams) => {
     const subjects = (Array.isArray(course.subjects) ? course.subjects : []).map((e) => {

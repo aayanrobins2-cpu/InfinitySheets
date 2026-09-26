@@ -61,6 +61,29 @@ export function sheetFidelity(w, examMinutes) {
   return clamp(0.4 * time + 0.6 * diff, 0, 1);
 }
 
+/**
+ * How far the real result could sit from the prediction, in percentage points.
+ * It only tightens with evidence that looks like the real exam: each sheet
+ * counts by its fidelity squared, so a full-length exam-level sitting counts
+ * as 1 while a short Easy sheet barely counts at all. Consistent scores on
+ * those sheets tighten it further; scattered ones widen it.
+ *   no realistic sheets → ±30 · 1 full sitting → ≈±18 · 4 → ≈±10 · 10 → ≈±7 · 25 → ≈±4
+ */
+export function predictionMargin(worksheets, { board } = {}) {
+  const examMinutes = examMinutesFor(board);
+  const rows = (worksheets || []).map((w) => ({ f: sheetFidelity(w, examMinutes), s: Number(w?.score) || 0 }));
+  const evidence = rows.reduce((t, r) => t + r.f * r.f, 0);
+  const base = 30 / Math.sqrt(1 + 1.8 * evidence);
+  let scatter = 0;
+  const wsum = rows.reduce((t, r) => t + r.f, 0);
+  if (rows.length >= 2 && wsum > 0) {
+    const mean = rows.reduce((t, r) => t + r.f * r.s, 0) / wsum;
+    const sd = Math.sqrt(rows.reduce((t, r) => t + r.f * (r.s - mean) ** 2, 0) / wsum);
+    scatter = sd / Math.sqrt(Math.max(1, evidence));
+  }
+  return Math.round(clamp(Math.sqrt(base * base + scatter * scatter), 3, 30));
+}
+
 // A sheet that was as hard AND as long as the real exam.
 export function isExamSitting(w, examMinutes) {
   return (DIFF_RANK[w?.difficulty] ?? 0) >= 1 && (Number(w?.duration) || 0) >= examMinutes;
