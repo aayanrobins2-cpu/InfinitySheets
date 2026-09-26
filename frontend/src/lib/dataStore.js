@@ -122,7 +122,7 @@ export function settingsToRow(state, userId) {
     onboarding_done: state.onboardingDone ?? false,
     tutorial_done: state.tutorialDone ?? false,
     // Small per-user blobs that do not deserve their own table.
-    data: { flashcards: state.flashcards || null, studyPlan: state.studyPlan || null, badges: state.badges || null, reminderHour: s.reminderHour ?? 18, askMistakeReason: s.askMistakeReason !== false, glass: typeof s.glass === 'number' ? s.glass : 50, glassOff: !!s.glassOff, plan: s.plan === 'plus' ? 'plus' : 'free', dashboardCards: s.dashboardCards || null, aiEnabled: s.aiEnabled !== false, plusUsage: s.plusUsage || {}, school: s.school || null, consent: state.consent || null, focusSessions: state.focusSessions || [], pendingSubmissions: (state.pendingSubmissions || []).slice(-20), notes: (state.notes || []).slice(0, 200) },
+    data: { flashcards: state.flashcards || null, studyPlan: state.studyPlan || null, badges: state.badges || null, reminderHour: s.reminderHour ?? 18, askMistakeReason: s.askMistakeReason !== false, glass: typeof s.glass === 'number' ? s.glass : 50, glassOff: !!s.glassOff, plan: s.plan === 'plus' ? 'plus' : 'free', dashboardCards: s.dashboardCards || null, aiEnabled: s.aiEnabled !== false, plusUsage: s.plusUsage || {}, school: s.school || null, drafts: (state.draftWorksheets || []).slice(0, 5).map((d) => ({ ...d, working: [] })), consent: state.consent || null, focusSessions: state.focusSessions || [], pendingSubmissions: (state.pendingSubmissions || []).slice(-20), notes: (state.notes || []).slice(0, 200) },
     updated_at: nowISO(),
   };
 }
@@ -137,6 +137,7 @@ export function rowToSettingsState(row) {
     focusSessions: Array.isArray(extra.focusSessions) ? extra.focusSessions : [],
     pendingSubmissions: Array.isArray(extra.pendingSubmissions) ? extra.pendingSubmissions : [],
     notes: Array.isArray(extra.notes) ? extra.notes : [],
+    draftWorksheets: Array.isArray(extra.drafts) ? extra.drafts : [],
     settings: {
       reminderHour: typeof extra.reminderHour === 'number' ? extra.reminderHour : 18,
       askMistakeReason: extra.askMistakeReason !== false,

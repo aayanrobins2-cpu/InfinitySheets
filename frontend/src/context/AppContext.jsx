@@ -78,10 +78,22 @@ const defaultState = {
   goalDate: null,
   // In-progress worksheet the student left mid-way (null when none). Lets them
   // resume from the Dashboard / Worksheet History.
-  draftWorksheet: null,
+  draftWorksheets: [], // unfinished worksheets, newest first
 };
 
 const AppContext = createContext(null);
+
+// Unfinished worksheets: newest save of each id wins, newest first, capped.
+export const MAX_DRAFTS = 8;
+function mergeDrafts(a = [], b = []) {
+  const byId = new Map();
+  [...(a || []), ...(b || [])].forEach((d) => {
+    if (!d?.id || !(d.questions || []).length) return;
+    const cur = byId.get(d.id);
+    if (!cur || String(d.savedAt || '') > String(cur.savedAt || '')) byId.set(d.id, d);
+  });
+  return [...byId.values()].sort((x, y) => String(y.savedAt || '').localeCompare(String(x.savedAt || ''))).slice(0, MAX_DRAFTS);
+}
 
 export function AppProvider({ children }) {
   const [state, setState] = useState(defaultState);
@@ -161,7 +173,9 @@ export function AppProvider({ children }) {
         loadedState.streak = live;
         bg(() => store.upsertSettings({ ...loadedState, user: { id: userId } }, userId), 'streak/expire');
       }
-      setState((s) => withTrack({ ...defaultState, theme: s.theme, draftWorksheet: s.draftWorksheet, ...loadedState }, loadedState.courses));
+      // Unfinished worksheets: this device's copies merged with the account's
+      // (newest save of each wins), so they survive reloads and other devices.
+      setState((s) => withTrack({ ...defaultState, theme: s.theme, ...loadedState, draftWorksheets: mergeDrafts(s.draftWorksheets, loadedState.draftWorksheets) }, loadedState.courses));
       setSyncStatus('saved');
       setTimeout(syncTrack, 0);
       identify(userId);
@@ -204,6 +218,9 @@ export function AppProvider({ children }) {
     // confirms the session. (A leftover demo user from the old demo mode is
     // dropped the same way and its local data is not migrated.)
     const fromDemo = !!(hydrated.user && hydrated.user.isDemo) || !!hydrated.fromDemo;
+    // Older saves kept a single draft; fold it into the list.
+    hydrated.draftWorksheets = mergeDrafts(hydrated.draftWorksheets, hydrated.draftWorksheet ? [hydrated.draftWorksheet] : []);
+    delete hydrated.draftWorksheet;
     setState({ ...hydrated, user: null, fromDemo });
 
     if (!isSupabaseConfigured) {
@@ -515,7 +532,7 @@ export function AppProvider({ children }) {
   const recordWorksheet = useCallback((sheet) => {
     const { next, newMistakes } = computeWorksheet(stateRef.current, sheet);
     // Completing a worksheet clears any saved in-progress draft.
-    setState({ ...next, draftWorksheet: null });
+    setState({ ...next, draftWorksheets: (next.draftWorksheets || []).filter((d) => d.id !== sheet.draftId) });
     track('worksheet_completed', { subject: sheet.subject, score: sheet.score, total: sheet.total, difficulty: sheet.difficulty, answerType: sheet.answerType, examMode: !!sheet.examMode, simulation: !!sheet.simulation, paper: !!sheet.paper });
     bg(() => store.upsertWorksheet(sheet, uid()), 'recordWorksheet/sheet');
     bg(() => store.upsertMistakes(newMistakes, uid()), 'recordWorksheet/mistakes');
@@ -531,13 +548,24 @@ export function AppProvider({ children }) {
     bg(() => store.upsertWorksheet(merged, uid()), 'updateWorksheet');
   }, []);
 
-  // Save / update the in-progress worksheet draft (local only — never synced).
+  // Unfinished worksheets — as many as the student has going (newest first,
+  // up to MAX_DRAFTS). Saved to this device on every change and to the
+  // account a few seconds after the last change, so they survive a reload,
+  // leaving the site, or switching device.
+  const draftSyncRef = useRef(null);
+  const syncDrafts = () => {
+    clearTimeout(draftSyncRef.current);
+    draftSyncRef.current = setTimeout(() => bg(() => store.upsertSettings(stateRef.current, uid()), 'drafts'), 4000);
+  };
   const saveDraftWorksheet = useCallback((draft) => {
-    setState((s) => ({ ...s, draftWorksheet: draft }));
-  }, []);
-  const clearDraftWorksheet = useCallback(() => {
-    setState((s) => (s.draftWorksheet ? { ...s, draftWorksheet: null } : s));
-  }, []);
+    if (!draft?.id) return;
+    setState((s) => ({ ...s, draftWorksheets: mergeDrafts([draft], (s.draftWorksheets || []).filter((d) => d.id !== draft.id)) }));
+    syncDrafts();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const clearDraftWorksheet = useCallback((id) => {
+    setState((s) => ({ ...s, draftWorksheets: (s.draftWorksheets || []).filter((d) => d.id !== id) }));
+    syncDrafts();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const removeMistake = useCallback((id) => {
     setState((s) => ({ ...s, mistakes: s.mistakes.filter((m) => m.id !== id) }));

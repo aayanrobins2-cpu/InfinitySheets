@@ -687,8 +687,12 @@ export default function Worksheets({ go, active = true }) {
   useEffect(() => {
     let wantResume = null;
     try { wantResume = window.sessionStorage.getItem('resume_ws_draft'); } catch (_) { /* ignore */ }
-    if (wantResume && state.draftWorksheet) {
-      const d = state.draftWorksheet;
+    // A reload (or coming back to the tab) reopens the sheet that was open.
+    let openId = null;
+    try { openId = window.sessionStorage.getItem('ws_open_draft'); } catch (_) { /* ignore */ }
+    const drafts = state.draftWorksheets || [];
+    const d = (wantResume && (drafts.find((x) => x.id === wantResume) || drafts[0])) || (openId && drafts.find((x) => x.id === openId)) || null;
+    if (d) {
       prevSubjectRef.current = d.subject;
       draftIdRef.current = d.id;
       setSubject(d.subject);
@@ -720,13 +724,24 @@ export default function Worksheets({ go, active = true }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist the draft as the student answers / navigates while taking it.
+  // Persist the draft as the student answers / navigates while taking it —
+  // and every 15 s (so the clock is saved too) and when the page unloads.
   useEffect(() => {
     if (stage === 'take' && questions.length) {
       saveDraftWorksheet(makeDraft(liveRef.current));
+      try { window.sessionStorage.setItem('ws_open_draft', draftIdRef.current || ''); } catch (_) { /* ignore */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage, answers, current]);
+  useEffect(() => {
+    if (stage !== 'take') return undefined;
+    const save = () => { const d = liveRef.current; if (d.stage === 'take' && (d.questions || []).length) saveDraftWorksheet(makeDraft(d)); };
+    const id = setInterval(save, 15000);
+    window.addEventListener('beforeunload', save);
+    document.addEventListener('visibilitychange', save);
+    return () => { clearInterval(id); window.removeEventListener('beforeunload', save); document.removeEventListener('visibilitychange', save); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage]);
 
   // Save the latest progress if the component unmounts mid-worksheet
   // (e.g. the student navigates away without submitting).
@@ -735,6 +750,8 @@ export default function Worksheets({ go, active = true }) {
     if (d.stage === 'take' && (d.questions || []).length) {
       saveDraftWorksheet(makeDraft(d));
     }
+    // Leaving for another page (not a reload) — don't auto-reopen it later.
+    try { window.sessionStorage.removeItem('ws_open_draft'); } catch (_) { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1169,8 +1186,10 @@ export default function Worksheets({ go, active = true }) {
       durationSec,
       analytics,
       date: new Date().toISOString(),
+      draftId: draftIdRef.current,
     };
     recordWorksheet(sheet);
+    try { window.sessionStorage.removeItem('ws_open_draft'); } catch (_) { /* ignore */ }
     setResult(sheet);
     setStage('result');
   };

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import UnfinishedWorksheets from './UnfinishedWorksheets';
 import { PlusName } from './PlusUpgradeBanner';
 import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
@@ -175,16 +176,11 @@ function SubmissionsDueCard({ submissions, onScan, onCancel, onClearDue }) {
 }
 
 export default function Dashboard({ go }) {
-  const { state, clearDraftWorksheet, updateSettings, updateCourse, removePendingSubmission, setSubmissionDue } = useApp();
+  const { state, updateSettings, updateCourse, removePendingSubmission, setSubmissionDue } = useApp();
   const plus = isPlus(state);
   // Memoised: a fresh `[]` fallback each render would invalidate every useMemo below.
   // Only subjects still in the student's courses count towards the dashboard.
   const ws = useMemo(() => activeWorksheets(state.worksheets, state.courses, state.user?.subjects, primaryTrack(state.courses, state.user?.examTrack)), [state.worksheets, state.courses, state.user?.subjects, state.user?.examTrack]);
-  const draft = state.draftWorksheet;
-  const resumeDraft = () => {
-    try { window.sessionStorage.setItem('resume_ws_draft', '1'); } catch (_) { /* ignore */ }
-    go('worksheets');
-  };
 
   const stats = useMemo(() => {
     const total = ws.reduce((s, w) => s + (w.total || 0), 0);
@@ -757,43 +753,7 @@ export default function Dashboard({ go }) {
         <p className="text-[14px] text-slate-500 mt-1">Here is your study overview. <span className="text-slate-400">Long-press a card to move it (on touch, press and hold its edge).</span></p>
       </div>
 
-      {draft && (draft.questions || []).length > 0 && (
-        <div
-          className="rounded-xl border border-amber-300 bg-amber-50 p-5 flex flex-wrap items-center justify-between gap-4"
-          data-testid="dashboard-continue-worksheet"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-              <PlayCircle className="w-6 h-6" />
-            </span>
-            <div className="min-w-0">
-              <div className="text-[10px] tracking-[0.14em] uppercase font-semibold text-amber-700">Unfinished worksheet</div>
-              <div className="text-[15px] font-semibold text-slate-900 truncate">
-                Continue {draft.subject}{draft.topics && draft.topics.length ? ` · ${draft.topics.join(', ')}` : ''}
-              </div>
-              <div className="text-[12px] text-slate-500 mt-0.5">
-                {draft.answered || 0} of {draft.total || (draft.questions || []).length} answered
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => clearDraftWorksheet()}
-              data-testid="dashboard-discard-worksheet"
-              className="px-3.5 py-2 rounded-lg text-[13px] font-medium border border-[color:var(--color-border)] bg-white hover:bg-slate-100 text-slate-700 transition-colors"
-            >
-              Discard
-            </button>
-            <button
-              onClick={resumeDraft}
-              data-testid="dashboard-resume-worksheet"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold text-white bg-amber-600 hover:opacity-95 transition-opacity"
-            >
-              <PlayCircle className="w-5 h-5" /> Continue
-            </button>
-          </div>
-        </div>
-      )}
+      <UnfinishedWorksheets go={go} testid="dashboard-continue-worksheet" />
 
       {/* Cards, in the student's order; hidden ones are skipped. The ad slot
           and the action row are fixed. */}

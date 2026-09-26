@@ -145,7 +145,7 @@ const TOTAL_BUDGET_MS = 130_000;
 
 const DB_URL = Deno.env.get("SUPABASE_URL");
 const DB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-const CACHE_TIMEOUT_MS = 1500;
+const CACHE_TIMEOUT_MS = 4000;
 
 function cacheKey(ctx: Record<string, unknown>) {
   return ["v2", ctx.board, ctx.subject, ctx.topic, ctx.ibLevel || ""]
@@ -378,6 +378,8 @@ Deno.serve(async (req: Request) => {
   const text = (data?.candidates?.[0]?.content?.parts || []).map((p: { text?: string }) => p.text || "").join("").trim();
   if (!text) return json({ error: "The AI returned an empty answer. Try rephrasing." }, 502);
 
-  if (mode === "overview") cachePut(overviewId, ctx, text, used);
+  // Save before replying: a fire-and-forget write can be cut off when the
+  // function returns, and then the next student would wait for it again.
+  if (mode === "overview") await cachePut(overviewId, ctx, text, used);
   return json({ text, model: used, cached: false });
 });

@@ -15,7 +15,6 @@ import Pricing from './Pricing';
 import StudentGallery3D from './StudentGallery3D';
 import Footer from './Footer';
 import VisionMission from './VisionMission';
-import AdSlot from '../ads/AdSlot';
 import MobileStickyCTA from './MobileStickyCTA';
 import AuthModal from './AuthModal';
 
@@ -66,7 +65,6 @@ export default function LandingPage({ hash }) {
       <PredictedGrade />
       <WhyDifferent />
       <ActiveLearning />
-      <div className="section-light px-6 py-10"><div className="max-w-[820px] mx-auto"><AdSlot slot="landing-lower" size="compact" /></div></div>
       <HowItWorks />
       <FreeResources />
       <Pricing />
