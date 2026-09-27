@@ -113,7 +113,7 @@ const GREETING_TEMPLATES = [
 function pickGreeting(fullName) {
   const name = (fullName || 'Student').split(' ')[0] || 'Student';
   const tpl = GREETING_TEMPLATES[Math.floor(Math.random() * GREETING_TEMPLATES.length)];
-  return tpl.split('{name}').join(name) // every {name}, not just the first;
+  return tpl.split('{name}').join(name); // every {name}, not just the first
 }
 
 function Ring({ value = 0 }) {
