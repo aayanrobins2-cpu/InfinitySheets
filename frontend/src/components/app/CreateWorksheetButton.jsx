@@ -27,6 +27,7 @@ export default function CreateWorksheetButton({ onClick, compact = false, classN
       type="button"
       onClick={onClick}
       aria-label={CREATE_WORKSHEET_LABEL}
+      title={`${CREATE_WORKSHEET_LABEL} (${/Mac|iPhone|iPad/.test(navigator.platform || "") ? "⌘⇧2" : "Ctrl+Shift+2"})`}
       className={`btn-violet inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-[13.5px] font-semibold whitespace-nowrap ring-1 ring-white/25 shadow-sm transition-opacity hover:opacity-95 ${className}`}
       {...rest}
     >

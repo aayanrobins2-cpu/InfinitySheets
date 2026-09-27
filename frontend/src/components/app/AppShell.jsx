@@ -195,6 +195,9 @@ export default function AppShell({ hash }) {
   useEffect(() => {
     const onKey = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen((v) => !v); }
+      // Cmd/Ctrl + Shift + 2 (or W, where the browser lets the page have it)
+      // → Create a worksheet. Uses e.code: Shift+2 types "@" / '"' by layout.
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.code === 'Digit2' || e.code === 'KeyW')) { e.preventDefault(); window.location.hash = '#worksheets'; }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
