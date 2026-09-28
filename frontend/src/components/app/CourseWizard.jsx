@@ -39,6 +39,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
   const { isPlus: plus, requirePlus } = usePlus();
   const isOnboarding = mode === 'onboarding';
 
+  const [showWelcome, setShowWelcome] = useState(isOnboarding);
   const [step, setStep] = useState(0);
   const [customOpen, setCustomOpen] = useState(false);
   const [subjectQuery, setSubjectQuery] = useState('');
@@ -133,11 +134,6 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
     if (onClose) onClose();
   };
 
-  const skip = () => {
-    if (onClose) onClose();
-    else if (isOnboarding) completeOnboarding({ examTrack, examDate: '', subjects: trackSubjects.slice(0, 1), frequency, weeklyGoal });
-  };
-
   if (customOpen) {
     return (
       <CustomCourseWizard
@@ -154,6 +150,31 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
       <div className="absolute inset-0 grid-fade pointer-events-none" />
 
       <div className="relative w-full max-w-[860px] mx-4 my-8">
+        {showWelcome ? (
+          <div className="bg-white rounded-2xl border border-[color:var(--color-border)] overflow-hidden" data-testid="onboarding-welcome">
+            <div className="h-1 w-full bg-blue-500" />
+            <div className="px-6 py-10 sm:px-10 sm:py-12 text-center">
+              <span className="mx-auto w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center text-white">
+                <Sparkles className="w-6 h-6" />
+              </span>
+              <h1 className="mt-5 text-[32px] sm:text-[38px] font-semibold text-slate-900">Hi {state.user?.name || 'there'}</h1>
+              <p className="mt-2 mx-auto max-w-[520px] text-[14px] leading-6 text-slate-600">
+                Let&apos;s set up the subjects you study. I&apos;ll guide you through choosing your course, subjects, exam dates, and study goal.
+              </p>
+              <div className="mt-7 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowWelcome(false)}
+                  data-testid="onboarding-start"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13.5px] font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                >
+                  Choose my subjects <ArrowRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <span className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
@@ -164,9 +185,11 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
               <div className="text-[11.5px] text-slate-500">{isOnboarding ? `Hi ${state.user?.name || 'there'} · build your first course` : 'A course can contain multiple subjects'}</div>
             </div>
           </div>
-          <button onClick={skip} className="text-[12.5px] text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1">
-            {onClose ? 'Cancel' : 'Skip'} <X className="w-4 h-4" />
-          </button>
+          {!isOnboarding && onClose && (
+            <button onClick={onClose} className="text-[12.5px] text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1">
+              Cancel <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-3 mb-5">
@@ -239,6 +262,29 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
               </div>
               <h2 className="text-[26px] font-semibold tracking-tight text-slate-900">Pick the subjects in this course</h2>
               <p className="text-[13.5px] text-slate-500 mt-1">Select one or more subjects. Each can have its own exam date in the next step.</p>
+              {isOnboarding && (
+                <div
+                  className={`mt-4 flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${picked.length ? 'border-emerald-200 bg-emerald-50' : 'border-blue-200 bg-blue-50'}`}
+                  aria-live="polite"
+                  data-testid="subject-guide"
+                >
+                  <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold ${picked.length ? 'bg-emerald-500 text-white' : 'bg-blue-600 text-white'}`}>
+                    {picked.length ? <CheckCircle2 className="w-4 h-4" /> : subjectQuery.trim() ? '2' : '1'}
+                  </span>
+                  <div>
+                    <div className={`text-[13px] font-semibold ${picked.length ? 'text-emerald-900' : 'text-blue-900'}`}>
+                      {picked.length ? 'Your subject is selected' : subjectQuery.trim() ? 'Choose a matching subject' : 'Find your first subject'}
+                    </div>
+                    <div className={`mt-0.5 text-[12px] leading-5 ${picked.length ? 'text-emerald-700' : 'text-blue-700'}`}>
+                      {picked.length
+                        ? `${picked.length} selected. Add any others you study, then press Continue.`
+                        : subjectQuery.trim()
+                          ? 'Select its card below. You can choose more than one subject.'
+                          : 'Search by name below, or browse the list and select a subject card.'}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="mt-4 flex items-center justify-between gap-3">
                 <div className="text-[12.5px] text-slate-500">{picked.length} selected</div>
                 <div className="flex items-center gap-2">
@@ -247,7 +293,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
                   <button onClick={() => { setPicked([]); setDates({}); }} className="text-[12.5px] text-slate-500 hover:text-slate-800 transition-colors">Clear</button>
                 </div>
               </div>
-              <div className="mt-3 relative">
+              <div className={`mt-3 relative rounded-lg ${isOnboarding && picked.length === 0 && !subjectQuery.trim() ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}>
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   value={subjectQuery}
@@ -257,12 +303,12 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
                   data-testid="wizard-subject-search"
                 />
               </div>
-              <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[42vh] overflow-y-auto pr-1">
+              <div className={`mt-3 grid grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[42vh] overflow-y-auto p-1 ${isOnboarding && picked.length === 0 && subjectQuery.trim() ? 'rounded-lg ring-2 ring-blue-400 ring-offset-1' : ''}`}>
                 {trackSubjects.filter((s) => s.toLowerCase().includes(subjectQuery.trim().toLowerCase())).map((s) => {
                   const info = SUBJECT_INFO[s] || { emoji: subjectMark(s), tagline: 'Practice and improve.' };
                   const sel = picked.includes(s);
                   return (
-                    <button key={s} onClick={() => togglePick(s)}
+                    <button key={s} onClick={() => togglePick(s)} data-testid={`wizard-subject-${s}`}
                       className={`text-left rounded-xl border px-4 py-3 transition-colors ${sel ? 'border-blue-400 bg-blue-50' : 'border-[color:var(--color-border)] bg-white hover:bg-slate-100'}`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -464,7 +510,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
           )}
 
           <div className="px-6 py-4 border-t border-[color:var(--color-border)] flex items-center justify-between gap-3 bg-slate-50/60">
-            <div className="text-[12px] text-slate-500">{step + 1} of 4</div>
+            <div className="text-[12px] text-slate-500">{step + 1} of {steps.length}</div>
             <div className="flex items-center gap-2">
               {step > 0 && (
                 <button onClick={back} className="inline-flex items-center gap-1 px-3.5 py-2 rounded-lg text-[13px] font-medium border border-[color:var(--color-border)] bg-white hover:bg-slate-100 text-slate-700 transition-colors">
@@ -477,6 +523,8 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
