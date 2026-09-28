@@ -13,7 +13,7 @@ import ComplaintLink from './ComplaintLink';
  */
 export default function TopHeader({ title, activeKey, isDark, courseCount, onToggleTheme, onNewWorksheet, sidebarOpen, onOpenSidebar, onOpenPalette, syncStatus }) {
   return (
-    <header className="px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-2 flex items-start justify-between gap-3 border-b border-[color:var(--color-border)] bg-white" data-testid="top-header">
+    <header className="liquid-glass px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-2 flex items-start justify-between gap-3 border-b border-[color:var(--color-border)]" data-testid="top-header">
       <div className="flex items-start gap-2 sm:gap-3 min-w-0 flex-1">
         {onOpenSidebar && (!sidebarOpen) && (
           <button
