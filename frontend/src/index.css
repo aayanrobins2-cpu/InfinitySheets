@@ -1013,8 +1013,9 @@ html.no-glass .tile-violet, html.no-glass .tile-royal, html.no-glass .tile-emera
 
 /* InfinitySheets Plus brand: the same blue mark with a slow shine sweep, and a
    shimmering "Plus" wordmark. */
+/* The InfinitySheets+ "+": polished chrome with a moving shine. */
 .brand-plus-text {
-  background: linear-gradient(90deg, #b8860b 0%, #f5c542 30%, #fff4c2 50%, #f5c542 70%, #b8860b 100%);
+  background: linear-gradient(100deg, #6b7280 0%, #d1d5db 18%, #ffffff 32%, #9ca3af 46%, #f3f4f6 60%, #ffffff 70%, #6b7280 86%, #d1d5db 100%);
   background-size: 220% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent;
   animation: brand-plus-sheen 3s linear infinite;
@@ -1089,10 +1090,13 @@ html.no-glass aside[data-glass-sidebar]::after, html.no-glass header[data-testid
 
 /* InfinitySheets+ wordmark: the + sheen, in gold, across the whole name. */
 .plus-gold {
-  background: linear-gradient(90deg, #b8860b 0%, #f5c542 30%, #fff4c2 50%, #f5c542 70%, #b8860b 100%);
+  background: linear-gradient(100deg, #6b7280 0%, #d1d5db 18%, #ffffff 32%, #9ca3af 46%, #f3f4f6 60%, #ffffff 70%, #6b7280 86%, #d1d5db 100%);
   background-size: 220% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent;
   animation: brand-plus-sheen 3s linear infinite;
   font-weight: 700;
 }
 @media (prefers-reduced-motion: reduce) { .plus-gold { animation: none; } }
+
+.brand-plus-text, .plus-gold { filter: drop-shadow(0 0 0.5px rgba(15, 23, 42, 0.55)); }
+html.dark .brand-plus-text, html.dark .plus-gold { filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.25)); }

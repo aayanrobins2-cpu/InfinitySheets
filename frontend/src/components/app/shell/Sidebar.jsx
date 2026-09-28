@@ -47,10 +47,10 @@ export default function Sidebar({ nav, activeKey, onNavigate, onLogout, onClose,
               data-nav-key={n.key}
               data-testid={`nav-${n.key}`}
               onClick={() => onNavigate(n.key)}
-              className={`sidebar-item text-left text-[13.5px] px-3 py-2 rounded-lg flex items-center gap-2.5 transition-colors ${isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}
+              className={`sidebar-item text-left text-[13.5px] px-3 py-2 rounded-lg flex items-center gap-2.5 whitespace-nowrap min-w-0 transition-colors ${isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-blue-700' : 'text-slate-500'} ${n.locked ? 'opacity-60' : ''}`} strokeWidth={2} />
-              <span className={`flex-1 ${n.locked ? 'text-slate-400' : ''}`}>{n.label}</span>
+              <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-blue-700' : 'text-slate-500'} ${n.locked ? 'opacity-60' : ''}`} strokeWidth={2} />
+              <span className={`flex-1 min-w-0 truncate ${n.locked ? 'text-slate-400' : ''}`}>{n.label}</span>
               {n.locked && <span className="brand-plus-text font-extrabold text-[15px] leading-none shrink-0" title="InfinitySheets+">+</span>}
             </button>
           );

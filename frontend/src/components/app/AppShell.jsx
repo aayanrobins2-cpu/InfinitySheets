@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, GraduationCap, Pencil, FileText, Library, History, TrendingUp, Dumbbell, Sparkles, AlertTriangle, Settings, Shield, BookOpen, Layers, Users } from 'lucide-react';
+import { LayoutDashboard, GraduationCap, Pencil, FileText, Library, History, TrendingUp, Dumbbell, Sparkles, AlertTriangle, Settings, Shield, BookOpen, Layers, Users, CalendarClock } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import Dashboard from './Dashboard';
 import StartStudying from './StartStudying';
@@ -20,6 +20,8 @@ import TopicOverview from './TopicOverview';
 import ResourcesPage from '../landing/ResourcesPage';
 import Sidebar from './shell/Sidebar';
 import PlusCheckout from './PlusCheckout';
+import ExamTimetable from './ExamTimetable';
+import { TwoStepGate, useTwoStepGate } from './TwoStep';
 import { getWorksheetJob, subscribeWorksheetJob } from '../../lib/worksheetJob';
 import TopHeader from './shell/TopHeader';
 import NotesFlashcards from './NotesFlashcards';
@@ -58,6 +60,7 @@ const HIDDEN_ROUTES = [
   // Reachable from the landing footer / topic pages even though it left the sidebar.
   { key: 'resources', label: 'Free Resources', Icon: BookOpen },
   { key: 'plus', label: 'InfinitySheets+', Icon: Sparkles },
+  { key: 'exams', label: 'Exam Timetable', Icon: CalendarClock },
 ];
 
 const SIDEBAR_STORAGE_KEY = 'infinitysheets_sidebar_open';
@@ -112,6 +115,7 @@ function renderRoute(activeKey, params, go, isAdmin) {
     case 'groups': return <Groups />;
     case 'resources': return <ResourcesPage embedded />;
     case 'plus': return <PlusCheckout />;
+    case 'exams': return <ExamTimetable go={go} />;
     case 'admin': return isAdmin ? <AdminPlaceholder /> : <Dashboard go={go} />;
     case 'course-overview': return <CourseOverview courseId={params.id} go={go} />;
     case 'topic': return <TopicOverview subject={params.subject} topic={params.topic} go={go} />;
@@ -125,7 +129,8 @@ export default function AppShell({ hash }) {
   const isDemo = !!state.user?.isDemo;
   const { key: active, params } = parseHash(hash);
   const isAdmin = state.user?.role === 'admin';
-  const PLUS_NAV = { flashcards: 'flashcards', recommendations: 'aiPlan' };
+  // No page is locked for free accounts (AI is rationed by credits instead).
+  const PLUS_NAV = {};
   const NAV = (isAdmin ? [...BASE_NAV, ADMIN_ITEM] : BASE_NAV).map((n) => (PLUS_NAV[n.key] && !plus ? { ...n, locked: true } : n));
   const ALL_ITEMS = [...NAV, ...HIDDEN_ROUTES];
   const [wsJob, setWsJob] = useState(getWorksheetJob());
@@ -207,9 +212,13 @@ export default function AppShell({ hash }) {
     await apiLogout();
     window.location.hash = '';
   };
+  // Two-step verification: an account with an authenticator app must enter
+  // its code before the app opens (after password, Google, or a reload).
+  const twoStep = useTwoStepGate(!!state.user?.id && !state.user?.isDemo);
 
   return (
     <div className="h-screen overflow-hidden section-bg flex relative">
+      {twoStep.status === 'needs-code' && <TwoStepGate onVerified={twoStep.recheck} onSignOut={exitAccount} />}
       {/* Slow ambient colour the glass chrome refracts. */}
       <div className="app-ambient" aria-hidden="true" />
       {/* Mobile scrim — dim the app when the drawer is open so the page

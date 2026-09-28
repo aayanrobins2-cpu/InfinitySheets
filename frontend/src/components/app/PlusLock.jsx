@@ -7,25 +7,20 @@ import { openPlusBanner, PlusMark, PlusName } from './PlusUpgradeBanner';
 
 // One place to show and enforce InfinitySheets+ locks.
 export function usePlus() {
-  const { state, updateSettings } = useApp();
+  const { state } = useApp();
   const plus = isPlus(state);
-  // Returns true when allowed. A free user spends one of their free uses
-  // (see FREE_ALLOWANCE); once those are gone the upgrade banner opens and
-  // it returns false.
+  // Nothing is locked for free accounts any more: every feature is usable and
+  // the AI ones are rationed by daily credits, enforced by the ai-chat
+  // function (the upgrade banner opens when they run out). `isPlus` here
+  // therefore means "can use it" — true for everyone. The only hard limit
+  // left is the number of subjects (FREE_SUBJECT_LIMIT, in the course wizard).
   const requirePlus = (featureKey) => {
-    if (plus) return true;
-    const left = freeUsesLeft(state, featureKey);
-    if (left > 0) {
-      updateSettings({ plusUsage: recordUse(state.settings?.plusUsage, featureKey) });
-      const rule = FREE_ALLOWANCE[featureKey];
-      toast(`${PLUS_FEATURES[featureKey] || 'InfinitySheets+ feature'}: ${rule.kind === 'once' ? 'your one free use' : `free use, ${left - 1} left today`}. Unlimited with InfinitySheets+.`);
-      return true;
-    }
-    openPlusBanner(featureKey);   // the full upgrade banner, listing everything
+    if (plus || featureKey !== 'moreSubjects') return true;
+    openPlusBanner(featureKey);
     return false;
   };
-  const usesLeft = (featureKey) => freeUsesLeft(state, featureKey);
-  return { isPlus: plus, requirePlus, usesLeft };
+  const usesLeft = () => Infinity;
+  return { isPlus: true, requirePlus, usesLeft, reallyPlus: plus };
 }
 
 // Small "InfinitySheets+" lock chip shown next to a locked control. It
@@ -43,25 +38,8 @@ export function PlusBadge({ className = '' }) {
 
 // Wraps a control so free users see it greyed with a lock; clicking shows the
 // upgrade prompt instead of doing the action. Plus users get the children as-is.
-export function PlusLock({ feature, children, className = '' }) {
-  const { isPlus: plus, requirePlus } = usePlus();
-  if (plus) return children;
-  return (
-    <div className={`relative ${className}`}>
-      <div className="opacity-45 pointer-events-none select-none" aria-hidden="true">{children}</div>
-      <button
-        type="button"
-        onClick={() => requirePlus(feature)}
-        className="absolute inset-0 flex items-center justify-center rounded-[inherit]"
-        aria-label={`${PLUS_FEATURES[feature] || 'Feature'} — InfinitySheets+ only`}
-        data-testid={`plus-lock-${feature}`}
-      >
-        <span className="inline-flex items-center rounded-full bg-violet-600 text-white px-2.5 py-1 text-[11px] font-semibold shadow">
-          <PlusName />
-        </span>
-      </button>
-    </div>
-  );
+export function PlusLock({ children }) {
+  return children;
 }
 
 // A full-page upgrade screen for a locked route (Flashcards / Smart Learning).
@@ -85,30 +63,6 @@ const passDay = () => new Date().toDateString();
 function hasPass(feature) { try { return JSON.parse(window.localStorage.getItem(PASS_KEY) || '{}')[feature] === passDay(); } catch (_) { return false; } }
 function givePass(feature) { try { const p = JSON.parse(window.localStorage.getItem(PASS_KEY) || '{}'); p[feature] = passDay(); window.localStorage.setItem(PASS_KEY, JSON.stringify(p)); } catch (_) { /* ignore */ } }
 
-export function PlusPreview({ feature, children }) {
-  const { requirePlus, usesLeft } = usePlus();
-  const [open, setOpen] = React.useState(() => hasPass(feature));
-  const label = PLUS_FEATURES[feature] || 'This feature';
-  const left = usesLeft(feature);
-  // A free use opens the whole page for the rest of today.
-  if (open) {
-    return (
-      <div data-testid={`plus-pass-${feature}`}>
-        <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/80 px-4 py-2 text-[12.5px] text-violet-900">Free pass for today. {allowanceText(feature)} Unlimited with <PlusName />.</div>
-        {children}
-      </div>
-    );
-  }
-  const takePass = () => { if (requirePlus(feature)) { givePass(feature); setOpen(true); } };
-  return (
-    <div className="relative" data-testid={`plus-preview-${feature}`}>
-      <div className="sticky top-2 z-20 mb-4 rounded-xl border border-violet-200 bg-violet-50/95 backdrop-blur px-4 py-2.5 flex items-center gap-2 text-[13px] text-violet-900 shadow-sm">
-        <PlusMark className="text-[15px] shrink-0" />
-        <span className="flex-1"><b>{label}</b> is part of <PlusName />. {allowanceText(feature)}</span>
-        {left > 0 && <button type="button" onClick={takePass} className="shrink-0 rounded-lg bg-violet-600 text-white px-3 py-1 text-[12px] font-semibold hover:bg-violet-700" data-testid={`plus-try-${feature}`}>Try it free</button>}
-      </div>
-      <div className="opacity-50 grayscale-[0.35] select-none pointer-events-none" aria-hidden="true">{children}</div>
-      <button type="button" aria-label={`${label} — InfinitySheets+ only`} onClick={() => (left > 0 ? takePass() : requirePlus(feature))} className="absolute inset-0 z-10 cursor-not-allowed bg-transparent" />
-    </div>
-  );
+export function PlusPreview({ children }) {
+  return children;
 }

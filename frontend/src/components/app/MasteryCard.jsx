@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Award } from 'lucide-react';
 import { computeMastery, masteryForSubject, subjectMasterySummary, LEVELS } from '../../lib/mastery';
+import { arrowTabs } from '../../lib/arrowTabs';
 
 // Topic mastery per subject: Not started → Novice → Learning → Solid →
 // Mastered, from accuracy × evidence × recency (lib/mastery.js).
@@ -20,12 +21,18 @@ export default function MasteryCard({ worksheets, subjects, topicsFor, go }) {
           <div className="text-[15px] font-semibold text-slate-900">{active} · {rows.some((r) => r.n) ? `${summary.avg}/100 average` : 'Not enough data yet'}</div>
           <div className="text-[12px] text-slate-500 mt-0.5">{LEVELS.slice(1).map((l) => `${summary.counts[l.key] || 0} ${l.label.toLowerCase()}`).join(' · ')}</div>
         </div>
-        {subjects.length > 1 && (
-          <select className="input-base w-auto py-1.5" value={active} onChange={(e) => setSubject(e.target.value)} data-testid="mastery-subject">
-            {subjects.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        )}
       </div>
+      {/* One tab per subject — click or use the arrow keys to switch. */}
+      {subjects.length > 1 && (
+        <div className="flex flex-wrap gap-1.5 mb-4" role="tablist" aria-label="Subject" onKeyDown={arrowTabs(subjects, active, setSubject)} data-testid="mastery-subject">
+          {subjects.map((s) => (
+            <button key={s} type="button" role="tab" aria-selected={s === active} tabIndex={s === active ? 0 : -1} onClick={() => setSubject(s)}
+              className={`px-3 py-1.5 rounded-full text-[12.5px] font-medium border transition-colors ${s === active ? 'bg-blue-600 border-blue-600 text-white' : 'border-[color:var(--color-border)] text-slate-600 hover:bg-slate-50'}`}>
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="space-y-1.5">
         {rows.map((r) => (
           <button key={r.topic} type="button" onClick={() => go(`topic?subject=${encodeURIComponent(active)}&topic=${encodeURIComponent(r.topic)}`)} className="w-full text-left flex items-center gap-3 group" title={r.n ? `${r.n} answered · ${r.accuracy}% overall · ${r.recentAccuracy}% recently` : 'Not practised yet'}>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { arrowTabs } from '../../lib/arrowTabs';
 import { Layers, FileText, PenLine } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { enrolledSubjects, boardFor, resolvedTopics, subjectBoards, primaryTrack } from '../../lib/subjects';
@@ -35,9 +36,9 @@ export default function NotesFlashcards({ go }) {
         ))}
         <span className="text-[12px] text-slate-500 ml-auto">{board}{ibLevel ? ` · ${ibLevel}` : ''}</span>
       </div>
-      <div className="inline-flex rounded-full border border-[color:var(--color-border)] bg-white p-1 mb-5" style={{ borderRadius: 9999 }} role="tablist" data-testid="nf-tabs">
+      <div className="inline-flex rounded-full border border-[color:var(--color-border)] bg-white p-1 mb-5" style={{ borderRadius: 9999 }} role="tablist" aria-label="Notes, flashcards or blurting" onKeyDown={arrowTabs(TABS.map((t) => t.key), tab, pick)} data-testid="nf-tabs">
         {TABS.map(({ key, label, Icon }) => (
-          <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => pick(key)} data-testid={`nf-tab-${key}`} className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors ${tab === key ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>
+          <button key={key} type="button" role="tab" aria-selected={tab === key} tabIndex={tab === key ? 0 : -1} onClick={() => pick(key)} data-testid={`nf-tab-${key}`} className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors ${tab === key ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>
             <Icon className="w-4 h-4" /> {label}
           </button>
         ))}

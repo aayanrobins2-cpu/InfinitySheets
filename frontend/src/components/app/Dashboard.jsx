@@ -403,7 +403,7 @@ export default function Dashboard({ go }) {
     [state.courses, studyTrack],
   );
   // The countdown opens the full exam timetable (Settings → Exam dates).
-  const openTimetable = () => { try { window.sessionStorage.setItem('open_exam_dates', '1'); } catch (_) { /* ignore */ } go('settings'); };
+  const openTimetable = () => go('exams');
   const openSubject = (s) => { window.location.hash = `#study?subject=${encodeURIComponent(s)}`; };
 
   // ---- Card manager (Samsung Health style): show / hide / reorder ----------
@@ -562,13 +562,13 @@ export default function Dashboard({ go }) {
           <div className="text-[12px] text-slate-500 mt-1">{ws.reduce((s, w) => s + (w.total || 0), 0)} questions answered in total</div>
         </div>
         <div className="rounded-xl border border-[color:var(--color-border)] p-5 bg-white">
-          <div className="eyebrow-muted mb-3 flex items-center gap-1.5"><CalendarClock className="w-4 h-4 text-violet-600" /> Upcoming exams</div>
+          <button type="button" onClick={() => go('exams')} className="w-full eyebrow-muted mb-3 flex items-center gap-1.5 hover:text-blue-700 text-left" data-testid="upcoming-exams-open"><CalendarClock className="w-4 h-4 text-violet-600" /> Upcoming exams <span className="ml-auto normal-case tracking-normal text-[12px] text-blue-700 font-medium">Full timetable &rarr;</span></button>
           {courseExams.length === 0 ? (
             <button onClick={() => go('courses')} className="text-[14px] text-blue-700 hover:text-blue-900 transition-colors">Add a course to set per-subject exam dates &rarr;</button>
           ) : (
             <div className="flex flex-col gap-2">
               {courseExams.slice(0, 4).map((c) => (
-                <div key={c.name + c.date} className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-[color:var(--color-border)]">
+                <div key={c.name + c.date} role="button" tabIndex={0} onClick={() => go('exams')} onKeyDown={(e) => { if (e.key === 'Enter') go('exams'); }} className="flex items-center justify-between gap-3 px-3 py-2 rounded-md border border-[color:var(--color-border)] cursor-pointer hover:border-blue-300">
                   <div className="min-w-0">
                     <div className="text-[13.5px] font-medium text-slate-900 truncate">{c.name}</div>
                     <div className="text-[11.5px] text-slate-500">{fmtDate(c.date)}</div>
@@ -926,7 +926,6 @@ function NotesFlashcardsCard({ notes, flashcards, plus, go }) {
     <button type="button" onClick={() => go('flashcards')} className="w-full text-left rounded-2xl border border-[color:var(--color-border)] bg-white p-5 hover:border-violet-300 transition-colors" data-testid="dash-notes-flashcards">
       <div className="flex items-center justify-between gap-2">
         <div className="eyebrow-muted inline-flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Notes &amp; flashcards</div>
-        {!plus && <span className="text-[11px] text-violet-700 font-semibold"><PlusName /></span>}
       </div>
       {empty ? (
         <div className="text-[13px] text-slate-500 mt-2">Not enough data yet &mdash; upload your notes or make a flashcard deck to see them here.</div>

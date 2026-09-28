@@ -1,4 +1,5 @@
 import { openPlusBanner, PlusName } from './PlusUpgradeBanner';
+import { TwoStepSettings } from './TwoStep';
 import { isOffensiveName, OFFENSIVE_NAME_MESSAGE } from '../../lib/nameFilter';
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
@@ -55,6 +56,7 @@ export default function SettingsView() {
 
       <Preferences settings={state.settings} updateSettings={updateSettings} />
       <ExamDatesSettings />
+      <TwoStepSettings />
 
       <AiSection settings={state.settings} updateSettings={updateSettings} />
       <Section title="Devices" icon={Laptop} subtitle="Your account works on up to 3 devices. Sign out of one here to use a new phone or laptop.">
