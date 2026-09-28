@@ -1,4 +1,5 @@
 import React from 'react';
+import CreditsBadge from './CreditsBadge';
 import { Moon, Sun, PanelLeftOpen, Search } from 'lucide-react';
 import CreateWorksheetButton from '../CreateWorksheetButton';
 import SyncBadge from './SyncBadge';
@@ -34,6 +35,7 @@ export default function TopHeader({ title, activeKey, isDark, courseCount, onTog
             <Search className="w-3.5 h-3.5" /> Search <kbd className="text-[10px] px-1 rounded bg-slate-100 border border-slate-200">⌘K</kbd>
           </button>
         )}
+        <CreditsBadge />
         <ComplaintLink />
         <SyncBadge status={syncStatus} />
         <button

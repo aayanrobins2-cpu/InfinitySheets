@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { downloadWorksheetPDF } from './Worksheets';
 import UnfinishedWorksheets from './UnfinishedWorksheets';
 import { PlusName } from './PlusUpgradeBanner';
 import { confirmDelete } from '../../lib/confirm';
 import { fmtDate } from '../../lib/dates';
 import { useApp } from '../../context/AppContext';
 import { isPlus } from '../../lib/entitlements';
-import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, RotateCcw, Upload, FileText } from 'lucide-react';
+import { CalendarClock, Sparkles, BookOpen, ArrowRight, PlayCircle, Stethoscope, Pencil, Check, X, RotateCcw, Upload, FileText, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStrengthsWeaknesses';
 import { predictedBreakdown, formatGrade, scoreToIBGrade, predictionMargin } from '../../lib/predictedGrade';
@@ -202,6 +203,12 @@ function SubmissionsDueCard({ submissions, onScan, onCancel, onClearDue }) {
               )}
               {s.dueDate && (
                 <button type="button" onClick={() => onClearDue(s.id)} className="text-[11.5px] text-slate-500 hover:text-slate-800 shrink-0" data-testid={`submission-cleardue-${s.id}`}>Cancel date</button>
+              )}
+              {/* The sheet is saved with the submission, so it can be printed again. */}
+              {(s.questions || []).length > 0 && (
+                <button type="button" onClick={() => downloadAgain(s)} className="btn-outline-dark inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold shrink-0" title="Download this worksheet's PDF again" data-testid={`submission-download-${s.id}`}>
+                  <Download className="w-3.5 h-3.5" /> Download again
+                </button>
               )}
               <button type="button" onClick={() => onScan(s.id)} className="btn-violet inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold shrink-0" data-testid={`submission-scan-${s.id}`}>
                 <Upload className="w-3.5 h-3.5" /> Scan
@@ -933,4 +940,21 @@ function NotesFlashcardsCard({ notes, flashcards, plus, go }) {
       <div className="text-[12px] text-violet-700 font-medium mt-3">Open Notes &amp; Flashcards &rarr;</div>
     </button>
   );
+}
+
+// Re-download a submission's worksheet PDF (same questions, same answer key).
+function downloadAgain(s) {
+  try {
+    downloadWorksheetPDF({
+      questions: s.questions,
+      subject: s.subject,
+      topics: s.topics || [],
+      difficulty: s.difficulty,
+      answerType: s.answerType,
+      duration: s.duration,
+      paperLabel: s.paperLabel,
+    });
+  } catch (err) {
+    toast.error('Could not create the PDF — try again.');
+  }
 }

@@ -6,6 +6,8 @@ import { dataUrlParts } from './images';
 import { snapTopic, guessTopicFromText } from './topicSnap';
 import { detectChains } from './chains';
 import { examFormatText } from './examPresets';
+import { setCredits } from './credits';
+import { openPlusBanner } from '../components/app/PlusUpgradeBanner';
 
 export const AI_FUNCTION = 'ai-chat';
 
@@ -41,6 +43,9 @@ async function readErrorMessage(error) {
   // function's own { error } message when there is one.
   try {
     const body = await error?.context?.json?.();
+    if (body?.credits) setCredits(body.credits);
+    // Out of free credits: show the upgrade banner as well as the message.
+    if (body?.code === 'out_of_credits') openPlusBanner('aiCredits');
     if (body?.error) return body.error;
   } catch (e) { /* fall through */ }
   return error?.message || 'The AI could not answer right now.';
@@ -62,8 +67,19 @@ export async function askAi({ mode = 'chat', context = {}, messages = [], force 
     body: { mode, context, force, files: [...(files || []), ...(images || [])].map(({ mimeType, data, label }) => ({ mimeType, data, label })), messages: messages.map((m) => ({ role: m.role, content: m.content })) },
   });
   if (error) throw new Error(await readErrorMessage(error));
+  if (data?.credits) setCredits(data.credits);
   if (data?.error) throw new Error(data.error);
   return data?.text || '';
+}
+
+/** Today's AI credit balance ({ plan, used, limit, left, resetsAt }). */
+export async function fetchCredits() {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data } = await supabase.functions.invoke(AI_FUNCTION, { body: { mode: 'credits' } });
+    if (data?.credits) setCredits(data.credits);
+    return data?.credits || null;
+  } catch (_) { return null; }
 }
 
 // Topic overviews are deterministic enough to cache for the session — saves

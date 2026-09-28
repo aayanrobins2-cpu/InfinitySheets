@@ -215,6 +215,63 @@ async function requireUser(req: Request): Promise<string | null> {
   } catch { return null; }
 }
 
+// ---------------------------------------------------------------------------
+// Credits. Every AI action costs credits; free accounts get FREE_DAILY_CREDITS
+// a day (reset at 00:00 UTC). InfinitySheets+ and admins are unlimited. Every
+// call is logged to public.ai_usage with its tokens so real cost can be
+// compared with ad revenue. Cached topic overviews cost nothing.
+// ---------------------------------------------------------------------------
+const FREE_DAILY_CREDITS = 30;
+const CREDIT_COST: Record<string, number> = {
+  chat: 1, recommend: 1, overview: 1, examformat: 1, solution: 1, mark: 1, transcribe: 1,
+  generate: 2, flashcards: 2, blurt: 2,
+  diagnose: 3, plan: 3, multiply: 3, "course-search": 3,
+  assess: 4,
+  extract: 0, syllabus: 0, // admin tools
+};
+const costOf = (mode: string) => CREDIT_COST[mode] ?? 1;
+
+async function rest(path: string, init: RequestInit = {}) {
+  return fetch(`${DB_URL}/rest/v1/${path}`, {
+    ...init,
+    headers: { apikey: DB_KEY!, Authorization: `Bearer ${DB_KEY}`, "Content-Type": "application/json", ...(init.headers || {}) },
+    signal: AbortSignal.timeout(CACHE_TIMEOUT_MS),
+  });
+}
+
+// 'admin' | 'plus' | 'free'
+async function planFor(userId: string): Promise<string> {
+  try {
+    const [pr, st] = await Promise.all([
+      rest(`profiles?id=eq.${userId}&select=role`).then((r) => r.json()),
+      rest(`user_settings?user_id=eq.${userId}&select=data`).then((r) => r.json()),
+    ]);
+    if (Array.isArray(pr) && pr[0]?.role === "admin") return "admin";
+    if (Array.isArray(st) && st[0]?.data?.plan === "plus") return "plus";
+  } catch (_) { /* fall through */ }
+  return "free";
+}
+
+function dayStartUtc() { const d = new Date(); d.setUTCHours(0, 0, 0, 0); return d; }
+
+async function creditsUsedToday(userId: string): Promise<number> {
+  try {
+    const r = await rest(`ai_usage?user_id=eq.${userId}&created_at=gte.${dayStartUtc().toISOString()}&select=credits&limit=5000`);
+    const rows = await r.json();
+    return Array.isArray(rows) ? rows.reduce((n: number, x: { credits?: number }) => n + (Number(x.credits) || 0), 0) : 0;
+  } catch (_) { return 0; }
+}
+
+async function logUsage(row: Record<string, unknown>) {
+  try { await rest("ai_usage", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify(row) }); } catch (_) { /* best effort */ }
+}
+
+function creditInfo(plan: string, used: number) {
+  const unlimited = plan !== "free";
+  const reset = dayStartUtc(); reset.setUTCDate(reset.getUTCDate() + 1);
+  return { plan, used, limit: unlimited ? null : FREE_DAILY_CREDITS, left: unlimited ? null : Math.max(0, FREE_DAILY_CREDITS - used), resetsAt: reset.toISOString() };
+}
+
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = 40;
 const rate = new Map<string, number[]>();
@@ -246,12 +303,26 @@ Deno.serve(async (req: Request) => {
     const names = (d?.models || []).filter((m: { supportedGenerationMethods?: string[] }) => (m.supportedGenerationMethods || []).includes("generateContent")).map((m: { name: string }) => String(m.name).replace(/^models\//, ""));
     return json({ models: names, status: r.status });
   }
+  // Credits check-in: how many the student has left today.
+  if (body.mode === "credits") {
+    const plan = await planFor(userId);
+    return json({ credits: creditInfo(plan, await creditsUsedToday(userId)) });
+  }
   const mode = MODES.has(String(body.mode)) ? String(body.mode) : "chat";
   const chain = chainFor(mode);
   const models = preferred ? [preferred, ...chain.filter((m) => m !== preferred)] : [...chain];
   const ctx = body.context || {};
   const cachedOverview = mode === "overview" && !body.force ? await cacheGet(cacheKey(ctx)) : null;
-  if (cachedOverview) { cacheBumpHit(cacheKey(ctx)); return json({ text: cachedOverview.body, model: cachedOverview.model, cached: true }); }
+  const [plan, usedBefore] = await Promise.all([planFor(userId), creditsUsedToday(userId)]);
+  if (cachedOverview) {
+    cacheBumpHit(cacheKey(ctx));
+    await logUsage({ user_id: userId, mode, model: "cache", plan, credits: 0, cached: true });
+    return json({ text: cachedOverview.body, model: cachedOverview.model, cached: true, credits: creditInfo(plan, usedBefore) });
+  }
+  const cost = costOf(mode);
+  if (plan === "free" && usedBefore + cost > FREE_DAILY_CREDITS) {
+    return json({ error: `You've used today's ${FREE_DAILY_CREDITS} free AI credits. They refill at midnight (UTC) — or get InfinitySheets+ for unlimited AI.`, code: "out_of_credits", credits: creditInfo(plan, usedBefore) }, 402);
+  }
   if (rateLimited(userId)) return json({ error: "Too many AI requests. Please wait a few minutes." }, 429);
 
   const overviewId = mode === "overview" ? cacheKey(ctx) : "";
@@ -381,5 +452,7 @@ Deno.serve(async (req: Request) => {
   // Save before replying: a fire-and-forget write can be cut off when the
   // function returns, and then the next student would wait for it again.
   if (mode === "overview") await cachePut(overviewId, ctx, text, used);
-  return json({ text, model: used, cached: false });
+  const usage = data?.usageMetadata || {};
+  await logUsage({ user_id: userId, mode, model: used, plan, credits: cost, prompt_tokens: Number(usage.promptTokenCount) || 0, output_tokens: (Number(usage.candidatesTokenCount) || 0) + (Number(usage.thoughtsTokenCount) || 0), cached: false });
+  return json({ text, model: used, cached: false, credits: creditInfo(plan, usedBefore + cost) });
 });

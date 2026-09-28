@@ -30,6 +30,7 @@ export const PLUS_PITCH = [
   'Worksheets that draw on the notes you upload',
   'Custom courses built from your own material',
   `More than ${FREE_SUBJECT_LIMIT} subjects`,
+  'Unlimited AI — no daily credit limit',
   'No ads, anywhere',
 ];
 
@@ -41,6 +42,7 @@ export const PLUS_FEATURES = {
   diagnosis: 'AI worksheet diagnosis',
   customCourse: 'Custom courses',
   customRequest: 'Custom requests to tweak a worksheet',
+  aiCredits: 'Unlimited AI (free accounts get 30 AI credits a day)',
   notesInWorksheets: 'Worksheets built from your own notes',
   moreSubjects: `More than ${FREE_SUBJECT_LIMIT} subjects`,
 };

@@ -238,7 +238,7 @@ function sanitizeForPDF(s) {
     .replace(/[^\x20-\x7e\n\r\t°±²³¹¼½¾×÷]/g, '');
 }
 
-function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerType, duration, studentName, paperLabel }) {
+export function downloadWorksheetPDF({ questions, subject, topics, difficulty, answerType, duration, studentName, paperLabel }) {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
