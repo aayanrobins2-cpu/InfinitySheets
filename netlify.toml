@@ -2,7 +2,7 @@
 # are needed. CI=true keeps lint warnings as build errors, same as locally.
 # The site is linked to GitHub: every push to main builds and deploys, and
 # pull requests get Deploy Previews. REACT_APP_SUPABASE_URL / _ANON_KEY are
-# set as Netlify environment variables (public values).
+# set as Netlify environment variables (public values). Linked 28 Sept 2026.
 [build]
   base = "frontend"
   command = "corepack enable && corepack yarn install && CI=true corepack yarn build"
