@@ -1,4 +1,5 @@
 import React from 'react';
+import { Flask, OpenBook, Pen, Worksheet } from './StudyDecor';
 
 /**
  * Futuristic infinity-pattern background.
@@ -16,6 +17,10 @@ export default function InfinityBackground({ variant = 'soft', className = '' })
       <InfSvg className="inf-2" size={520} stroke={stroke} color="#0ea5e9" opacity={op * 0.9} />
       <InfSvg className="inf-3" size={380} stroke={stroke} color="#dc2626" opacity={op * 0.75} />
       <InfSvg className="inf-4" size={300} stroke={stroke} color="#2563eb" opacity={op * 0.6} />
+      <OpenBook className="study-book" size={86} color="#ffffff" />
+      <Worksheet className="study-sheet" size={74} color="#ffffff" />
+      <Flask className="study-flask" size={78} color="#ffffff" />
+      <Pen className="study-pen" size={68} color="#ffffff" />
     </div>
   );
 }

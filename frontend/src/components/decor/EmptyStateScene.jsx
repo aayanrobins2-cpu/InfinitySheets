@@ -1,33 +1,10 @@
 import React from 'react';
+import { InfinityMark, Pen, Worksheet } from './StudyDecor';
 
 /**
- * Hand-drawn empty-state illustrations: empty lab, open book, cobwebs.
- * Strokes use currentColor so they adapt to light/dark mode automatically.
+ * Hand-drawn academic empty-state illustrations. Strokes use currentColor so
+ * they adapt to light and dark mode without introducing separate image files.
  */
-
-export function Cobweb({ className = '', size = 120 }) {
-  return (
-    <svg className={className} width={size} height={size} viewBox="0 0 120 120" fill="none">
-      <g stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" opacity="0.65">
-        <path d="M2 2 L60 60" />
-        <path d="M60 2 L60 60" />
-        <path d="M2 60 L60 60" />
-        <path d="M2 30 L30 30" />
-        <path d="M30 2 L30 30" />
-        <path d="M14 2 Q 22 22 2 14" />
-        <path d="M30 2 Q 46 14 30 30" />
-        <path d="M2 30 Q 18 46 30 30" />
-        <path d="M30 30 Q 50 50 60 60" />
-        <path d="M50 30 Q 56 46 30 50" />
-        <path d="M30 50 Q 46 56 60 30" />
-        <circle cx="60" cy="60" r="1.2" fill="currentColor" />
-        <line x1="60" y1="60" x2="74" y2="74" />
-        <line x1="68" y1="60" x2="74" y2="74" />
-        <line x1="60" y1="68" x2="74" y2="74" />
-      </g>
-    </svg>
-  );
-}
 
 export function OpenBook({ className = '', size = 180 }) {
   return (
@@ -83,18 +60,12 @@ export function EmptyLab({ className = '', size = 260 }) {
         <line x1="176" y1="88" x2="204" y2="88" />
         <path d="M176 130 Q 190 122, 204 130" opacity="0.4" />
 
-        {/* Cobweb in top corner */}
-        <g transform="translate(220,36)">
-          <path d="M0 0 L18 18" />
-          <path d="M10 0 L18 18" />
-          <path d="M0 10 L18 18" />
-          <path d="M3 3 Q 12 9 9 12" />
-          <path d="M9 3 Q 15 12 12 15" />
+        {/* Worksheet and infinity mark on the shelf */}
+        <g transform="translate(188,4)">
+          <rect x="0" y="0" width="20" height="28" rx="2" />
+          <path d="M5 8 H15 M5 14 H15 M5 20 H12" opacity="0.55" />
         </g>
-        {/* dust speckles */}
-        <circle cx="90" cy="148" r="0.9" fill="currentColor" />
-        <circle cx="160" cy="150" r="0.9" fill="currentColor" />
-        <circle cx="200" cy="156" r="0.9" fill="currentColor" />
+        <path d="M52 22 C52 15 61 15 68 22 C75 29 84 29 84 22 C84 15 75 15 68 22 C61 29 52 29 52 22 Z" />
       </g>
     </svg>
   );
@@ -109,13 +80,14 @@ export default function EmptyStateScene({ variant = 'lab', className = '' }) {
   return (
     <div className={`pointer-events-none select-none ${className}`} aria-hidden="true">
       <div className="relative w-full h-full text-slate-300 dark:text-slate-600">
-        {/* Top-left cobweb */}
-        <div className="absolute top-0 left-0 opacity-80">
-          <Cobweb size={110} />
+        <div className="absolute top-3 left-3 -rotate-6 opacity-50">
+          <InfinityMark size={170} color="currentColor" opacity={0.75} />
         </div>
-        {/* Top-right cobweb (mirrored) */}
-        <div className="absolute top-0 right-0 opacity-80" style={{ transform: 'scaleX(-1)' }}>
-          <Cobweb size={110} />
+        <div className="absolute top-4 right-8 rotate-6 opacity-45">
+          <Worksheet size={72} color="currentColor" />
+        </div>
+        <div className="absolute bottom-7 left-[12%] -rotate-12 opacity-40">
+          <Pen size={64} color="currentColor" />
         </div>
         {/* Centered scene */}
         <div className="absolute inset-x-0 bottom-6 flex items-end justify-center gap-10">

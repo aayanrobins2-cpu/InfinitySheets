@@ -59,18 +59,50 @@ export function TestTube({ className = '', color = '#10b981', size = 64 }) {
   );
 }
 
-export function Student({ className = '', color = '#2563eb', size = 64 }) {
+export function OpenBook({ className = '', color = '#2563eb', size = 64 }) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none">
       <g stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-        {/* graduation cap */}
-        <path d="M10 22 L32 14 L54 22 L32 30 Z" fill={color} fillOpacity="0.12" />
-        <path d="M50 24 L50 36" />
-        <path d="M50 36 a2 2 0 0 0 2 2 a2 2 0 0 0 -2 2 a2 2 0 0 0 -2 -2 a2 2 0 0 0 2 -2 Z" fill={color} />
-        <path d="M18 26 L18 36 C 22 42 42 42 46 36 L46 26" />
-        {/* face */}
-        <circle cx="32" cy="46" r="6" />
-        <path d="M22 60 c 0 -6 5 -10 10 -10 s 10 4 10 10" />
+        <path d="M5 14 C16 10 25 12 31 18 V53 C24 47 15 45 5 48 Z" fill={color} fillOpacity="0.08" />
+        <path d="M59 14 C48 10 39 12 33 18 V53 C40 47 49 45 59 48 Z" fill={color} fillOpacity="0.08" />
+        <path d="M32 18 V53" />
+        <path d="M11 22 C18 20 23 21 27 24 M11 29 C18 27 23 28 27 31 M37 24 C42 21 48 20 53 22 M37 31 C42 28 48 27 53 29" opacity="0.65" />
+      </g>
+    </svg>
+  );
+}
+
+export function Worksheet({ className = '', color = '#7c3aed', size = 64 }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none">
+      <g stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 6 H40 L52 18 V58 H14 Z" fill={color} fillOpacity="0.07" />
+        <path d="M40 6 V18 H52" />
+        <path d="M21 28 L24 31 L29 24 M34 28 H45 M21 40 L24 43 L29 36 M34 40 H45 M21 51 H45" />
+      </g>
+    </svg>
+  );
+}
+
+export function Flask({ className = '', color = '#10b981', size = 64 }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none">
+      <g stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M24 7 H40 M27 7 V25 L13 50 A5 5 0 0 0 18 57 H46 A5 5 0 0 0 51 50 L37 25 V7" />
+        <path d="M20 43 Q32 37 44 43 L50 52 A4 4 0 0 1 46 57 H18 A4 4 0 0 1 14 52 Z" fill={color} fillOpacity="0.12" />
+        <circle cx="27" cy="48" r="1.2" fill={color} /><circle cx="36" cy="45" r="1" fill={color} /><circle cx="40" cy="51" r="1.3" fill={color} />
+      </g>
+    </svg>
+  );
+}
+
+export function Calculator({ className = '', color = '#f59e0b', size = 64 }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 64 64" fill="none">
+      <g stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="13" y="5" width="38" height="54" rx="5" fill={color} fillOpacity="0.06" />
+        <rect x="20" y="12" width="24" height="10" rx="2" />
+        {[0, 1, 2].map((r) => [0, 1, 2].map((c) => <rect key={`${r}-${c}`} x={20 + c * 9} y={29 + r * 9} width="5" height="5" rx="1" />))}
       </g>
     </svg>
   );
@@ -106,28 +138,39 @@ export function InfinityMark({ className = '', color = '#2563eb', size = 64, opa
  * Sits inside a relatively-positioned parent.
  */
 export default function StudyDecor({ density = 'normal' }) {
-  const items = density === 'dense'
+  const items = density === 'app'
     ? [
-        { C: Pencil, top: '6%',  left: '4%',  rot: -12, size: 78, op: 0.35, color: '#2563eb' },
-        { C: TestTube, top: '12%', right: '6%', rot: 16, size: 72, op: 0.32, color: '#10b981' },
-        { C: Notebook, top: '46%', left: '3%', rot: -6, size: 86, op: 0.30, color: '#dc2626' },
-        { C: Pen, top: '60%', right: '5%', rot: 22, size: 82, op: 0.34, color: '#0ea5e9' },
-        { C: Student, bottom: '8%', left: '38%', rot: -4, size: 86, op: 0.28, color: '#2563eb' },
-        { C: Ruler, top: '32%', left: '46%', rot: 10, size: 78, op: 0.28, color: '#f59e0b' },
+        { C: OpenBook, top: '7%', left: '5%', rot: -8, size: 96, op: 0.32, color: '#2563eb' },
+        { C: Worksheet, top: '8%', right: '7%', rot: 7, size: 84, op: 0.28, color: '#7c3aed' },
+        { C: Pencil, top: '31%', left: '3%', rot: -18, size: 76, op: 0.25, color: '#0ea5e9' },
+        { C: Flask, top: '38%', right: '4%', rot: 9, size: 88, op: 0.28, color: '#10b981' },
+        { C: Calculator, bottom: '14%', left: '7%', rot: 6, size: 76, op: 0.24, color: '#f59e0b' },
+        { C: TestTube, bottom: '8%', right: '18%', rot: -9, size: 78, op: 0.26, color: '#10b981' },
+        { C: Pen, bottom: '4%', right: '4%', rot: 28, size: 74, op: 0.24, color: '#2563eb' },
+        { C: Ruler, top: '63%', left: '42%', rot: -5, size: 82, op: 0.20, color: '#f59e0b' },
+      ]
+    : density === 'dense'
+    ? [
+        { C: OpenBook, top: '6%', left: '4%', rot: -8, size: 86, op: 0.34, color: '#2563eb' },
+        { C: Flask, top: '11%', right: '6%', rot: 12, size: 78, op: 0.30, color: '#10b981' },
+        { C: Worksheet, top: '45%', left: '3%', rot: -6, size: 82, op: 0.28, color: '#7c3aed' },
+        { C: Pen, top: '60%', right: '5%', rot: 22, size: 82, op: 0.30, color: '#0ea5e9' },
+        { C: Calculator, bottom: '7%', left: '38%', rot: -4, size: 78, op: 0.25, color: '#f59e0b' },
+        { C: Ruler, top: '32%', left: '46%', rot: 10, size: 78, op: 0.24, color: '#f59e0b' },
       ]
     : [
-        { C: Pencil, top: '8%', left: '6%', rot: -14, size: 60, op: 0.30, color: '#2563eb' },
-        { C: TestTube, top: '64%', right: '6%', rot: 14, size: 60, op: 0.28, color: '#10b981' },
-        { C: Notebook, bottom: '8%', left: '8%', rot: -6, size: 62, op: 0.26, color: '#dc2626' },
-        { C: Pen, top: '14%', right: '12%', rot: 22, size: 60, op: 0.28, color: '#0ea5e9' },
+        { C: OpenBook, top: '8%', left: '6%', rot: -7, size: 68, op: 0.28, color: '#2563eb' },
+        { C: Flask, top: '64%', right: '6%', rot: 12, size: 66, op: 0.25, color: '#10b981' },
+        { C: Worksheet, bottom: '8%', left: '8%', rot: -5, size: 66, op: 0.24, color: '#7c3aed' },
+        { C: Pen, top: '14%', right: '12%', rot: 22, size: 62, op: 0.25, color: '#0ea5e9' },
       ];
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+    <div className={`${density === 'app' ? 'app-study-backdrop fixed' : 'absolute'} inset-0 pointer-events-none overflow-hidden`} aria-hidden="true">
       {/* infinity marks */}
-      <div className="absolute top-[5%] right-[28%] -rotate-12"><InfinityMark size={260} color="#2563eb" opacity={0.32} /></div>
-      <div className="absolute bottom-[12%] left-[18%] rotate-6"><InfinityMark size={220} color="#0ea5e9" opacity={0.28} /></div>
-      <div className="absolute top-[58%] right-[6%] rotate-12"><InfinityMark size={180} color="#dc2626" opacity={0.24} /></div>
+      <div className="absolute top-[4%] right-[28%] -rotate-6"><InfinityMark size={280} color="#2563eb" opacity={0.30} /></div>
+      <div className="absolute bottom-[10%] left-[20%] rotate-6"><InfinityMark size={230} color="#0ea5e9" opacity={0.25} /></div>
+      <div className="absolute top-[54%] right-[8%] rotate-12"><InfinityMark size={190} color="#7c3aed" opacity={0.20} /></div>
 
       {/* clipart */}
       {items.map(({ C, color, op, rot, size, ...pos }, i) => (
