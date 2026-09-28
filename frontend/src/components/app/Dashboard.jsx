@@ -89,7 +89,7 @@ const GREETING_TEMPLATES = [
   "{name}, the Force is strong with your flashcards.",
   "Achievement unlocked: {name} showed up.",
   "Level up, {name}. The next boss is a past paper.",
-  "It's not a bug, {name} — it's a learning opportunity.",
+  "Wake up, Mr. {name}.",
   "Ctrl + S your knowledge, {name}.",
   "Loading brilliance… 100%. Welcome back, {name}.",
   "Plot twist: {name} actually enjoys revising.",
