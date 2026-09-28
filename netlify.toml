@@ -1,9 +1,14 @@
 # Netlify: the React app lives in frontend/. Hash routing, so no redirects
 # are needed. CI=true keeps lint warnings as build errors, same as locally.
+# The site is linked to GitHub: every push to main builds and deploys, and
+# pull requests get Deploy Previews. REACT_APP_SUPABASE_URL / _ANON_KEY are
+# set as Netlify environment variables (public values).
 [build]
   base = "frontend"
   command = "corepack enable && corepack yarn install && CI=true corepack yarn build"
   publish = "build"
+  # /api/geo (the VPN check) lives here; relative to base.
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "22"
