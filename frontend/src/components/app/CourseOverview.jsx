@@ -5,7 +5,6 @@ import { EXAM_TRACKS, SUBJECT_INFO, TOPIC_SUMMARY } from '../../data/mock';
 import { topicsFor, subjectMark, subjectRoute } from '../../lib/subjects';
 import { ArrowLeft, BookOpen, GraduationCap, CalendarClock, ArrowRight } from 'lucide-react';
 import CreateWorksheetButton from './CreateWorksheetButton';
-import InfinityBackground from '../decor/InfinityBackground';
 
 function normalize(course) {
   if (!course) return null;
@@ -114,7 +113,6 @@ export default function CourseOverview({ courseId, go }) {
         {/* Hero */}
         <div className="relative overflow-hidden rounded-2xl text-white mb-5" data-testid="course-overview-hero">
           <div className="absolute inset-0 bg-blue-700" />
-          <InfinityBackground variant="hero" />
           <div className="absolute inset-0 grid-fade opacity-60" />
           <div className="relative p-7 lg:p-9">
             <div className="flex items-center gap-2 mb-3">

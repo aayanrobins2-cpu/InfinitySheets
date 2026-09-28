@@ -138,18 +138,7 @@ export function InfinityMark({ className = '', color = '#2563eb', size = 64, opa
  * Sits inside a relatively-positioned parent.
  */
 export default function StudyDecor({ density = 'normal' }) {
-  const items = density === 'app'
-    ? [
-        { C: OpenBook, top: '7%', left: '5%', rot: -8, size: 96, op: 0.32, color: '#2563eb' },
-        { C: Worksheet, top: '8%', right: '7%', rot: 7, size: 84, op: 0.28, color: '#7c3aed' },
-        { C: Pencil, top: '31%', left: '3%', rot: -18, size: 76, op: 0.25, color: '#0ea5e9' },
-        { C: Flask, top: '38%', right: '4%', rot: 9, size: 88, op: 0.28, color: '#10b981' },
-        { C: Calculator, bottom: '14%', left: '7%', rot: 6, size: 76, op: 0.24, color: '#f59e0b' },
-        { C: TestTube, bottom: '8%', right: '18%', rot: -9, size: 78, op: 0.26, color: '#10b981' },
-        { C: Pen, bottom: '4%', right: '4%', rot: 28, size: 74, op: 0.24, color: '#2563eb' },
-        { C: Ruler, top: '63%', left: '42%', rot: -5, size: 82, op: 0.20, color: '#f59e0b' },
-      ]
-    : density === 'dense'
+  const items = density === 'dense'
     ? [
         { C: OpenBook, top: '6%', left: '4%', rot: -8, size: 86, op: 0.34, color: '#2563eb' },
         { C: Flask, top: '11%', right: '6%', rot: 12, size: 78, op: 0.30, color: '#10b981' },
@@ -166,7 +155,7 @@ export default function StudyDecor({ density = 'normal' }) {
       ];
 
   return (
-    <div className={`${density === 'app' ? 'app-study-backdrop fixed' : 'absolute'} inset-0 pointer-events-none overflow-hidden`} aria-hidden="true">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
       {/* infinity marks */}
       <div className="absolute top-[4%] right-[28%] -rotate-6"><InfinityMark size={280} color="#2563eb" opacity={0.30} /></div>
       <div className="absolute bottom-[10%] left-[20%] rotate-6"><InfinityMark size={230} color="#0ea5e9" opacity={0.25} /></div>
