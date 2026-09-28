@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Award } from 'lucide-react';
+import { Award, ChevronLeft, ChevronRight } from 'lucide-react';
 import { computeMastery, masteryForSubject, subjectMasterySummary, LEVELS } from '../../lib/mastery';
-import { arrowTabs } from '../../lib/arrowTabs';
 
 // Topic mastery per subject: Not started → Novice → Learning → Solid →
 // Mastered, from accuracy × evidence × recency (lib/mastery.js).
@@ -12,27 +11,29 @@ export default function MasteryCard({ worksheets, subjects, topicsFor, go }) {
   const rows = useMemo(() => (active ? masteryForSubject(mastery, active, topicsFor(active)) : []), [mastery, active, topicsFor]);
   const summary = useMemo(() => subjectMasterySummary(rows), [rows]);
   if (!subjects.length) return null;
+  const step = (d) => setSubject(subjects[(subjects.indexOf(active) + d + subjects.length) % subjects.length]);
+  const onKey = (e) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); step(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+  };
 
   return (
-    <div className="rounded-2xl border border-[color:var(--color-border)] bg-white p-5" data-testid="mastery">
+    <div className="rounded-2xl border border-[color:var(--color-border)] bg-white p-5" data-testid="mastery" tabIndex={-1} onKeyDown={onKey}>
       <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-        <div>
+        <div className="min-w-0">
           <div className="eyebrow-muted mb-0.5 inline-flex items-center gap-1.5"><Award className="w-3.5 h-3.5" /> Topic mastery</div>
           <div className="text-[15px] font-semibold text-slate-900">{active} · {rows.some((r) => r.n) ? `${summary.avg}/100 average` : 'Not enough data yet'}</div>
           <div className="text-[12px] text-slate-500 mt-0.5">{LEVELS.slice(1).map((l) => `${summary.counts[l.key] || 0} ${l.label.toLowerCase()}`).join(' · ')}</div>
         </div>
+        {/* Back / forward through your subjects (the arrow keys work too). */}
+        {subjects.length > 1 && (
+          <div className="flex items-center gap-2 shrink-0" data-testid="mastery-subject">
+            <span className="text-[11.5px] text-slate-500 tabular-nums">{subjects.indexOf(active) + 1} / {subjects.length}</span>
+            <button type="button" onClick={() => step(-1)} aria-label="Previous subject" className="w-8 h-8 rounded-full border border-[color:var(--color-border)] text-slate-600 hover:bg-slate-50 hover:text-slate-900 flex items-center justify-center" data-testid="mastery-prev"><ChevronLeft className="w-4 h-4" /></button>
+            <button type="button" onClick={() => step(1)} aria-label="Next subject" className="w-8 h-8 rounded-full border border-[color:var(--color-border)] text-slate-600 hover:bg-slate-50 hover:text-slate-900 flex items-center justify-center" data-testid="mastery-next"><ChevronRight className="w-4 h-4" /></button>
+          </div>
+        )}
       </div>
-      {/* One tab per subject — click or use the arrow keys to switch. */}
-      {subjects.length > 1 && (
-        <div className="flex flex-wrap gap-1.5 mb-4" role="tablist" aria-label="Subject" onKeyDown={arrowTabs(subjects, active, setSubject)} data-testid="mastery-subject">
-          {subjects.map((s) => (
-            <button key={s} type="button" role="tab" aria-selected={s === active} tabIndex={s === active ? 0 : -1} onClick={() => setSubject(s)}
-              className={`px-3 py-1.5 rounded-full text-[12.5px] font-medium border transition-colors ${s === active ? 'bg-blue-600 border-blue-600 text-white' : 'border-[color:var(--color-border)] text-slate-600 hover:bg-slate-50'}`}>
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
       <div className="space-y-1.5">
         {rows.map((r) => (
           <button key={r.topic} type="button" onClick={() => go(`topic?subject=${encodeURIComponent(active)}&topic=${encodeURIComponent(r.topic)}`)} className="w-full text-left flex items-center gap-3 group" title={r.n ? `${r.n} answered · ${r.accuracy}% overall · ${r.recentAccuracy}% recently` : 'Not practised yet'}>
