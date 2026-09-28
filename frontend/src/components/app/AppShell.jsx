@@ -36,6 +36,7 @@ import { PlusPreview } from './PlusLock';
 import { pageview } from '../../lib/analytics';
 import { maybeRemind } from '../../lib/reminders';
 import { dueReviews } from '../../lib/spacedRepetition';
+import StudyDecor from '../decor/StudyDecor';
 
 const BASE_NAV = [
   { key: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard },
@@ -223,8 +224,8 @@ export default function AppShell({ hash }) {
       {/* Ad blocker / VPN wall: only inside the app, where the ads are — never
           on the landing, privacy or public resources pages. */}
       <AdblockNotice />
-      {/* Slow ambient colour the glass chrome refracts. */}
-      <div className="app-ambient" aria-hidden="true" />
+      {/* Academic line art gives the app's glass surfaces something meaningful to reveal. */}
+      <StudyDecor density="app" />
       {/* Mobile scrim — dim the app when the drawer is open so the page
           content becomes clearly "behind" the sidebar. */}
       {isMobile && sidebarOpen && (

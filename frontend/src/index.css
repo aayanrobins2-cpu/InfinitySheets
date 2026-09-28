@@ -249,6 +249,10 @@ html.dark .grid-fade {
 .infinity-bg .inf-2 { top: 30%; right: -80px; transform: rotate(18deg); }
 .infinity-bg .inf-3 { bottom: -60px; left: 25%; transform: rotate(-4deg); }
 .infinity-bg .inf-4 { top: 65%; left: -40px; transform: rotate(6deg); }
+.infinity-bg .study-book { left: 8%; bottom: 7%; transform: rotate(-7deg); opacity: 0.24; }
+.infinity-bg .study-sheet { right: 7%; top: 10%; transform: rotate(8deg); opacity: 0.23; }
+.infinity-bg .study-flask { right: 28%; bottom: 4%; transform: rotate(10deg); opacity: 0.2; }
+.infinity-bg .study-pen { left: 44%; top: 2%; transform: rotate(24deg); opacity: 0.18; }
 
 /* ===== Remove all gradients & glow effects globally ===== */
 [class*="bg-gradient-to"] {
@@ -884,7 +888,11 @@ html.dark {
   --glass-hi: rgba(255, 255, 255, 0.05);
 }
 
-/* Ambient background the glass can refract: soft colour fields. */
+/* Quiet academic background for the authenticated app. */
+.app-study-backdrop { z-index: 0; opacity: 0.34; }
+html.dark .app-study-backdrop { opacity: 0.2; }
+
+/* Ambient background the glass can refract. */
 .section-bg {
   background-image:
     radial-gradient(1100px 600px at -10% -10%, rgba(37, 99, 235, 0.05), transparent 60%),
@@ -1025,25 +1033,6 @@ html.no-glass .tile-violet, html.no-glass .tile-royal, html.no-glass .tile-emera
 @media (prefers-reduced-motion: reduce) { .brand-plus-text { animation: none; } }
 
 
-/* =====================================================================
-   Liquid glass chrome — the top bar and the sidebar.
-   Real glass, not just transparency: the backdrop is blurred AND its colour
-   boosted (saturate), a diagonal sheen and a bright top/left edge catch the
-   light, a faint frosted grain sits in the surface, and slow ambient colour
-   drifts behind the app so there is something to refract. The Settings
-   slider (--chrome-*) turns all of it up or down; "off" makes it solid.
-   ===================================================================== */
-.app-ambient { position: fixed; inset: -10%; z-index: 0; pointer-events: none; opacity: var(--ambient, 0.7); }
-.app-ambient::before, .app-ambient::after {
-  content: ''; position: absolute; border-radius: 9999px; filter: blur(70px);
-  animation: ambient-drift 26s ease-in-out infinite alternate;
-}
-.app-ambient::before { width: 46vw; height: 46vw; left: -6vw; top: -8vw; background: radial-gradient(circle, rgba(59, 130, 246, 0.30), transparent 65%); }
-.app-ambient::after { width: 40vw; height: 40vw; right: -4vw; bottom: -6vw; background: radial-gradient(circle, rgba(14, 165, 233, 0.24), transparent 65%); animation-duration: 32s; animation-direction: alternate-reverse; }
-html.dark .app-ambient::before { background: radial-gradient(circle, rgba(59, 130, 246, 0.22), transparent 65%); }
-html.dark .app-ambient::after { background: radial-gradient(circle, rgba(14, 165, 233, 0.18), transparent 65%); }
-@keyframes ambient-drift { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(6vw, 5vh, 0) scale(1.15); } }
-
 /* Same glass as the landing page's top bar (.liquid-glass): frosted,
    see-through, a hairline border and a soft shadow with a faint top light.
    The Liquid glass slider sets how clear and how blurred it is. */
@@ -1067,12 +1056,11 @@ html.dark aside[data-glass-sidebar] { border-right-color: rgba(255, 255, 255, 0.
 html.dark header[data-testid="top-header"] {
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
-html.no-glass .app-ambient { display: none; }
+html.no-glass .app-study-backdrop { display: none; }
 html.no-glass aside[data-glass-sidebar], html.no-glass header[data-testid="top-header"] {
   background: var(--color-card) !important; -webkit-backdrop-filter: none; backdrop-filter: none;
 }
 html.no-glass header[data-testid="top-header"] { box-shadow: none !important; }
-@media (prefers-reduced-motion: reduce) { .app-ambient::before, .app-ambient::after { animation: none; } }
 
 /* InfinitySheets+ wordmark: the + sheen, in gold, across the whole name. */
 .plus-gold {
