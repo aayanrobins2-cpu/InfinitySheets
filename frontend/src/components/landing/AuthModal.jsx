@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { isOffensiveName, OFFENSIVE_NAME_MESSAGE } from '../../lib/nameFilter';
-import { X } from 'lucide-react';
+import { X, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
 import { EXAM_TRACKS } from '../../data/mock';
@@ -17,6 +17,13 @@ export default function AuthModal({ open, initialTab = 'signup', onClose }) {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', track: 'AP', password: '' });
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [emailSentTo, setEmailSentTo] = useState(null); // password OK, waiting for the emailed link
+  const [resendIn, setResendIn] = useState(0);
+  useEffect(() => {
+    if (resendIn <= 0) return undefined;
+    const t = setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
 
   useEffect(() => { if (open) setTab(initialTab); }, [open, initialTab]);
 
@@ -62,7 +69,14 @@ export default function AuthModal({ open, initialTab = 'signup', onClose }) {
     }
     setBusy(true);
     try {
-      await apiLogin({ email: loginForm.email, password: loginForm.password });
+      const res = await apiLogin({ email: loginForm.email, password: loginForm.password });
+      if (res?.emailSent) {
+        // Step 2: they finish signing in from the link in their inbox.
+        setEmailSentTo(res.email);
+        setResendIn(60);
+        setBusy(false);
+        return;
+      }
       toast.success('Welcome back!');
       goDashboard();
     } catch (err) {
@@ -119,6 +133,17 @@ export default function AuthModal({ open, initialTab = 'signup', onClose }) {
             <Field label="Password (min 6 characters)"><input data-testid="signup-password" type="password" className="input-base" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></Field>
             <button type="submit" data-testid="signup-submit" disabled={busy} className="btn-violet mt-2 py-3 rounded-lg text-[14px] font-medium disabled:opacity-60">{busy ? 'Creating\u2026' : 'Create account'}</button>
           </form>
+        ) : emailSentTo ? (
+          <div className="text-center py-2" data-testid="login-check-email">
+            <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto mb-3"><Mail className="w-6 h-6" /></div>
+            <div className="text-[16px] font-semibold text-slate-900">Check your email</div>
+            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">Your password was right. To confirm it's you, we've sent a sign-in link to <b className="text-slate-700">{emailSentTo}</b>. Open it on this device to finish signing in.</p>
+            <p className="text-[12px] text-slate-400 mt-2">Not there? Check your spam folder.</p>
+            <button type="button" disabled={busy || resendIn > 0} onClick={handleLogin} className="btn-outline-dark mt-4 w-full py-2.5 rounded-lg text-[13px] font-medium disabled:opacity-50" data-testid="login-resend">
+              {resendIn > 0 ? `Resend the email in ${resendIn}s` : 'Resend the email'}
+            </button>
+            <button type="button" onClick={() => { setEmailSentTo(null); setLoginForm({ ...loginForm, password: '' }); }} className="mt-2 text-[12.5px] text-slate-500 hover:text-slate-800">Use a different account</button>
+          </div>
         ) : (
           <form onSubmit={handleLogin} className="flex flex-col gap-3">
             <Field label="Email"><input data-testid="login-email" type="email" className="input-base" value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} /></Field>

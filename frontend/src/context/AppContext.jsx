@@ -13,6 +13,9 @@ import { markCard } from '../lib/flashcards';
 import { initAnalytics, identify, track } from '../lib/analytics';
 import { toast } from 'sonner';
 
+// Password sign-in is confirmed by an emailed link (set REACT_APP_EMAIL_CONFIRM_SIGNIN=off to disable).
+const EMAIL_CONFIRM_SIGNIN = process.env.REACT_APP_EMAIL_CONFIRM_SIGNIN !== 'off';
+
 // Study data now lives in Supabase (Postgres + RLS) when the user is signed in
 // with a real account.
 const STORAGE_KEY = 'infinitysheets_state_v1';
@@ -104,6 +107,8 @@ export function AppProvider({ children }) {
   useEffect(() => { stateRef.current = state; }, [state]);
 
   const bootstrappedRef = useRef(null);
+
+  const emailStepRef = useRef(false); // true while a password sign-in waits for its email link
   // Admin-only demo/preview: a local sample account. While it's active the
   // Supabase auth listener and localStorage cache are frozen so the admin's
   // real account is never touched, and nothing syncs (a demo user has no id,
@@ -238,6 +243,9 @@ export function AppProvider({ children }) {
         return;
       }
       if (session && session.user) {
+        // Mid password sign-in: this session is about to be swapped for the
+        // emailed link, so don't open the app with it.
+        if (emailStepRef.current) return;
         if (bootstrappedRef.current === session.user.id) { setLoaded(true); return; }
         // Covers Google OAuth and restored sessions, which never go through
         // apiLogin: a second student account on this device is signed out.
@@ -425,10 +433,34 @@ export function AppProvider({ children }) {
     return { id: authUser.id, email: authUser.email, name };
   }, [bootstrapCore]);
 
+  // Sign-in is two steps: the password is checked, then an email link
+  // confirms it's really the student. The password session is dropped at once
+  // (this device only) and a one-time sign-in link is emailed; opening it
+  // signs them in. Google sign-in skips this (Google has verified them).
   const apiLogin = useCallback(async ({ email, password }) => {
     const cleanEmail = (email || '').trim().toLowerCase();
-    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-    if (error) throw error;
+    emailStepRef.current = true;
+    let data;
+    try {
+      const res = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+      if (res.error) throw res.error;
+      data = res.data;
+      if (EMAIL_CONFIRM_SIGNIN) {
+        await supabase.auth.signOut({ scope: 'local' });
+        const { error: otpError } = await supabase.auth.signInWithOtp({
+          email: cleanEmail,
+          options: { shouldCreateUser: false, emailRedirectTo: window.location.origin },
+        });
+        if (otpError) {
+          throw new Error(/rate|seconds|too many/i.test(otpError.message || '')
+            ? 'Too many sign-in emails were sent just now. Wait a minute and try again.'
+            : (otpError.message || 'Could not send the sign-in email.'));
+        }
+        return { emailSent: true, email: cleanEmail };
+      }
+    } finally {
+      emailStepRef.current = false;
+    }
     const authUser = data.user;
     const gate = await guardDevice(authUser);
     if (gate) throw await denyAccess(authUser, gate);
