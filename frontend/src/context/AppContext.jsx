@@ -689,7 +689,7 @@ export function AppProvider({ children }) {
     const worksheets = [];
     const mistakes = [];
     let totalQuestionsToday = 0;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = dayKey(new Date());
 
     subs.forEach((subject) => {
       const topics = topicsFor(primaryTrack(stateRef.current.courses, stateRef.current.user?.examTrack), subject);
@@ -719,7 +719,7 @@ export function AppProvider({ children }) {
           const q = questions[qi];
           mistakes.push({ id: `${sheetId}-${qi}`, worksheetId: sheetId, subject, topic: q._topic, question: q.q, options: q.options, correct: q.a, given: answers[qi], answerType: 'Multiple choice', typedAnswer: null, examKeywords: null, date: sheet.date });
         }
-        if (dt.toISOString().slice(0, 10) === today) totalQuestionsToday += total;
+        if (dayKey(dt) === today) totalQuestionsToday += total;
       }
     });
 

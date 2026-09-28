@@ -3,8 +3,9 @@ import { confirmDelete } from '../../lib/confirm';
 import { Plus, X, ChevronDown, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useApp } from '../../context/AppContext';
+import { isoDay } from '../../lib/dates';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => isoDay(new Date());
 const daysFrom = (iso) => (iso ? Math.max(0, Math.ceil((new Date(iso + 'T00:00:00').getTime() - Date.now()) / 86400000)) : null);
 const nearest = (exams) => exams.map((e) => e.date).filter(Boolean).sort()[0] || undefined;
 

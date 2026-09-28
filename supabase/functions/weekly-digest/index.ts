@@ -19,6 +19,11 @@ type Sheet = { user_id: string; subject: string; topic: string; total: number; c
 
 function env(name: string) { return Deno.env.get(name) || ""; }
 
+// Names, subjects and topics are typed by students; never let them become markup.
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+}
+
 // Constant-time comparison of two secrets (compares SHA-256 digests).
 async function sameSecret(a: string, b: string) {
   const enc = new TextEncoder();
@@ -61,7 +66,7 @@ function digestFor(name: string, sheets: Sheet[], streak: number, appUrl: string
       `Your streak is at ${streak}. One 10-minute sheet today gets it moving again.`,
     ];
   const text = `${lines.join("\n")}\n\nOpen the app: ${appUrl}/#dashboard\n\nYou get this because the weekly digest is on in Settings → Reminders & digest. Turn it off there any time.`;
-  const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.55;color:#0f172a;max-width:560px"><h2 style="margin:0 0 12px;font-size:20px">Your week on InfinitySheets</h2>${lines.map((l) => (l ? `<p style="margin:0 0 6px">${l.replace(/^• /, "&bull; ")}</p>` : `<div style="height:8px"></div>`)).join("")}<p style="margin:16px 0"><a href="${appUrl}/#dashboard" style="background:#7c3aed;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">Open the app</a></p><p style="color:#64748b;font-size:12px">You get this because the weekly digest is on in Settings → Reminders &amp; digest. Turn it off there any time.</p></div>`;
+  const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.55;color:#0f172a;max-width:560px"><h2 style="margin:0 0 12px;font-size:20px">Your week on InfinitySheets</h2>${lines.map((l) => (l ? `<p style="margin:0 0 6px">${escapeHtml(l).replace(/^• /, "&bull; ")}</p>` : `<div style="height:8px"></div>`)).join("")}<p style="margin:16px 0"><a href="${appUrl}/#dashboard" style="background:#7c3aed;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">Open the app</a></p><p style="color:#64748b;font-size:12px">You get this because the weekly digest is on in Settings → Reminders &amp; digest. Turn it off there any time.</p></div>`;
   return { subject: sheets.length ? `Your week: ${total} questions at ${acc}%` : "Your streak needs you this week", text, html };
 }
 

@@ -10,6 +10,10 @@
 // gain or lose anyone a day.
 
 export function dayKey(d) {
+  // A bare 'yyyy-mm-dd' (how lastStudyDate is stored) is already a local day
+  // key. new Date('yyyy-mm-dd') would read it as UTC midnight, which is the
+  // previous day anywhere west of UTC — that reset streaks on a second sheet.
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
   const x = d instanceof Date ? d : new Date(d);
   if (Number.isNaN(x.getTime())) return null;
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;

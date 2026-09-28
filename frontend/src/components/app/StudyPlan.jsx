@@ -46,7 +46,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
         plan, instruction, history: chat.slice(-6),
         board: primaryTrack(state.courses, state.user?.examTrack),
         boards: subjectBoards(state.courses, primaryTrack(state.courses, state.user?.examTrack)),
-        exams: allExams(), subjects, startDate: new Date().toISOString().slice(0, 10),
+        exams: allExams(), subjects, startDate: isoDay(new Date()),
       });
       setStudyPlan({ summary: p.summary, days: p.days, createdAt: plan.createdAt || new Date().toISOString(), tweakedAt: new Date().toISOString() });
       setChat((c) => [...c, { role: 'assistant', content: p.reply }]);
@@ -70,7 +70,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
         weeklyGoal: state.settings?.weeklyGoal,
         weakTopics: weak,
         subjects,
-        startDate: new Date().toISOString().slice(0, 10),
+        startDate: isoDay(new Date()),
       });
       setStudyPlan({ ...p, createdAt: new Date().toISOString() });
       setChat([]);

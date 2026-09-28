@@ -1,7 +1,7 @@
 import { openPlusBanner, PlusName } from './PlusUpgradeBanner';
 import { setWorksheetJob } from '../../lib/worksheetJob';
 import { confirmDelete } from '../../lib/confirm';
-import { fmtDate } from '../../lib/dates';
+import { fmtDate, isoDay } from '../../lib/dates';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { downloadNoteFile } from '../../lib/dataStore';
 import { useApp } from '../../context/AppContext';
@@ -418,7 +418,7 @@ export function downloadWorksheetPDF({ questions, subject, topics, difficulty, a
   });
 
   const safeName = (subject || 'worksheet').replace(/\W+/g, '_').slice(0, 40).toLowerCase();
-  const stamp = new Date().toISOString().slice(0, 10);
+  const stamp = isoDay(new Date());
   doc.save(`infinitysheets_${safeName}_${stamp}.pdf`);
 }
 
@@ -1041,7 +1041,7 @@ export default function Worksheets({ go, active = true }) {
       addPendingSubmission({
         subject, topics, answerType, difficulty, duration,
         questions: qs, board: boardForSubject, ibLevel: ibLevelForSubject,
-        dueDate: due.toISOString().slice(0, 10),
+        dueDate: isoDay(due),
       });
     } catch (err) {
       // eslint-disable-next-line no-console

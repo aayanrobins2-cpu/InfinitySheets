@@ -2,6 +2,7 @@ import { subjectMark } from '../../lib/subjects';
 import SchoolCodeCard from './SchoolCodeCard';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { isoDay } from '../../lib/dates';
 import { EXAM_TRACKS, SUBJECTS, SUBJECT_INFO } from '../../data/mock';
 import { ArrowRight, ArrowLeft, Calendar, CheckCircle2, GraduationCap, BookOpen, X, Sparkles, CalendarClock, Target, Search } from 'lucide-react';
 import StudyDecor from '../decor/StudyDecor';
@@ -31,7 +32,7 @@ const FREQUENCY_OPTIONS = [
 const WEEKLY_GOALS = [25, 50, 75, 100, 150];
 
 function inDays(d) {
-  const dt = new Date(); dt.setDate(dt.getDate() + d); return dt.toISOString().slice(0, 10);
+  const dt = new Date(); dt.setDate(dt.getDate() + d); return isoDay(dt);
 }
 
 export default function CourseWizard({ mode = 'onboarding', onClose }) {
@@ -364,7 +365,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
                           <div className="text-[14px] font-semibold text-slate-900">{s}</div>
                         </div>
                       </div>
-                      <input type="date" min={new Date().toISOString().slice(0, 10)} className="input-base" value={v} onChange={(e) => setDates((d) => ({ ...d, [s]: e.target.value }))} />
+                      <input type="date" min={isoDay(new Date())} className="input-base" value={v} onChange={(e) => setDates((d) => ({ ...d, [s]: e.target.value }))} />
                       <label className="rounded-md border border-violet-200/60 bg-violet-50 px-3 py-2 min-w-[120px] flex flex-col">
                         <span className="text-[9.5px] tracking-wider uppercase font-semibold text-violet-700">Or in … days</span>
                         <input type="number" min="0" max="3650" inputMode="numeric" placeholder="30" aria-label={`Days until the ${s} exam`} className="bg-transparent outline-none text-[16px] font-semibold text-slate-900 tabular-nums w-full" value={days ?? ''} onChange={(e) => { const n = parseInt(e.target.value, 10); setDates((d) => ({ ...d, [s]: Number.isNaN(n) ? '' : inDays(Math.max(0, Math.min(3650, n))) })); }} data-testid={`days-${s.replace(/\s+/g, '-')}`} />
