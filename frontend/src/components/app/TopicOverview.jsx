@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink, Sparkles, RefreshCw, Loader2, FileText, Link2,
 import { usePlus } from './PlusLock';
 import { useApp } from '../../context/AppContext';
 import { syllabusLink } from '../../data/syllabus';
-import { subjectBoards, boardName, primaryTrack } from '../../lib/subjects';
+import { subjectBoards, boardName, primaryTrack, sheetBelongs, subjectEntries, subjectKey, subjectRoute } from '../../lib/subjects';
 import { topicOverview, isAiEnabled } from '../../lib/ai';
 import { topicLinks } from '../../data/topicLinks';
 import CreateWorksheetButton from './CreateWorksheetButton';
@@ -16,19 +16,21 @@ import AiChat, { MarkdownLite } from './ai/AiChat';
  * questions tagged with the topic, and the student's own attempts.
  * Route: #topic?subject=<subject>&topic=<topic>
  */
-export default function TopicOverview({ subject, topic, go }) {
+export default function TopicOverview({ subject, topic, boardParam, levelParam, go }) {
   const { isPlus: plus, requirePlus, usesLeft } = usePlus();
   const [askOpen, setAskOpen] = useState(false); // a free user spent a free doubt session
   const { state } = useApp();
   const examTrack = primaryTrack(state.courses, state.user?.examTrack);
   const boards = useMemo(() => subjectBoards(state.courses, examTrack), [state.courses, examTrack]);
-  const board = boards[subject]?.board || examTrack;
-  const ibLevel = boards[subject]?.ibLevel;
+  const board = boardParam || boards[subject]?.board || examTrack;
+  const ibLevel = levelParam || (boardParam ? undefined : boards[subject]?.ibLevel);
+  const entry = useMemo(() => ({ key: subjectKey(subject, board, ibLevel), subject, board, ibLevel }), [subject, board, ibLevel]);
+  const entries = useMemo(() => subjectEntries(state.courses, examTrack), [state.courses, examTrack]);
   // The official syllabus link goes to the AI so the overview can cite it.
   const syllabus = useMemo(() => syllabusLink(board, subject), [board, subject]);
   const context = useMemo(() => ({ board, subject, topic, ibLevel, syllabusUrl: syllabus.url, syllabusTitle: syllabus.title }), [board, subject, topic, ibLevel, syllabus]);
 
-  const attempts = useMemo(() => (state.worksheets || []).filter((w) => w.subject === subject && w.topic === topic), [state.worksheets, subject, topic]);
+  const attempts = useMemo(() => (state.worksheets || []).filter((w) => w.topic === topic && sheetBelongs(w, entry, entries)), [state.worksheets, topic, entry, entries]);
   const acc = useMemo(() => {
     const total = attempts.reduce((s, w) => s + (w.total || 0), 0);
     const correct = attempts.reduce((s, w) => s + (w.correct || 0), 0);
@@ -44,10 +46,11 @@ export default function TopicOverview({ subject, topic, go }) {
 
   const launch = () => {
     window.sessionStorage.setItem('preselect_subject', subject);
+    window.sessionStorage.setItem('preselect_subject_key', entry.key);
     window.sessionStorage.setItem('preselect_topic', topic);
     go('worksheets');
   };
-  const back = () => { window.location.hash = `#study?subject=${encodeURIComponent(subject)}`; };
+  const back = () => { window.location.hash = subjectRoute(entry); };
 
   if (!subject || !topic) {
     return (

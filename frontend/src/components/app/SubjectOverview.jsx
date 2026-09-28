@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { SUBJECT_INFO } from '../../data/mock';
 import { useApp } from '../../context/AppContext';
-import { subjectBoards, boardName, primaryTrack, resolvedTopics, subjectMark } from '../../lib/subjects';
+import { subjectBoards, boardName, primaryTrack, resolvedTopics, sheetBelongs, subjectEntries, subjectKey, subjectMark, subjectRoute } from '../../lib/subjects';
 import SubjectHero from './subject/SubjectHero';
 import TopicsList from './subject/TopicsList';
 import SubjectSidePanels from './subject/SubjectSidePanels';
@@ -17,10 +17,10 @@ const FALLBACK_INFO = {
   tone: 'primary',
 };
 
-function useSubjectStats(worksheets, subject) {
+function useSubjectStats(worksheets, entry, entries) {
   const stats = {};
   (worksheets || []).forEach((w) => {
-    if (w.subject !== subject) return;
+    if (!sheetBelongs(w, entry, entries)) return;
     if (!stats[w.topic]) stats[w.topic] = { correct: 0, total: 0 };
     stats[w.topic].correct += w.correct;
     stats[w.topic].total += w.total;
@@ -28,25 +28,30 @@ function useSubjectStats(worksheets, subject) {
   const totalAnswered = Object.values(stats).reduce((s, x) => s + x.total, 0);
   const totalCorrect = Object.values(stats).reduce((s, x) => s + x.correct, 0);
   const subjectAccuracy = totalAnswered ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
-  const worksheetCount = (worksheets || []).filter((w) => w.subject === subject).length;
+  const worksheetCount = (worksheets || []).filter((w) => sheetBelongs(w, entry, entries)).length;
   return { stats, subjectAccuracy, totalAnswered, worksheetCount };
 }
 
-export default function SubjectOverview({ subject, go, onBack }) {
+export default function SubjectOverview({ subject, board: boardParam, ibLevel: levelParam, go, onBack }) {
   const { state } = useApp();
   // This subject's own board, not the account-wide exam track — a student
   // taking CBSE Maths and IB Economics must see the right one on each page.
   const examTrack = primaryTrack(state.courses, state.user?.examTrack);
   const boards = useMemo(() => subjectBoards(state.courses, examTrack), [state.courses, examTrack]);
-  const board = boards[subject]?.board || examTrack;
-  const ibLevel = boards[subject]?.ibLevel;
+  const board = boardParam || boards[subject]?.board || examTrack;
+  const ibLevel = levelParam || (boardParam ? undefined : boards[subject]?.ibLevel);
+  const entries = useMemo(() => subjectEntries(state.courses, examTrack), [state.courses, examTrack]);
+  const entry = useMemo(() => entries.find((candidate) => candidate.subject === subject && candidate.board === board && (!ibLevel || candidate.ibLevel === ibLevel)) || {
+    key: subjectKey(subject, board, ibLevel), subject, board, ibLevel,
+  }, [entries, subject, board, ibLevel]);
   const info = SUBJECT_INFO[subject] || { ...FALLBACK_INFO, emoji: subjectMark(subject) };
   const topics = resolvedTopics(state.syllabusTopics, board, subject);
-  const { stats, subjectAccuracy, totalAnswered, worksheetCount } = useSubjectStats(state.worksheets, subject);
+  const { stats, subjectAccuracy, totalAnswered, worksheetCount } = useSubjectStats(state.worksheets, entry, entries);
 
   const launch = (topic) => {
     if (topic) window.sessionStorage.setItem('preselect_topic', topic);
     window.sessionStorage.setItem('preselect_subject', subject);
+    window.sessionStorage.setItem('preselect_subject_key', entry.key);
     go('worksheets');
   };
 
@@ -80,7 +85,7 @@ export default function SubjectOverview({ subject, go, onBack }) {
           topics={topics}
           stats={stats}
           onLaunch={launch}
-          onOpen={(topic) => { window.location.hash = `#topic?subject=${encodeURIComponent(subject)}&topic=${encodeURIComponent(topic)}`; }}
+          onOpen={(topic) => { window.location.hash = subjectRoute(entry, 'topic', { topic }); }}
         />
         <div className="flex flex-col gap-4">
           <SubjectSidePanels subject={subject} board={board} ibLevel={ibLevel} />

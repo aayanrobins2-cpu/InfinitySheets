@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, CornerDownLeft } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { enrolledSubjects, boardFor, resolvedTopics } from '../../lib/subjects';
+import { boardName, enrolledSubjectEntries, resolvedTopics, subjectRoute } from '../../lib/subjects';
 import { track } from '../../lib/analytics';
 
 // Ctrl/⌘ K: jump anywhere — pages, subjects, topics (opens the topic
@@ -11,7 +11,7 @@ export default function CommandPalette({ nav = [], go, open, onClose }) {
   const [q, setQ] = useState('');
   const [idx, setIdx] = useState(0);
   const inputRef = useRef(null);
-  const subjects = useMemo(() => enrolledSubjects(state.courses, state.user?.subjects, state.user?.examTrack), [state.courses, state.user?.subjects, state.user?.examTrack]);
+  const subjects = useMemo(() => enrolledSubjectEntries(state.courses, state.user?.subjects, state.user?.examTrack), [state.courses, state.user?.subjects, state.user?.examTrack]);
 
   const items = useMemo(() => {
     const list = [];
@@ -19,15 +19,16 @@ export default function CommandPalette({ nav = [], go, open, onClose }) {
     list.push({ kind: 'Page', label: 'Create a worksheet', run: () => go('worksheets') });
     list.push({ kind: 'Page', label: 'Mistake history', run: () => go('mistakes') });
     list.push({ kind: 'Action', label: `Switch to ${state.theme === 'dark' ? 'light' : 'dark'} mode`, run: toggleTheme });
-    subjects.forEach((s) => {
-      list.push({ kind: 'Subject', label: s, hint: 'Start studying', run: () => go(`study?subject=${encodeURIComponent(s)}`) });
-      resolvedTopics(state.syllabusTopics, boardFor(s, state.courses, state.user?.examTrack), s).forEach((t) => {
-        list.push({ kind: 'Topic', label: t, hint: s, run: () => go(`topic?subject=${encodeURIComponent(s)}&topic=${encodeURIComponent(t)}`) });
-        list.push({ kind: 'Practise', label: `Worksheet on ${t}`, hint: s, run: () => { try { sessionStorage.setItem('preselect_subject', s); sessionStorage.setItem('preselect_topic', t); } catch (e) { /* ignore */ } go('worksheets'); } });
+    subjects.forEach((entry) => {
+      const hint = `${entry.subject} · ${boardName(entry.board)}${entry.ibLevel ? ` ${entry.ibLevel}` : ''}`;
+      list.push({ kind: 'Subject', label: entry.subject, hint: boardName(entry.board), run: () => { window.location.hash = subjectRoute(entry); } });
+      resolvedTopics(state.syllabusTopics, entry.board, entry.subject).forEach((t) => {
+        list.push({ kind: 'Topic', label: t, hint, run: () => { window.location.hash = subjectRoute(entry, 'topic', { topic: t }); } });
+        list.push({ kind: 'Practise', label: `Worksheet on ${t}`, hint, run: () => { try { sessionStorage.setItem('preselect_subject', entry.subject); sessionStorage.setItem('preselect_subject_key', entry.key); sessionStorage.setItem('preselect_topic', t); } catch (e) { /* ignore */ } go('worksheets'); } });
       });
     });
     return list;
-  }, [nav, subjects, state.theme, state.courses, state.syllabusTopics, state.user?.examTrack, go, toggleTheme]);
+  }, [nav, subjects, state.theme, state.syllabusTopics, go, toggleTheme]);
 
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();

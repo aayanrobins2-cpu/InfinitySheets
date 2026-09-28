@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SUBJECT_INFO } from '../../data/mock';
-import { enrolledSubjects, subjectBoards, boardName, questionsForSubject, primaryTrack, subjectMark } from '../../lib/subjects';
+import { enrolledSubjectEntries, boardName, questionsForSubject, primaryTrack, subjectMark } from '../../lib/subjects';
 import { BookOpen, Eye, EyeOff, Sparkles, Library, ChevronRight, Search, ArrowLeft, ArrowRight, ExternalLink, FileText } from 'lucide-react';
 import { syllabusLink } from '../../data/syllabus';
 import { textbook } from '../../lib/notation';
@@ -14,23 +14,22 @@ import CreateWorksheetButton from './CreateWorksheetButton';
 // are grouped by the student's subjects, honouring each subject's board so a
 // CBSE Mathematics course shows CBSE Mathematics past papers.
 
-export default function QuestionBank({ go, subjectParam }) {
+export default function QuestionBank({ go, subjectParam, boardParam, levelParam }) {
   const { state } = useApp();
   const track = primaryTrack(state.courses, state.user?.examTrack);
 
   // Exact same subject list as "My subjects" (Dashboard / Start Studying).
   const chosenSubjects = useMemo(
-    () => enrolledSubjects(state.courses, state.user?.subjects, track),
+    () => enrolledSubjectEntries(state.courses, state.user?.subjects, track),
     [state.courses, state.user?.subjects, track],
   );
-  const boards = useMemo(() => subjectBoards(state.courses, track), [state.courses, track]);
 
   // Past-paper questions grouped by subject, using the same selector as the
   // worksheet builder so the two lists can never drift apart.
   const questionsBySubject = useMemo(() => {
     const out = {};
-    chosenSubjects.forEach((subject) => {
-      out[subject] = questionsForSubject(state.pastPapers, subject, state.courses, track).map((p) => ({
+    chosenSubjects.forEach((entry) => {
+      out[entry.key] = questionsForSubject(state.pastPapers, entry.subject, state.courses, track, entry).map((p) => ({
         id: p.id,
         q: textbook(p.q),
         options: Array.isArray(p.options) ? p.options.map(textbook) : [],
@@ -45,9 +44,10 @@ export default function QuestionBank({ go, subjectParam }) {
   }, [state.pastPapers, state.courses, chosenSubjects, track]);
 
   const decodedParam = subjectParam ? decodeURIComponent(subjectParam) : null;
-  const startInBrowse = decodedParam && chosenSubjects.includes(decodedParam);
+  const routedEntry = decodedParam ? chosenSubjects.find((entry) => entry.subject === decodedParam && (!boardParam || entry.board === boardParam) && (!levelParam || entry.ibLevel === levelParam)) : null;
+  const startInBrowse = !!routedEntry;
   const [mode, setMode] = useState(startInBrowse ? 'browse' : 'select');
-  const [active, setActive] = useState(startInBrowse ? decodedParam : (chosenSubjects[0] || null));
+  const [active, setActive] = useState(startInBrowse ? routedEntry.key : (chosenSubjects[0]?.key || null));
 
   const openSubject = (s) => { setActive(s); setMode('browse'); };
   const backToSubjects = () => setMode('select');
@@ -57,7 +57,6 @@ export default function QuestionBank({ go, subjectParam }) {
       <SubjectPicker
         subjects={chosenSubjects}
         questionsBySubject={questionsBySubject}
-        boards={boards}
         onPick={openSubject}
       />
     );
@@ -65,10 +64,9 @@ export default function QuestionBank({ go, subjectParam }) {
 
   return (
     <BrowseSubject
-      subject={active}
+      entry={chosenSubjects.find((entry) => entry.key === active) || chosenSubjects[0]}
       chosenSubjects={chosenSubjects}
       questionsBySubject={questionsBySubject}
-      boards={boards}
       onBack={backToSubjects}
       onSwitchSubject={openSubject}
       go={go}
@@ -80,7 +78,7 @@ export default function QuestionBank({ go, subjectParam }) {
 // Subject picker (landing screen)
 // --------------------------------------------------------------------------
 
-function SubjectPicker({ subjects, questionsBySubject, boards, onPick }) {
+function SubjectPicker({ subjects, questionsBySubject, onPick }) {
   return (
     <div className="relative">
       <div className="absolute inset-0 -z-10 opacity-60"><StudyDecor /></div>
@@ -97,15 +95,15 @@ function SubjectPicker({ subjects, questionsBySubject, boards, onPick }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="qbank-subject-grid">
-          {subjects.map((s) => {
+          {subjects.map((entry) => {
+            const s = entry.subject;
             const info = SUBJECT_INFO[s] || { emoji: subjectMark(s) };
-            const qs = questionsBySubject[s] || [];
+            const qs = questionsBySubject[entry.key] || [];
             const count = qs.length;
             const topicCount = new Set(qs.map((q) => q.topic)).size;
-            const b = boards[s];
-            const syl = syllabusLink(b?.board, s);
+            const syl = syllabusLink(entry.board, s);
             return (
-              <div key={s} className="relative">
+              <div key={entry.key} className="relative">
               <a
                 href={syl.url}
                 target="_blank"
@@ -117,7 +115,7 @@ function SubjectPicker({ subjects, questionsBySubject, boards, onPick }) {
                 <FileText className="w-3.5 h-3.5" /> Syllabus <ExternalLink className="w-3 h-3" />
               </a>
               <button
-                onClick={() => onPick(s)}
+                onClick={() => onPick(entry.key)}
                 data-testid={`qbank-subject-${s.replace(/\s+/g, '-')}`}
                 className="group w-full text-left card-soft p-5 border border-[color:var(--color-border)] hover:border-blue-400 hover:shadow-md transition-all"
               >
@@ -126,11 +124,11 @@ function SubjectPicker({ subjects, questionsBySubject, boards, onPick }) {
                   <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
                 </div>
                 <div className="text-[16.5px] font-semibold text-slate-900">{s}</div>
-                {b && b.board !== s && (
+                {entry.board && (
                   <div className="mt-1 flex items-center gap-1.5">
-                    <span className="text-[11px] tracking-[0.1em] uppercase font-semibold text-blue-700">{boardName(b.board)}</span>
-                    {b.ibLevel && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">{b.ibLevel}</span>
+                    <span className="text-[11px] tracking-[0.1em] uppercase font-semibold text-blue-700">{boardName(entry.board)}</span>
+                    {entry.ibLevel && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">{entry.ibLevel}</span>
                     )}
                   </div>
                 )}
@@ -151,12 +149,13 @@ function SubjectPicker({ subjects, questionsBySubject, boards, onPick }) {
 // Browse a single subject
 // --------------------------------------------------------------------------
 
-function BrowseSubject({ subject, chosenSubjects, questionsBySubject, boards, onBack, onSwitchSubject, go }) {
+function BrowseSubject({ entry, chosenSubjects, questionsBySubject, onBack, onSwitchSubject, go }) {
+  const subject = entry.subject;
   const [query, setQuery] = useState('');
   const [revealed, setRevealed] = useState({});
   const [year, setYear] = useState('');
   const [type, setType] = useState('');
-  const list = useMemo(() => questionsBySubject[subject] || [], [questionsBySubject, subject]);
+  const list = useMemo(() => questionsBySubject[entry.key] || [], [questionsBySubject, entry.key]);
   const years = useMemo(() => Array.from(new Set(list.map((x) => x.year).filter(Boolean))).sort((a, b) => b - a), [list]);
   const types = useMemo(() => Array.from(new Set(list.map((x) => x.answerType).filter(Boolean))), [list]);
 
@@ -179,6 +178,7 @@ function BrowseSubject({ subject, chosenSubjects, questionsBySubject, boards, on
     if (!ids.length) return;
     try {
       window.sessionStorage.setItem('preselect_subject', subject);
+      window.sessionStorage.setItem('preselect_subject_key', entry.key);
       window.sessionStorage.setItem('preselect_paper', JSON.stringify({ ids, label: `${subject}${year ? ` ${year}` : ''}${type ? ` · ${type}` : ''} · ${ids.length} questions` }));
     } catch (e) { /* ignore */ }
     go('worksheets');
@@ -186,6 +186,7 @@ function BrowseSubject({ subject, chosenSubjects, questionsBySubject, boards, on
 
   const launchPractice = (topic) => {
     window.sessionStorage.setItem('preselect_subject', subject);
+    window.sessionStorage.setItem('preselect_subject_key', entry.key);
     // No topic means "whole subject" — clear any stale preselection.
     if (topic) window.sessionStorage.setItem('preselect_topic', topic);
     else window.sessionStorage.removeItem('preselect_topic');
@@ -206,7 +207,7 @@ function BrowseSubject({ subject, chosenSubjects, questionsBySubject, boards, on
         </button>
       </div>
 
-      <SyllabusCard subject={subject} board={boards[subject]?.board} ibLevel={boards[subject]?.ibLevel} />
+      <SyllabusCard subject={subject} board={entry.board} ibLevel={entry.ibLevel} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
@@ -250,22 +251,23 @@ function BrowseSubject({ subject, chosenSubjects, questionsBySubject, boards, on
 
       {chosenSubjects.length > 1 && (
         <div className="flex flex-wrap gap-2 mb-5">
-          {chosenSubjects.map((s) => {
+          {chosenSubjects.map((candidate) => {
+            const s = candidate.subject;
             const info = SUBJECT_INFO[s] || { emoji: subjectMark(s) };
-            const sel = subject === s;
+            const sel = entry.key === candidate.key;
             return (
-              <button key={s} onClick={() => onSwitchSubject(s)}
+              <button key={candidate.key} onClick={() => onSwitchSubject(candidate.key)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12.5px] font-medium border transition-colors ${sel ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-white border-[color:var(--color-border)] text-slate-700 hover:bg-slate-100'}`}>
                 <span className="text-[14px] leading-none">{info.emoji}</span>
                 <span>{s}</span>
-                <span className="text-[11px] text-slate-500">{(questionsBySubject[s] || []).length}</span>
+                <span className="text-[11px] text-slate-500">{boardName(candidate.board)}{candidate.ibLevel ? ` ${candidate.ibLevel}` : ''} · {(questionsBySubject[candidate.key] || []).length}</span>
               </button>
             );
           })}
         </div>
       )}
 
-      <SubjectQuestions subject={subject} board={boards[subject]?.board} questions={filtered} totalInSubject={list.length} revealed={revealed} setRevealed={setRevealed} launchPractice={launchPractice} />
+      <SubjectQuestions subject={subject} board={entry.board} questions={filtered} totalInSubject={list.length} revealed={revealed} setRevealed={setRevealed} launchPractice={launchPractice} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { SUBJECTS, SUBJECT_INFO, EXAM_TRACKS } from '../../data/mock';
-import { enrolledSubjects, subjectBoards, boardName, tracksOffering, defaultBoardFor, primaryTrack, subjectMark } from '../../lib/subjects';
+import { boardName, enrolledSubjectEntries, primaryTrack, subjectKey, subjectMark, subjectRoute } from '../../lib/subjects';
 
 import { BookOpen, ArrowRight, Search, Plus, X, ChevronDown, ChevronUp, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
@@ -20,31 +20,27 @@ const toneBadge = {
   success: 'bg-emerald-100 text-emerald-700',
 };
 
-// Flatten every subject available across all exam tracks, deduped.
-function buildAllSubjects() {
-  const seen = new Set();
-  const out = [];
-  Object.values(SUBJECTS).forEach((arr) => {
-    arr.forEach((s) => {
-      const key = s.toLowerCase();
-      if (!seen.has(key)) {
-        seen.add(key);
-        out.push(s);
-      }
-    });
-  });
-  return out.sort((a, b) => a.localeCompare(b));
+// Keep one tile per curriculum + subject. A shared display name is not a
+// shared syllabus: AP Chemistry and IB Chemistry are separate subjects.
+function buildAllSubjectEntries() {
+  return EXAM_TRACKS.flatMap((exam) => (SUBJECTS[exam.id] || []).map((subject) => ({
+    key: subjectKey(subject, exam.id, null),
+    subject,
+    board: exam.id,
+    ibLevel: null,
+    label: `${subject} · ${boardName(exam.id)}`,
+  }))).sort((a, b) => a.subject.localeCompare(b.subject) || a.board.localeCompare(b.board));
 }
 
-const ALL_SUBJECTS = buildAllSubjects();
+const ALL_SUBJECT_ENTRIES = buildAllSubjectEntries();
 
-export default function StartStudying({ go, subjectParam }) {
+export default function StartStudying({ go, subjectParam, boardParam, levelParam }) {
   const { state, updateCourse, addCourse, removeCourse } = useApp();
   const track = primaryTrack(state.courses, state.user?.examTrack);
   const courses = state.courses;
   const userSubjects = state.user?.subjects;
-  const list = useMemo(() => enrolledSubjects(courses, userSubjects, track), [courses, userSubjects, track]);
-  const boards = useMemo(() => subjectBoards(courses, track), [courses, track]);
+  const entries = useMemo(() => enrolledSubjectEntries(courses, userSubjects, track), [courses, userSubjects, track]);
+  const list = useMemo(() => entries.map((entry) => entry.subject), [entries]);
 
   const masteryWs = useMemo(() => activeWorksheets(state.worksheets, courses, userSubjects, track), [state.worksheets, courses, userSubjects, track]);
   const [query, setQuery] = useState('');
@@ -58,23 +54,19 @@ export default function StartStudying({ go, subjectParam }) {
   // Split subjects into the ones the student has taken vs. everything else,
   // each filtered by the search query when one is present.
   const takenMatches = useMemo(
-    () => (trimmed ? list.filter((s) => s.toLowerCase().includes(trimmed)) : list),
-    [trimmed, list],
+    () => (trimmed ? entries.filter((entry) => `${entry.subject} ${boardName(entry.board)} ${entry.ibLevel || ''}`.toLowerCase().includes(trimmed)) : entries),
+    [trimmed, entries],
   );
   const notTakenMatches = useMemo(() => {
-    const rest = ALL_SUBJECTS.filter((s) => !list.includes(s));
-    return trimmed ? rest.filter((s) => s.toLowerCase().includes(trimmed)) : rest;
-  }, [trimmed, list]);
+    const taken = new Set(entries.map((entry) => subjectKey(entry.subject, entry.board, null)));
+    const rest = ALL_SUBJECT_ENTRIES.filter((entry) => !taken.has(subjectKey(entry.subject, entry.board, null)));
+    return trimmed ? rest.filter((entry) => `${entry.subject} ${boardName(entry.board)}`.toLowerCase().includes(trimmed)) : rest;
+  }, [trimmed, entries]);
   const noMatches = trimmed && takenMatches.length === 0 && notTakenMatches.length === 0;
   // A search always expands the not-taken list so results are visible.
   const notTakenExpanded = !!trimmed || notTakenOpen;
 
-  const openOverview = (s) => { window.location.hash = `#study?subject=${encodeURIComponent(s)}`; };
-
-  const subjectInCourse = (s) => (courses || []).some((c) => {
-    const subs = Array.isArray(c.subjects) ? c.subjects : (c.subject ? [c.subject] : []);
-    return subs.some((e) => (typeof e === 'string' ? e : e?.subject) === s);
-  });
+  const openOverview = (entry) => { window.location.hash = subjectRoute(entry); };
 
   // Append a subject to an existing course. Idempotent. For IB courses an
   // HL/SL level is captured and stored on the subject entry.
@@ -84,39 +76,41 @@ export default function StartStudying({ go, subjectParam }) {
     const subs = Array.isArray(course.subjects)
       ? course.subjects
       : (course.subject ? [{ subject: course.subject }] : []);
-    const already = subs.some((e) => (typeof e === 'string' ? e : e?.subject) === addTarget);
+    const already = subs.some((e) => (typeof e === 'string' ? e : e?.subject) === addTarget.subject);
     if (already) {
-      toast.info(`${addTarget} is already in ${course.name}`);
+      toast.info(`${addTarget.subject} is already in ${course.name}`);
       setAddTarget(null);
       return;
     }
-    const entry = { subject: addTarget, ...(ibLevel ? { ibLevel } : {}) };
+    const entry = { subject: addTarget.subject, ...(ibLevel ? { ibLevel } : {}) };
     updateCourse(courseId, { subjects: [...subs, entry] });
-    toast.success(`Added ${addTarget} to ${course.name}`);
+    toast.success(`Added ${addTarget.subject} to ${course.name}`);
     setAddTarget(null);
   };
 
   // Create a brand-new course on the spot containing this subject.
   const createCourseWithSubject = ({ name, board, ibLevel }) => {
     if (!addTarget) return;
-    const exam = board || defaultBoardFor(addTarget, track);
-    const entry = { subject: addTarget, ...(exam === 'IB' && ibLevel ? { ibLevel } : {}) };
-    const courseName = (name || '').trim() || `${boardName(exam)} \u00b7 ${addTarget}`;
+    const exam = board || addTarget.board;
+    const entry = { subject: addTarget.subject, ...(exam === 'IB' && ibLevel ? { ibLevel } : {}) };
+    const courseName = (name || '').trim() || `${boardName(exam)} \u00b7 ${addTarget.subject}`;
     addCourse({ name: courseName, exam, subjects: [entry], status: 'Active' });
-    toast.success(`Created ${courseName} and added ${addTarget}`);
+    toast.success(`Created ${courseName} and added ${addTarget.subject}`);
     setAddTarget(null);
   };
 
   // Drop a subject from every course that contains it. Empty courses are
   // removed so the student doesn't end up with a course with no subjects.
 
-  const renderCard = (s, taken) => {
-    const info = SUBJECT_INFO[s] || { emoji: subjectMark(s), tagline: 'Practice and improve.', tone: 'primary' };
+  const renderCard = (entry, taken) => {
+    const { subject, board, ibLevel } = entry;
+    const info = SUBJECT_INFO[subject] || { emoji: subjectMark(subject), tagline: 'Practice and improve.', tone: 'primary' };
+    const testKey = entry.key.replace(/[^a-zA-Z0-9_-]/g, '-');
     return (
-      <div key={s} className="group relative card-soft p-5 overflow-hidden flex flex-col" data-testid={`subject-tile-${s}`}>
+      <div key={entry.key} className="group relative card-soft p-5 overflow-hidden flex flex-col" data-testid={`subject-tile-${testKey}`}>
         <button
-          onClick={() => openOverview(s)}
-          data-testid={`subject-open-${s}`}
+          onClick={() => openOverview(entry)}
+          data-testid={`subject-open-${testKey}`}
           className="relative text-left flex-1 focus:outline-none"
         >
           <div className="relative flex items-start justify-between gap-3">
@@ -128,38 +122,25 @@ export default function StartStudying({ go, subjectParam }) {
               <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
             </div>
           </div>
-          <div className="relative mt-4 text-[16.5px] font-semibold text-slate-900">{s}</div>
-          {!taken && (() => {
-            const offered = tracksOffering(s).filter((id) => id !== s);
-            if (offered.length === 0) return null;
-            const shown = offered.slice(0, 3).map(boardName).join(' \u00b7 ');
-            const extra = offered.length - 3;
-            return (
-              <div className="relative mt-1 text-[11px] tracking-[0.08em] uppercase font-semibold text-slate-500" data-testid={`subject-offered-${s}`}>
-                {shown}{extra > 0 ? ` +${extra}` : ''}
-              </div>
-            );
-          })()}
-          {taken && boards[s] && boards[s].board !== s && (
-            <div className="relative mt-1 flex items-center gap-1.5">
-              <span className="text-[11px] tracking-[0.1em] uppercase font-semibold text-blue-700" data-testid={`subject-board-${s}`}>
-                {boardName(boards[s].board)}
+          <div className="relative mt-4 text-[16.5px] font-semibold text-slate-900">{subject}</div>
+          <div className="relative mt-1 flex items-center gap-1.5">
+            <span className="text-[11px] tracking-[0.1em] uppercase font-semibold text-blue-700" data-testid={`subject-board-${testKey}`}>
+              {boardName(board)}
+            </span>
+            {ibLevel && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                {ibLevel}
               </span>
-              {boards[s].ibLevel && (
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                  {boards[s].ibLevel}
-                </span>
-              )}
-            </div>
-          )}
+            )}
+          </div>
           {!taken && (
             <div className="relative mt-1 text-[12.5px] text-slate-500 line-clamp-1">{info.tagline}</div>
           )}
         </button>
         {!taken && (
           <button
-            onClick={() => setAddTarget(s)}
-            data-testid={`add-subject-${s}`}
+            onClick={() => setAddTarget(entry)}
+            data-testid={`add-subject-${testKey}`}
             className="relative mt-4 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-[13px] font-semibold text-blue-700 border border-blue-300 bg-blue-50/60 hover:bg-blue-100 transition-colors"
           >
             <Plus className="w-4 h-4" /> Add Subject
@@ -171,8 +152,10 @@ export default function StartStudying({ go, subjectParam }) {
 
   if (subjectParam) {
     const decoded = decodeURIComponent(subjectParam);
-    if (ALL_SUBJECTS.includes(decoded)) {
-      return <SubjectOverview subject={decoded} go={go} onBack={() => { window.location.hash = '#study'; }} />;
+    const entry = entries.find((candidate) => candidate.subject === decoded && (!boardParam || candidate.board === boardParam) && (!levelParam || candidate.ibLevel === levelParam))
+      || ALL_SUBJECT_ENTRIES.find((candidate) => candidate.subject === decoded && (!boardParam || candidate.board === boardParam));
+    if (entry) {
+      return <SubjectOverview subject={decoded} board={boardParam || entry.board} ibLevel={levelParam || entry.ibLevel} go={go} onBack={() => { window.location.hash = '#study'; }} />;
     }
   }
 
@@ -236,7 +219,7 @@ export default function StartStudying({ go, subjectParam }) {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {takenMatches.map((s) => renderCard(s, true))}
+                  {takenMatches.map((entry) => renderCard(entry, true))}
                 </div>
               )}
             </section>
@@ -245,7 +228,7 @@ export default function StartStudying({ go, subjectParam }) {
                 you take and the ones you could add. */}
             {list.length > 0 && (
               <div className="mb-8" data-testid="study-mastery">
-                <MasteryCard worksheets={masteryWs} subjects={list} topicsFor={(sub) => resolvedTopics(state.syllabusTopics, boards[sub]?.board || track, sub)} go={go} />
+                <MasteryCard worksheets={masteryWs} entries={entries} topicsFor={(entry) => resolvedTopics(state.syllabusTopics, entry.board, entry.subject)} />
               </div>
             )}
 
@@ -269,7 +252,7 @@ export default function StartStudying({ go, subjectParam }) {
                 </div>
               ) : notTakenExpanded ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {notTakenMatches.map((s) => renderCard(s, false))}
+                  {notTakenMatches.map((entry) => renderCard(entry, false))}
                 </div>
               ) : (
                 <button
@@ -287,7 +270,7 @@ export default function StartStudying({ go, subjectParam }) {
 
       {addTarget && (
         <AddSubjectModal
-          subject={addTarget}
+          subjectEntry={addTarget}
           courses={courses}
           track={track}
           examTracks={EXAM_TRACKS}
@@ -304,8 +287,10 @@ export default function StartStudying({ go, subjectParam }) {
 // Add-subject modal: pick an existing course (capturing HL/SL for IB) OR
 // create a brand-new course on the spot.
 // --------------------------------------------------------------------------
-function AddSubjectModal({ subject, courses, track, examTracks, onAddToCourse, onCreateCourse, onClose }) {
-  const hasCourses = (courses || []).length > 0;
+function AddSubjectModal({ subjectEntry, courses, track, examTracks, onAddToCourse, onCreateCourse, onClose }) {
+  const { subject, board } = subjectEntry;
+  const matchingCourses = (courses || []).filter((course) => (course.exam || track) === board);
+  const hasCourses = matchingCourses.length > 0;
   const [tab, setTab] = useState(hasCourses ? 'existing' : 'new');
 
   // For an IB existing course, we reveal an inline HL/SL choice before adding.
@@ -314,10 +299,8 @@ function AddSubjectModal({ subject, courses, track, examTracks, onAddToCourse, o
 
   // New-course form.
   const [newName, setNewName] = useState('');
-  // Only curricula that actually teach this subject are valid homes for it.
-  const offering = tracksOffering(subject);
-  const allowedTracks = (examTracks || []).filter((t) => offering.length === 0 || offering.includes(t.id));
-  const [newBoard, setNewBoard] = useState(defaultBoardFor(subject, track));
+  const allowedTracks = (examTracks || []).filter((t) => t.id === board);
+  const [newBoard, setNewBoard] = useState(board);
   const [newLevel, setNewLevel] = useState('HL');
 
   const boardOfCourse = (c) => c.exam || track;
@@ -392,26 +375,23 @@ function AddSubjectModal({ subject, courses, track, examTracks, onAddToCourse, o
             <>
               <p className="text-[13px] text-slate-500 mb-3">Choose which course this subject belongs to:</p>
               <div className="flex flex-col gap-2 max-h-[300px] overflow-auto">
-                {(courses || []).map((c) => {
+                {matchingCourses.map((c) => {
                   const subCount = Array.isArray(c.subjects) ? c.subjects.length : (c.subject ? 1 : 0);
                   const isIB = boardOfCourse(c) === 'IB';
                   const open = pendingId === c.id;
-                  const teaches = offering.length === 0 || offering.includes(boardOfCourse(c));
                   return (
-                    <div key={c.id} className={`rounded-xl border border-[color:var(--color-border)] bg-white ${teaches ? '' : 'opacity-60'}`}>
+                    <div key={c.id} className="rounded-xl border border-[color:var(--color-border)] bg-white">
                       <button
-                        onClick={() => teaches && clickExisting(c)}
-                        disabled={!teaches}
-                        title={teaches ? undefined : `${boardName(boardOfCourse(c))} does not offer ${subject}`}
+                        onClick={() => clickExisting(c)}
                         data-testid={isIB ? `pick-course-${c.id}` : `add-to-course-${c.id}`}
-                        className={`w-full text-left px-4 py-3 transition-colors flex items-center justify-between gap-3 rounded-xl ${teaches ? 'hover:bg-blue-50' : 'cursor-not-allowed'}`}
+                        className="w-full text-left px-4 py-3 transition-colors flex items-center justify-between gap-3 rounded-xl hover:bg-blue-50"
                       >
                         <div className="min-w-0">
                           <div className="text-[14px] font-semibold text-slate-900 truncate">{c.name}</div>
-                          <div className="text-[11.5px] text-slate-500">{boardName(boardOfCourse(c))} · {subCount} {subCount === 1 ? 'subject' : 'subjects'}{teaches ? '' : ` · does not offer ${subject}`}</div>
+                          <div className="text-[11.5px] text-slate-500">{boardName(boardOfCourse(c))} · {subCount} {subCount === 1 ? 'subject' : 'subjects'}</div>
                         </div>
-                        <span className={`inline-flex items-center gap-1 text-[12.5px] font-semibold shrink-0 ${teaches ? 'text-blue-700' : 'text-slate-400'}`}>
-                          {!teaches ? 'Not available' : isIB ? (open ? 'Choose level' : 'Select') : <><Plus className="w-4 h-4" /> Add</>}
+                        <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold shrink-0 text-blue-700">
+                          {isIB ? (open ? 'Choose level' : 'Select') : <><Plus className="w-4 h-4" /> Add</>}
                         </span>
                       </button>
                       {isIB && open && (
