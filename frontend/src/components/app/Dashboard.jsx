@@ -12,7 +12,7 @@ import { useStrengthsWeaknesses, useSavedSwOverrides } from '../../hooks/useStre
 import { predictedBreakdown, formatGrade, scoreToIBGrade, predictionMargin } from '../../lib/predictedGrade';
 import { effectiveStreak } from '../../lib/streak';
 import { SUBJECT_INFO } from '../../data/mock';
-import { enrolledSubjects, subjectBoards, boardName, activeWorksheets, primaryTrack, resolvedTopics, subjectMark, subjectEntries, sheetBelongs } from '../../lib/subjects';
+import { enrolledSubjectEntries, subjectBoards, boardName, activeWorksheets, primaryTrack, resolvedTopics, subjectMark, subjectEntries, sheetBelongs, subjectRoute } from '../../lib/subjects';
 import PredictedScoreMini from './PredictedScoreMini';
 import CreateWorksheetButton from './CreateWorksheetButton';
 import { diagnosisSnippet } from './ai/DiagnosisPanel';
@@ -423,17 +423,18 @@ export default function Dashboard({ go }) {
   // The student's subjects, matching what Start Studying shows. Each card
   // deep-links into that subject's overview (#study?subject=...).
   const studyTrack = primaryTrack(state.courses, state.user?.examTrack);
-  const mySubjects = useMemo(
-    () => enrolledSubjects(state.courses, state.user?.subjects, studyTrack),
+  const mySubjectEntries = useMemo(
+    () => enrolledSubjectEntries(state.courses, state.user?.subjects, studyTrack),
     [state.courses, state.user, studyTrack],
   );
+  const mySubjects = useMemo(() => mySubjectEntries.map((entry) => entry.subject), [mySubjectEntries]);
   const mySubjectBoards = useMemo(
     () => subjectBoards(state.courses, studyTrack),
     [state.courses, studyTrack],
   );
   // The countdown opens the full exam timetable (Settings → Exam dates).
   const openTimetable = () => go('exams');
-  const openSubject = (s) => { window.location.hash = `#study?subject=${encodeURIComponent(s)}`; };
+  const openSubject = (entry) => { window.location.hash = subjectRoute(entry); };
 
   // ---- Card manager (Samsung Health style): show / hide / reorder ----------
   const CARDS = [
@@ -474,7 +475,7 @@ export default function Dashboard({ go }) {
     ) },
     { id: 'subjects', label: 'My subjects', node: (
       <>
-      {mySubjects.length > 0 && (
+      {mySubjectEntries.length > 0 && (
         <div data-testid="dashboard-my-subjects">
           <div className="flex items-center justify-between mb-3 gap-3">
             <div className="eyebrow-muted flex items-center gap-1.5">
@@ -488,15 +489,17 @@ export default function Dashboard({ go }) {
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {mySubjects.map((s) => {
+            {mySubjectEntries.map((entry) => {
+              const s = entry.subject;
               const info = SUBJECT_INFO[s] || { emoji: subjectMark(s), tone: 'primary' };
-              const b = mySubjectBoards[s];
-              const recs = recommendedTopics(ws, s, resolvedTopics(state.syllabusTopics, b?.board || studyTrack, s), { limit: 3 });
+              const b = entry;
+              const entryWorksheets = ws.filter((worksheet) => sheetBelongs(worksheet, entry, mySubjectEntries));
+              const recs = recommendedTopics(entryWorksheets, s, resolvedTopics(state.syllabusTopics, entry.board, s), { limit: 3 });
               return (
                 <button
-                  key={s}
-                  onClick={() => openSubject(s)}
-                  data-testid={`dashboard-subject-${s}`}
+                  key={entry.key}
+                  onClick={() => openSubject(entry)}
+                  data-testid={`dashboard-subject-${entry.key.replace(/[^a-zA-Z0-9_-]/g, '-')}`}
                   className="group text-left rounded-xl border border-[color:var(--color-border)] bg-white p-4 hover:border-blue-300 hover:shadow-md transition-all self-start"
                 >
                   <div className="flex items-start justify-between gap-2">

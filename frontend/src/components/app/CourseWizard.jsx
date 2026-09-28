@@ -1,4 +1,4 @@
-import { subjectMark } from '../../lib/subjects';
+import { subjectKey, subjectMark } from '../../lib/subjects';
 import SchoolCodeCard from './SchoolCodeCard';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
@@ -110,8 +110,11 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
     // Free tier is capped at FREE_SUBJECT_LIMIT subjects total.
     if (!plus) {
       const already = new Set();
-      (state.courses || []).forEach((c) => (Array.isArray(c.subjects) ? c.subjects : []).forEach((e) => already.add(typeof e === 'string' ? e : e?.subject)));
-      picked.forEach((x) => already.add(x));
+      (state.courses || []).forEach((c) => (Array.isArray(c.subjects) ? c.subjects : []).forEach((e) => {
+        const subject = typeof e === 'string' ? e : e?.subject;
+        if (subject) already.add(subjectKey(subject, c.exam, typeof e === 'object' ? e?.ibLevel : null));
+      }));
+      picked.forEach((subject) => already.add(subjectKey(subject, examTrack, isIB ? ibLevels[subject] : null)));
       if (already.size > FREE_SUBJECT_LIMIT) { toast.error(`Free is limited to ${FREE_SUBJECT_LIMIT} subjects. Upgrade to InfinitySheets+ for more.`); return; }
     }
     const courseId = `c_${Date.now()}`;

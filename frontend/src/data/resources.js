@@ -4,6 +4,27 @@
 
 export const RESOURCE_TRACKS = [
   {
+    id: 'AP',
+    name: 'Advanced Placement',
+    short: 'AP',
+    groups: [
+      {
+        label: 'Official (College Board)',
+        links: [
+          { title: 'AP Central: courses and exams', desc: 'Official course pages, exam descriptions, sample questions, and scoring guidance.', url: 'https://apcentral.collegeboard.org/courses' },
+          { title: 'AP Students: course directory', desc: 'Explore every AP course and its exam information.', url: 'https://apstudents.collegeboard.org/course-index-page' },
+          { title: 'AP Central: past exam questions', desc: 'Released free-response questions and scoring materials by course.', url: 'https://apcentral.collegeboard.org/courses' },
+        ],
+      },
+      {
+        label: 'Free practice',
+        links: [
+          { title: 'Khan Academy: AP courses', desc: 'Free lessons and practice for supported AP subjects.', url: 'https://www.khanacademy.org/' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'IGCSE',
     name: 'Cambridge IGCSE',
     short: 'IGCSE',

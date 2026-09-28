@@ -103,9 +103,9 @@ function renderRoute(activeKey, params, go, isAdmin) {
   switch (activeKey) {
     case 'dashboard': return <Dashboard go={go} />;
     case 'courses': return <MyCourses />;
-    case 'study': return <StartStudying go={go} subjectParam={params.subject} />;
+    case 'study': return <StartStudying go={go} subjectParam={params.subject} boardParam={params.board} levelParam={params.level} />;
     case 'worksheets': return <Worksheets go={go} />;
-    case 'qbank': return <QuestionBank go={go} subjectParam={params.subject} />;
+    case 'qbank': return <QuestionBank go={go} subjectParam={params.subject} boardParam={params.board} levelParam={params.level} />;
     case 'history': return <WorksheetHistory />;
     case 'progress': return <ProgressView />;
     case 'strengths': return <Strengths />;
@@ -119,7 +119,7 @@ function renderRoute(activeKey, params, go, isAdmin) {
     case 'exams': return <ExamTimetable go={go} />;
     case 'admin': return isAdmin ? <AdminPlaceholder /> : <Dashboard go={go} />;
     case 'course-overview': return <CourseOverview courseId={params.id} go={go} />;
-    case 'topic': return <TopicOverview subject={params.subject} topic={params.topic} go={go} />;
+    case 'topic': return <TopicOverview subject={params.subject} topic={params.topic} boardParam={params.board} levelParam={params.level} go={go} />;
     default: return <Dashboard go={go} />;
   }
 }

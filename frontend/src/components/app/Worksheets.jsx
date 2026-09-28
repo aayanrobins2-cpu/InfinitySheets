@@ -473,7 +473,11 @@ export default function Worksheets({ go, active = true }) {
   const subjectOptions = useMemo(() => subjectEntries(state.courses, track), [state.courses, track]);
   const [entryKey, setEntryKey] = useState(() => {
     let pre = null;
-    try { const want = window.sessionStorage.getItem('preselect_subject'); pre = want ? subjectOptions.find((e) => e.subject === want) : null; } catch (_) { /* ignore */ }
+    try {
+      const wantKey = window.sessionStorage.getItem('preselect_subject_key');
+      const want = window.sessionStorage.getItem('preselect_subject');
+      pre = wantKey ? subjectOptions.find((e) => e.key === wantKey) : (want ? subjectOptions.find((e) => e.subject === want) : null);
+    } catch (_) { /* ignore */ }
     return (pre || subjectOptions[0])?.key || '';
   });
   const activeEntry = useMemo(() => subjectOptions.find((e) => e.key === entryKey) || subjectOptions[0] || null, [subjectOptions, entryKey]);
@@ -680,6 +684,7 @@ export default function Worksheets({ go, active = true }) {
 
   useEffect(() => {
     if (preselect) window.sessionStorage.removeItem('preselect_subject');
+    window.sessionStorage.removeItem('preselect_subject_key');
     if (preselectTopic) window.sessionStorage.removeItem('preselect_topic');
   }, [preselect, preselectTopic]);
 

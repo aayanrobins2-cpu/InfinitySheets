@@ -67,6 +67,32 @@ export function subjectEntries(courses, fallbackTrack) {
   return out;
 }
 
+// Board-aware version of enrolledSubjects. UI that opens a subject page must
+// use these entries so same-named subjects from different curricula remain
+// separate (for example AP Chemistry and IB Chemistry HL).
+export function enrolledSubjectEntries(courses, userSubjects, track) {
+  const fromCourses = subjectEntries(courses, track);
+  if (fromCourses.length) return fromCourses;
+  const trackSubs = SUBJECTS[track] || [];
+  return (userSubjects || [])
+    .filter((subject) => trackSubs.includes(subject) || !trackSubs.length)
+    .map((subject) => {
+      const board = track || defaultBoardFor(subject, track);
+      const key = subjectKey(subject, board, null);
+      return { key, subject, board, ibLevel: null, label: `${subject} · ${boardTag(board)}` };
+    });
+}
+
+export function subjectRoute(entry, route = 'study', extra = {}) {
+  const params = new URLSearchParams({
+    subject: entry.subject,
+    ...(entry.board ? { board: entry.board } : {}),
+    ...(entry.ibLevel ? { level: entry.ibLevel } : {}),
+    ...extra,
+  });
+  return `#${route}?${params.toString()}`;
+}
+
 // Does this worksheet belong to this entry? Sheets carry board + ibLevel;
 // older sheets without a board match on name only when the subject exists
 // once in the student's courses.

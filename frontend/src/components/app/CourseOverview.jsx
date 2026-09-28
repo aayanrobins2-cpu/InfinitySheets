@@ -2,7 +2,7 @@ import React from 'react';
 import { fmtDate } from '../../lib/dates';
 import { useApp } from '../../context/AppContext';
 import { EXAM_TRACKS, SUBJECT_INFO, TOPIC_SUMMARY } from '../../data/mock';
-import { topicsFor, subjectMark } from '../../lib/subjects';
+import { topicsFor, subjectMark, subjectRoute } from '../../lib/subjects';
 import { ArrowLeft, BookOpen, GraduationCap, CalendarClock, ArrowRight } from 'lucide-react';
 import CreateWorksheetButton from './CreateWorksheetButton';
 
@@ -57,7 +57,7 @@ function SubjectBlock({ s, board, onStudy }) {
             </div>
           )}
           <button
-            onClick={() => onStudy(s.subject)}
+            onClick={() => onStudy(s)}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12.5px] font-semibold text-white bg-blue-600 hover:opacity-95 transition-opacity"
           >
             Study <ArrowRight className="w-4 h-4" />
@@ -97,8 +97,8 @@ export default function CourseOverview({ courseId, go }) {
   const exam = EXAM_TRACKS.find((e) => e.id === course.exam) || { name: course.exam || 'Custom' };
   const totalTopics = course.subjects.reduce((acc, s) => acc + ((Array.isArray(s.topics) && s.topics.length) ? s.topics.length : topicsFor(course.exam, s.subject).length), 0);
 
-  const onStudy = (subject) => {
-    window.location.hash = `#study?subject=${encodeURIComponent(subject)}`;
+  const onStudy = (entry) => {
+    window.location.hash = subjectRoute({ subject: entry.subject, board: course.exam, ibLevel: entry.ibLevel });
   };
 
   return (
