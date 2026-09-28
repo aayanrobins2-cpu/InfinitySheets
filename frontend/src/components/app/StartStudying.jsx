@@ -5,7 +5,6 @@ import { enrolledSubjects, subjectBoards, boardName, tracksOffering, defaultBoar
 
 import { BookOpen, ArrowRight, Search, Plus, X, ChevronDown, ChevronUp, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
-import InfinityBackground from '../decor/InfinityBackground';
 import SubjectOverview from './SubjectOverview';
 import CreateWorksheetButton from './CreateWorksheetButton';
 import MasteryCard from './MasteryCard';
@@ -179,7 +178,6 @@ export default function StartStudying({ go, subjectParam }) {
 
   return (
     <div className="relative">
-      <InfinityBackground variant="soft" />
       <div className="relative">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
           <p className="text-[14px] text-slate-500 max-w-[640px]">Pick a subject to see its overview and create a worksheet tailored to your level.</p>

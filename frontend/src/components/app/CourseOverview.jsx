@@ -4,7 +4,6 @@ import { useApp } from '../../context/AppContext';
 import { EXAM_TRACKS, SUBJECT_INFO, TOPIC_SUMMARY } from '../../data/mock';
 import { topicsFor, subjectMark } from '../../lib/subjects';
 import { ArrowLeft, BookOpen, GraduationCap, CalendarClock, ArrowRight } from 'lucide-react';
-import InfinityBackground from '../decor/InfinityBackground';
 import CreateWorksheetButton from './CreateWorksheetButton';
 
 function normalize(course) {
@@ -104,7 +103,6 @@ export default function CourseOverview({ courseId, go }) {
 
   return (
     <div className="relative">
-      <InfinityBackground variant="soft" />
       <div className="relative">
         <div className="flex items-center gap-2 mb-3">
           <button onClick={() => go && go('courses')} className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-slate-600 hover:text-slate-900 transition-colors">

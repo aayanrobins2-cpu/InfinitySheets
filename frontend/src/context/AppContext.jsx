@@ -287,8 +287,9 @@ export function AppProvider({ children }) {
     // clear they are, the colour pulled through (saturation), the sheen on
     // the surface and the ambient colour behind the app that they refract.
     const g = off ? 0 : i / 100;
-    root.style.setProperty('--chrome-alpha', off ? '1' : (dark ? 0.78 - 0.5 * g : 0.8 - 0.5 * g).toFixed(3));
-    root.style.setProperty('--chrome-blur', off ? '0px' : `${Math.round(8 + 32 * g)}px`);
+    // 50 on the slider = the landing page's top bar (55% tint, 18px blur).
+    root.style.setProperty('--chrome-alpha', off ? '1' : (0.8 - 0.5 * g).toFixed(3));
+    root.style.setProperty('--chrome-blur', off ? '0px' : `${Math.round(4 + 28 * g)}px`);
     root.style.setProperty('--chrome-sat', off ? '100%' : `${Math.round(120 + 100 * g)}%`);
     root.style.setProperty('--chrome-sheen', off ? '0' : (0.06 + 0.22 * g).toFixed(3));
     root.style.setProperty('--ambient', off ? '0' : (0.35 + 0.65 * g).toFixed(3));
