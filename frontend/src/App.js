@@ -5,7 +5,6 @@ import LandingPage from './components/landing/LandingPage';
 import ResourcesPage from './components/landing/ResourcesPage';
 import PrivacyPage from './components/landing/PrivacyPage';
 import AppShell from './components/app/AppShell';
-import AdblockNotice from './components/AdblockNotice';
 import PlusUpgradeBanner from './components/app/PlusUpgradeBanner';
 import { Toaster } from './components/ui/sonner';
 
@@ -69,7 +68,6 @@ function App() {
     <div className="App">
       <AppProvider>
         <Router />
-        <AdblockNotice />
         <PlusUpgradeBanner />
         <Toaster position="top-right" />
       </AppProvider>

@@ -22,6 +22,7 @@ import Sidebar from './shell/Sidebar';
 import PlusCheckout from './PlusCheckout';
 import ExamTimetable from './ExamTimetable';
 import { TwoStepGate, useTwoStepGate } from './TwoStep';
+import AdblockNotice from '../AdblockNotice';
 import { getWorksheetJob, subscribeWorksheetJob } from '../../lib/worksheetJob';
 import TopHeader from './shell/TopHeader';
 import NotesFlashcards from './NotesFlashcards';
@@ -219,6 +220,9 @@ export default function AppShell({ hash }) {
   return (
     <div className="h-screen overflow-hidden section-bg flex relative">
       {twoStep.status === 'needs-code' && <TwoStepGate onVerified={twoStep.recheck} onSignOut={exitAccount} />}
+      {/* Ad blocker / VPN wall: only inside the app, where the ads are — never
+          on the landing, privacy or public resources pages. */}
+      <AdblockNotice />
       {/* Slow ambient colour the glass chrome refracts. */}
       <div className="app-ambient" aria-hidden="true" />
       {/* Mobile scrim — dim the app when the drawer is open so the page
