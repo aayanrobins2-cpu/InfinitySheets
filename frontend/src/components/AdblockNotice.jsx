@@ -6,13 +6,16 @@ import { detectVpn } from '../lib/vpn';
 import { detectAdblock } from '../lib/adblock';
 import { PlusMark, PlusName } from './app/PlusUpgradeBanner';
 
+// Temporarily skip ad-blocker detection. Set to true to restore the check.
+const ENABLE_ADBLOCK_DETECTION = false;
+
 // The two things that stop ads paying for the site — an ad blocker, or a VPN
 // that makes the traffic worthless to advertisers — put up a wall. It cannot
 // be dismissed or clicked past: no close button, the backdrop and Escape do
 // nothing, the page underneath can't scroll, and keyboard focus stays inside.
 // The only ways on are turning the blocker / VPN off and reloading, or
 // InfinitySheets+ — whose full feature list is shown right in the wall.
-// Both checks run on every load; nothing is remembered.
+// Enabled checks run on every load; nothing is remembered.
 // InfinitySheets+ members (and admins) never see it — they pay for the site.
 export default function AdblockNotice() {
   const { state } = useApp();
@@ -23,8 +26,11 @@ export default function AdblockNotice() {
     if (plus) { setKind(null); return undefined; }
     let alive = true;
     (async () => {
-      // Both checks at once; a VPN takes precedence in the wording.
-      const [vpn, blocked] = await Promise.all([detectVpn(), detectAdblock()]);
+      // A VPN takes precedence in the wording when both checks are enabled.
+      const [vpn, blocked] = await Promise.all([
+        detectVpn(),
+        ENABLE_ADBLOCK_DETECTION ? detectAdblock() : Promise.resolve(false),
+      ]);
       if (!alive) return;
       if (vpn?.likely) setKind('vpn');
       else if (blocked) setKind('adblock');
