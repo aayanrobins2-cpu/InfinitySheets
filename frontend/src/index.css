@@ -1050,22 +1050,33 @@ html.dark .app-ambient::after { background: radial-gradient(circle, rgba(14, 165
 aside[data-glass-sidebar],
 header[data-testid="top-header"] {
   background: rgba(255, 255, 255, var(--chrome-alpha, 0.55)) !important;
-  -webkit-backdrop-filter: blur(var(--chrome-blur, 18px)) saturate(160%);
-  backdrop-filter: blur(var(--chrome-blur, 18px)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--chrome-blur, 18px)) saturate(var(--chrome-sat, 160%));
+  backdrop-filter: blur(var(--chrome-blur, 18px)) saturate(var(--chrome-sat, 160%));
   box-shadow: 0 8px 32px -12px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
 }
 aside[data-glass-sidebar] { border-right-color: rgba(255, 255, 255, 0.65) !important; }
-header[data-testid="top-header"] { border-bottom-color: var(--color-border) !important; }
+header[data-testid="top-header"] {
+  background: linear-gradient(115deg, rgba(255, 255, 255, var(--chrome-sheen, 0.17)), transparent 48%, rgba(255, 255, 255, 0.06)),
+    rgba(255, 255, 255, var(--chrome-alpha, 0.55)) !important;
+  border-bottom-color: rgba(148, 163, 184, 0.32) !important;
+  box-shadow: 0 10px 28px -20px rgba(15, 23, 42, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
 html.dark aside[data-glass-sidebar],
 html.dark header[data-testid="top-header"] {
   background: rgba(23, 23, 23, var(--chrome-alpha, 0.55)) !important;
   box-shadow: 0 8px 32px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
 }
 html.dark aside[data-glass-sidebar] { border-right-color: rgba(255, 255, 255, 0.08) !important; }
+html.dark header[data-testid="top-header"] {
+  background: linear-gradient(115deg, rgba(255, 255, 255, calc(var(--chrome-sheen, 0.17) * 0.38)), transparent 48%),
+    rgba(23, 23, 23, var(--chrome-alpha, 0.55)) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
 html.no-glass .app-ambient { display: none; }
 html.no-glass aside[data-glass-sidebar], html.no-glass header[data-testid="top-header"] {
   background: var(--color-card) !important; -webkit-backdrop-filter: none; backdrop-filter: none;
 }
+html.no-glass header[data-testid="top-header"] { box-shadow: none !important; }
 @media (prefers-reduced-motion: reduce) { .app-ambient::before, .app-ambient::after { animation: none; } }
 
 /* InfinitySheets+ wordmark: the + sheen, in gold, across the whole name. */
