@@ -31,7 +31,7 @@ function BarChart() {
                 <div
                   className="viz-bar"
                   style={{ width: inView ? `${b.value}%` : '0%', transitionDelay: `${i * 90}ms` }}
-                  title={`${b.value}% — ${b.label}`}
+                  title={`${b.value}%, ${b.label}`}
                 />
               </div>
               <span className="w-10 text-right text-[14px] font-semibold text-slate-900 tabular-nums">{b.value}%</span>
@@ -60,7 +60,7 @@ export default function TheProblem() {
               More resources than ever. <Emphasis variant="underline">Still stuck.</Emphasis>
             </h2>
             <p className="mt-6 text-[16.5px] sm:text-[18px] leading-relaxed text-slate-600 max-w-[680px]">
-              Textbooks, videos, notes, tutors&mdash;students today have access to everything, yet most
+              Textbooks, videos, notes, tutors, students today have access to everything, yet most
               still fall short of what they are capable of. The hours go in. The marks don&rsquo;t come out.
             </p>
           </div>
@@ -93,7 +93,7 @@ export default function TheProblem() {
         <Reveal delay={0.25}>
           <p className="mt-14 text-[16px] sm:text-[17px] text-slate-700 max-w-[760px]">
             <span className="font-semibold text-slate-900">InfinitySheets exists to change this.</span> Not
-            more material to read&mdash;the right questions to answer, marked the moment you answer them.
+            more material to read, the right questions to answer, marked the moment you answer them.
           </p>
         </Reveal>
       </div>

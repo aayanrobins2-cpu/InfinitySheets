@@ -37,7 +37,7 @@ export async function initAnalytics() {
     } else if (PLAUSIBLE_DOMAIN) {
       await loadScript('https://plausible.io/js/script.manual.js', { 'data-domain': PLAUSIBLE_DOMAIN });
     }
-  } catch (e) { /* provider blocked (ad blocker) — stay silent */ }
+  } catch (e) { /* provider blocked (ad blocker), stay silent */ }
   ready = true;
   queue.splice(0).forEach(({ name, props }) => track(name, props));
 }

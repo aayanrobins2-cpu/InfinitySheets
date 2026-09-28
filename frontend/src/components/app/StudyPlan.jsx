@@ -52,7 +52,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
       setChat((c) => [...c, { role: 'assistant', content: p.reply }]);
       track('study_plan_tweaked');
     } catch (e) {
-      setChat((c) => [...c, { role: 'assistant', content: `Sorry — ${e.message || 'could not change the plan'}.` }]);
+      setChat((c) => [...c, { role: 'assistant', content: `Sorry, ${e.message || 'could not change the plan'}.` }]);
     } finally { setTweaking(false); }
   };
 
@@ -119,8 +119,8 @@ export default function StudyPlan({ weaknesses = [], go }) {
           <div className="eyebrow-muted mb-0.5">This week's plan</div>
           <div className="text-[15px] font-semibold text-slate-900 inline-flex items-center gap-2"><CalendarDays className="w-4 h-4 text-violet-600" /> {plan ? `${done}/${total} tasks done` : 'Let the AI plan your week'}</div>
           {plan?.summary && <div className="text-[12.5px] text-slate-600 mt-1">{plan.summary}</div>}
-          {daysToExam != null && daysToExam >= 0 && <div className="text-[12px] text-violet-700 mt-1">{daysToExam} day{daysToExam === 1 ? '' : 's'} to your exam — the plan works back from that date.</div>}
-          {stale && <div className="text-[11.5px] text-amber-700 mt-1">This plan is over a week old — regenerate it for the coming week.</div>}
+          {daysToExam != null && daysToExam >= 0 && <div className="text-[12px] text-violet-700 mt-1">{daysToExam} day{daysToExam === 1 ? '' : 's'} to your exam, the plan works back from that date.</div>}
+          {stale && <div className="text-[11.5px] text-amber-700 mt-1">This plan is over a week old, regenerate it for the coming week.</div>}
         </div>
         {aiOn ? (
           <button onClick={generate} disabled={busy} className={`${plan ? 'btn-outline-dark' : 'btn-violet'} inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium disabled:opacity-60`} data-testid="study-plan-generate">
@@ -140,7 +140,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
                   <div className="text-[12px] font-semibold text-slate-800">{cell.name}</div>
                   <div className="text-[11px] text-slate-500 mb-1.5 tabular-nums">{fmtDate(cell.iso)}</div>
                   {cell.di === null || !plan.days[cell.di].tasks.length ? (
-                    <div className="text-[11px] text-slate-400">{cell.di === null ? '—' : 'Rest'}</div>
+                    <div className="text-[11px] text-slate-400">{cell.di === null ? '-' : 'Rest'}</div>
                   ) : (
                     <ul className="space-y-1.5">
                       {plan.days[cell.di].tasks.map((t, ti) => {
@@ -166,7 +166,7 @@ export default function StudyPlan({ weaknesses = [], go }) {
         {aiOn && (
           <aside className="mt-5 pt-5 border-t border-[color:var(--color-border)] flex flex-col gap-2 max-w-[640px]" data-testid="plan-tweak">
             <div className="text-[12.5px] font-semibold text-violet-900 inline-flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-violet-600" /> Tweak it further</div>
-            <div className="text-[11.5px] text-slate-600">Tell the AI how to change the timetable — e.g. “only my midterm topics”, “nothing on Sundays”, “more chemistry, shorter sessions”.</div>
+            <div className="text-[11.5px] text-slate-600">Tell the AI how to change the timetable, e.g. “only my midterm topics”, “nothing on Sundays”, “more chemistry, shorter sessions”.</div>
             {chat.length > 0 && (
               <div className="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto pr-0.5" data-testid="plan-tweak-chat">
                 {chat.map((m, i) => (

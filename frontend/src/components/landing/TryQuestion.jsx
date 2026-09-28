@@ -14,7 +14,7 @@ const QUESTIONS = [
       { key: 'D', text: 'Gravity' },
     ],
     correct: 'B',
-    explanation: 'The table pushes back on the book perpendicular to its surface — the normal reaction force. It balances the weight, which is why the book doesn’t accelerate.',
+    explanation: 'The table pushes back on the book perpendicular to its surface, the normal reaction force. It balances the weight, which is why the book doesn’t accelerate.',
   },
   {
     track: 'IGCSE Chemistry', topic: 'Atomic structure',
@@ -26,7 +26,7 @@ const QUESTIONS = [
       { key: 'D', text: 'Neon' },
     ],
     correct: 'C',
-    explanation: 'The proton number defines the element. 11 protons means atomic number 11 — sodium. The neutrons only change the isotope, not the element.',
+    explanation: 'The proton number defines the element. 11 protons means atomic number 11, sodium. The neutrons only change the isotope, not the element.',
   },
   {
     track: 'SAT Math', topic: 'Linear equations',
@@ -50,7 +50,7 @@ const QUESTIONS = [
       { key: 'D', text: 'Mitochondrion' },
     ],
     correct: 'D',
-    explanation: 'Mitochondria carry out aerobic respiration and release energy as ATP — the classic one-mark recall question.',
+    explanation: 'Mitochondria carry out aerobic respiration and release energy as ATP, the classic one-mark recall question.',
   },
   {
     track: 'IB Economics', topic: 'Demand',
@@ -62,7 +62,7 @@ const QUESTIONS = [
       { key: 'D', text: 'It falls to zero' },
     ],
     correct: 'A',
-    explanation: 'The law of demand: price down, quantity demanded up — a movement along the demand curve, not a shift of it.',
+    explanation: 'The law of demand: price down, quantity demanded up, a movement along the demand curve, not a shift of it.',
   },
   {
     track: 'JEE Mathematics', topic: 'Algebra',
@@ -94,7 +94,7 @@ export default function TryQuestion() {
             <div className="hidden lg:block absolute -left-52 top-4"><DoodleEquations /></div>
             <h2 className="h-display text-[44px] sm:text-[56px] lg:text-[64px] leading-[1.05]">Try a real question. Right here.</h2>
             <p className="mt-5 text-[16px] text-slate-500 leading-relaxed">
-              This is what practice on InfinitySheets feels like&mdash;instant marking, an explanation, and a read on your weak spots.
+              This is what practice on InfinitySheets feels like, instant marking, an explanation, and a read on your weak spots.
             </p>
           </div>
         </Reveal>
@@ -137,7 +137,7 @@ export default function TryQuestion() {
                 {answered && (
                   <div className="mt-6 rounded-xl border border-slate-200/70 bg-slate-50/70 px-5 py-4">
                     <div className={`text-[14px] font-semibold ${isCorrect ? 'text-emerald-700' : 'text-red-700'}`}>
-                      {isCorrect ? 'Correct.' : `Not quite — the answer is ${QUESTION.correct}.`}
+                      {isCorrect ? 'Correct.' : `Not quite, the answer is ${QUESTION.correct}.`}
                     </div>
                     <p className="text-[13.5px] text-slate-600 mt-1.5 leading-relaxed">{QUESTION.explanation}</p>
                     <div className="mt-4 rounded-lg bg-white border border-slate-200 px-4 py-3 border-l-[3px] border-l-violet-500">

@@ -43,7 +43,7 @@ export default function MasteryCard({ worksheets, subjects, topicsFor, go }) {
           </button>
         ))}
       </div>
-      <div className="text-[11px] text-slate-500 mt-3">Mastery needs volume, accuracy and recent practice — a topic fades if it is left for months. Tap a topic for its overview.</div>
+      <div className="text-[11px] text-slate-500 mt-3">Mastery needs volume, accuracy and recent practice, a topic fades if it is left for months. Tap a topic for its overview.</div>
     </div>
   );
 }

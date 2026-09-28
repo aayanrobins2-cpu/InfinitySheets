@@ -25,7 +25,7 @@ export function DailyChallengeCard({ worksheets, subjects, topicsFor, go }) {
         <div>
           <div className="eyebrow-muted mb-1 inline-flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-amber-500" /> Today's 5</div>
           <div className="text-[15px] font-semibold text-slate-900">{ch.subject} · {ch.topics.join(' & ')}</div>
-          <div className="text-[12.5px] text-slate-600 mt-0.5">{done ? `Done — ${done.correct}/${done.total} right. Back tomorrow with new topics.` : 'Five quick questions on what needs the most work. Takes about 5 minutes.'}</div>
+          <div className="text-[12.5px] text-slate-600 mt-0.5">{done ? `Done, ${done.correct}/${done.total} right. Back tomorrow with new topics.` : 'Five quick questions on what needs the most work. Takes about 5 minutes.'}</div>
         </div>
         {streak > 0 && <span className="text-[12px] font-semibold text-amber-800 bg-amber-100 px-2 py-1 rounded-md whitespace-nowrap">{streak}-day run</span>}
       </div>
@@ -79,9 +79,9 @@ export function PomodoroTimer() {
     if (phase === 'focus') {
       logFocusSession({ minutes: PRESETS[preset][0], at: new Date().toISOString() });
       track('focus_session', { minutes: PRESETS[preset][0] });
-      toast.success(`Pomodoro done — ${PRESETS[preset][0]} min logged. Take ${PRESETS[preset][1]} minutes.`);
+      toast.success(`Pomodoro done, ${PRESETS[preset][0]} min logged. Take ${PRESETS[preset][1]} minutes.`);
     } else {
-      toast('Break over — ready for another block?');
+      toast('Break over, ready for another block?');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [left, running]);

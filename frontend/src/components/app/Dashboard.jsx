@@ -41,7 +41,7 @@ const SUBJECT_TONE_BADGE = {
 const GREETING_TEMPLATES = [
   "May the marks be with you, {name}.",
   "Expecto perfect scores, {name}.",
-  "I am inevitable — and so is your revision, {name}.",
+  "I am inevitable, and so is your revision, {name}.",
   "Just keep studying, {name}.",
   "Winter is coming. So are exams, {name}.",
   "One does not simply skip revision, {name}.",
@@ -50,37 +50,37 @@ const GREETING_TEMPLATES = [
   "To infinity and beyond the pass mark, {name}.",
   "Everything is awesome when you revise, {name}.",
   "Avengers, assemble your notes, {name}.",
-  "Wingardium Levi-o-SA — it's the flick that gets the marks, {name}.",
-  "Hakuna matata, {name} — but do the worksheet first.",
+  "Wingardium Levi-o-SA, it's the flick that gets the marks, {name}.",
+  "Hakuna matata, {name}, but do the worksheet first.",
   "{name}, you're a wizard at this.",
   "The odds are ever in your favour today, {name}.",
   "Do or do not. There is no cramming, {name}.",
-  "Great Scott, {name} — 1.21 gigawatts of focus!",
+  "Great Scott, {name}, 1.21 gigawatts of focus!",
   "Elementary, my dear {name}.",
   "Say my name. Say my grade. {name}, you're on it.",
-  "Roads? Where we're going we don't need roads — just past papers, {name}.",
+  "Roads? Where we're going we don't need roads, just past papers, {name}.",
   "Bazinga! {name} is back.",
   "{name} has entered the chat. Books open.",
-  "It's dangerous to go alone — take this worksheet, {name}.",
+  "It's dangerous to go alone, take this worksheet, {name}.",
   "Autobots, roll out, {name}.",
   "The first rule of study club: you do talk about it, {name}.",
   "Keep calm and revise on, {name}.",
   "Live long and pass, {name}.",
   "Nobody puts {name} in the corner. Not with these grades.",
   "Here's looking at you, {name}. Now look at your notes.",
-  "I'll be back — and so will you, {name}. Every day.",
+  "I'll be back, and so will you, {name}. Every day.",
   "Houston, we have a worksheet, {name}.",
-  "Use the Force, {name} — and a highlighter.",
+  "Use the Force, {name}, and a highlighter.",
   "Mischief managed. Revision next, {name}.",
   "Keep your friends close and your formulas closer, {name}.",
   "{name}, you shall not fail.",
-  "Not all who wander are lost — but you've got a study plan, {name}.",
+  "Not all who wander are lost, but you've got a study plan, {name}.",
   "Why so serious, {name}? It's only a practice paper.",
   "Life, uh, finds a way. So does a good study streak, {name}.",
   "Just one more question, {name}.",
   "Toto, we're not in the easy questions anymore, {name}.",
   "Stay focused, {name}. Mind the gap between you and an A.",
-  "Oh, the places you'll go, {name} — after this worksheet.",
+  "Oh, the places you'll go, {name}, after this worksheet.",
   "Fasten your seatbelt, {name}. It's going to be a productive night.",
   "{name}, you've got the high ground on this topic.",
   "What we do in revision echoes in exam season, {name}.",
@@ -93,7 +93,7 @@ const GREETING_TEMPLATES = [
   "Ctrl + S your knowledge, {name}.",
   "Loading brilliance… 100%. Welcome back, {name}.",
   "Plot twist: {name} actually enjoys revising.",
-  "The exam is a lie. Just kidding — get ready, {name}.",
+  "The exam is a lie. Just kidding, get ready, {name}.",
   "{name}, you miss 100% of the questions you don't practise.",
   "Stay hungry, stay studious, {name}.",
   "One small step for {name}, one giant leap for your grades.",
@@ -101,14 +101,43 @@ const GREETING_TEMPLATES = [
   "Veni, vidi, revisi, {name}.",
   "Knowledge is power, {name}. Charge up.",
   "{name}, your future self just said thank you.",
-  "Brains before games, {name}. Well — mostly.",
+  "Brains before games, {name}. Well, mostly.",
   "{name} vs. the syllabus: round one, fight!",
   "Tea, notes, focus. The holy trinity, {name}.",
-  "Beep boop — InfinityBot says hi, {name}.",
+  "Beep boop. InfinityBot says hi, {name}.",
   "Legend says {name} finished the whole worksheet.",
   "{name}, you're one worksheet closer to the dream.",
   "Every expert was once a beginner, {name}.",
   "Welcome to the grind, {name}. It's cosy in here.",
+  "Your brain called, {name}. It wants a snack. We have worksheets.",
+  "{name}, your textbook misses you. It told me.",
+  "Breaking news: local student {name} opens study app voluntarily.",
+  "Procrastination can wait, {name}. Literally, it's great at that.",
+  "{name}, the exam doesn't know you're coming. Let's keep it that way.",
+  "Studies show studying helps, {name}. Groundbreaking stuff.",
+  "Your phone will still be there in 25 minutes, {name}. Probably.",
+  "{name} has logged in. Teachers everywhere feel a disturbance.",
+  "Plot armour doesn't work in exams, {name}. Revision does.",
+  "Hydrate, revise, repeat. Mostly revise, {name}.",
+  "{name}, that past paper isn't going to fail itself. Wait, that's the goal.",
+  "Fun fact: the answer is never 'I'll do it tomorrow', {name}.",
+  "{name}, you're the main character. Main characters revise.",
+  "Your future self is sending good vibes, {name}. And snacks.",
+  "Error 404: excuses not found. Welcome back, {name}.",
+  "{name}, let's make your teachers suspicious of how good you've got.",
+  "One worksheet a day keeps the panic away, {name}.",
+  "{name}, the syllabus is big. You are bigger. Metaphorically.",
+  "Nap later, {name}. Or during a Pomodoro break. We won't tell.",
+  "{name} vs. procrastination. Place your bets. (We bet on {name}.)",
+  "Somewhere, a past paper is scared of you, {name}.",
+  "{name}, even Einstein had to revise. Probably. Don't check.",
+  "Your notes aren't going to read themselves, {name}. We tried.",
+  "{name}, today's forecast: 100% chance of getting smarter.",
+  "Warning: side effects of this session may include good grades, {name}.",
+  "{name}, the Wi-Fi is strong and so is your potential.",
+  "Mum would be proud, {name}. Dad too. The cat is indifferent.",
+  "{name}, you've unlocked a rare achievement: actually opening the app.",
+  "Keep going, {name}. The exam hall can smell fear, not revision.",
 ];
 
 function pickGreeting(fullName) {
@@ -153,7 +182,7 @@ function LatestDiagnosisStat({ sheet, go }) {
         </>
       ) : (
         <>
-          <div className="text-[20px] font-semibold mt-1 text-slate-400">&mdash;</div>
+          <div className="text-[20px] font-semibold mt-1 text-slate-400">-</div>
           <div className="text-[11px] text-slate-500 mt-0.5">Finish a worksheet to get one.</div>
         </>
       )}
@@ -168,7 +197,7 @@ function DaysStat({ days, subLabel, onEdit, onOpen }) {
     <div className="tile tile-violet flex flex-col min-h-[104px] cursor-pointer" data-testid="days-until-exam" role="button" tabIndex={0} title="See your full exam timetable" onClick={onOpen} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } }}>
       <div className="eyebrow-muted tile-accent">Days until exam</div>
       <div className="text-[26px] font-semibold mt-1 text-slate-900 tabular-nums leading-tight">
-        {has ? days : '\u2014'}
+        {has ? days : '-'}
         {has && <span className="text-[12px] font-medium text-slate-500 ml-1">{days === 1 ? 'day' : 'days'}</span>}
       </div>
       {subLabel && <div className="text-[11px] text-slate-500 mt-0.5 truncate">{subLabel}</div>}
@@ -928,7 +957,7 @@ function NotesFlashcardsCard({ notes, flashcards, plus, go }) {
         <div className="eyebrow-muted inline-flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Notes &amp; flashcards</div>
       </div>
       {empty ? (
-        <div className="text-[13px] text-slate-500 mt-2">Not enough data yet &mdash; upload your notes or make a flashcard deck to see them here.</div>
+        <div className="text-[13px] text-slate-500 mt-2">Not enough data yet, upload your notes or make a flashcard deck to see them here.</div>
       ) : (
         <div className="grid grid-cols-3 gap-3 mt-3">
           <div><div className="text-[20px] font-semibold text-slate-900 tabular-nums">{pdfs}</div><div className="text-[11px] uppercase tracking-wide text-slate-500">PDF notes</div></div>
@@ -954,6 +983,6 @@ function downloadAgain(s) {
       paperLabel: s.paperLabel,
     });
   } catch (err) {
-    toast.error('Could not create the PDF — try again.');
+    toast.error('Could not create the PDF, try again.');
   }
 }

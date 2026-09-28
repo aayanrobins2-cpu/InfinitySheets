@@ -36,7 +36,7 @@ export default function Recommendations({ go }) {
     const strong = [...(strengths || [])].sort((a, b) => b.acc - a.acc).slice(0, 3).map((t) => `${t.topic} (${t.subject}, ${t.acc}%)`);
     const subjects = Array.from(new Set(ws.map((w) => w.subject)));
     const primer = [
-      `Student profile — boards: ${boardList.map(boardName).join(', ')}.`,
+      `Student profile, boards: ${boardList.map(boardName).join(', ')}.`,
       state.settings?.examDate ? `Exam date: ${state.settings.examDate}.` : 'Exam date: not set.',
       `Subjects with attempts: ${subjects.join(', ') || 'none yet'}. Worksheets completed: ${ws.length}.`,
       `Weakest topics: ${weak.join('; ') || 'none identified yet'}.`,
@@ -62,7 +62,7 @@ export default function Recommendations({ go }) {
       <div className="flex items-center justify-between gap-3 mt-2">
         <div>
           <div className="eyebrow-muted flex items-center gap-1.5"><Stethoscope className="w-4 h-4 text-emerald-600" /> Worksheet diagnoses</div>
-          <div className="text-[12px] text-slate-500 mt-0.5">{diagnosedCount} of {ws.length} worksheet{ws.length === 1 ? '' : 's'} diagnosed — what went wrong and what to do about it.</div>
+          <div className="text-[12px] text-slate-500 mt-0.5">{diagnosedCount} of {ws.length} worksheet{ws.length === 1 ? '' : 's'} diagnosed, what went wrong and what to do about it.</div>
         </div>
       </div>
       {diagnosisSheets.map((w) => <DiagnosisPanel key={w.id} sheet={w} compact testid={`diagnosis-${w.id}`} />)}

@@ -9,7 +9,7 @@ import { fmtMs } from '../../lib/worksheetAnalytics';
 const pct = (x) => `${Math.round((x || 0) * 100)}%`;
 
 function Delta({ value, format = (v) => v, invert = false, suffix = '' }) {
-  if (value === null || value === undefined || Number.isNaN(value)) return <span className="text-slate-400">—</span>;
+  if (value === null || value === undefined || Number.isNaN(value)) return <span className="text-slate-400">-</span>;
   const good = invert ? value < 0 : value > 0;
   const flat = Math.abs(value) < 1e-9;
   const Icon = flat ? Minus : good ? TrendingUp : TrendingDown;
@@ -40,12 +40,12 @@ export function WeeklySummaryCard({ worksheets }) {
               <Delta value={w.deltas.questions} />
             </div>
             <div>
-              <div className="text-[20px] font-semibold text-slate-900 tabular-nums">{t.accuracy === null ? '—' : pct(t.accuracy)}</div>
+              <div className="text-[20px] font-semibold text-slate-900 tabular-nums">{t.accuracy === null ? '-' : pct(t.accuracy)}</div>
               <div className="text-[11px] uppercase tracking-wide text-slate-500">Accuracy</div>
               <Delta value={w.deltas.accuracy === null ? null : w.deltas.accuracy * 100} format={(v) => Math.round(v)} suffix=" pts" />
             </div>
             <div>
-              <div className="text-[20px] font-semibold text-slate-900 tabular-nums">{t.paceMs ? fmtMs(t.paceMs) : '—'}</div>
+              <div className="text-[20px] font-semibold text-slate-900 tabular-nums">{t.paceMs ? fmtMs(t.paceMs) : '-'}</div>
               <div className="text-[11px] uppercase tracking-wide text-slate-500">Per question</div>
               <Delta value={w.deltas.paceMs === null ? null : w.deltas.paceMs / 1000} format={(v) => `${Math.round(v)}s`} invert />
             </div>
@@ -113,7 +113,7 @@ export function ReviewDueTile({ worksheets, onStart }) {
       <div className="text-[26px] font-semibold text-slate-900 tabular-nums leading-none">{due.length}</div>
       <div className="text-[12px] text-slate-500 mt-1.5 flex-1">
         {due.length
-          ? `Question${due.length === 1 ? '' : 's'} you missed before, ready for their next spaced review${due.some((r) => r.overdueDays > 2) ? ' — some overdue' : ''}.`
+          ? `Question${due.length === 1 ? '' : 's'} you missed before, ready for their next spaced review${due.some((r) => r.overdueDays > 2) ? ', some overdue' : ''}.`
           : next
             ? `Nothing due. Next review ${fmtDate(next.due)}.`
             : 'Miss a question and it comes back after 1, 3, 7 and 14 days.'}

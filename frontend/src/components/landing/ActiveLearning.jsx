@@ -19,7 +19,7 @@ const MEASURES = [
 
 const CALLOUTS = [
   { value: '2.6×', title: 'Higher average grade', body: 'Active learners score 2.6× higher on average than students with no structured study.' },
-  { value: '1.6×', title: 'More effective time', body: 'They put in more hours—but in ways that actually move the grade, not just the clock.' },
+  { value: '1.6×', title: 'More effective time', body: 'They put in more hours, but in ways that actually move the grade, not just the clock.' },
   { value: '3×', title: 'More improvement', body: 'Three times the gain over a term compared with passive rereading.' },
 ];
 
@@ -96,7 +96,7 @@ export default function ActiveLearning() {
             <p className="mt-6 text-[16.5px] sm:text-[18px] leading-relaxed text-slate-600 max-w-[680px]">
               Decades of learning research agree: testing yourself on material builds far stronger
               memory than reading it again. Students who practise and retrieve don&rsquo;t just study
-              more efficiently&mdash;they finish the term with markedly higher grades.
+              more efficiently, they finish the term with markedly higher grades.
             </p>
           </div>
         </Reveal>
@@ -129,7 +129,7 @@ export default function ActiveLearning() {
         <Reveal delay={0.25}>
           <p className="mt-14 text-[16px] sm:text-[17px] text-slate-700 max-w-[760px]">
             <span className="font-semibold text-slate-900">That loop is what InfinitySheets automates.</span> Every
-            sheet is retrieval practice on your exact syllabus, marked instantly, tuned to where you are weak&mdash;so
+            sheet is retrieval practice on your exact syllabus, marked instantly, tuned to where you are weak, so
             you learn smarter, not just longer.
           </p>
         </Reveal>

@@ -63,7 +63,7 @@ export default function TopicsList({ subject, tone, topics, stats, onLaunch, onO
         </span>
         <h3 className="text-[16px] font-semibold text-slate-900">Topics in {subject}</h3>
       </div>
-      <p className="text-[13.5px] text-slate-500 mb-5">Open a topic for what the exam wants, sources and an AI tutor — or jump straight into a worksheet.</p>
+      <p className="text-[13.5px] text-slate-500 mb-5">Open a topic for what the exam wants, sources and an AI tutor, or jump straight into a worksheet.</p>
       <div className="flex flex-col gap-2">
         {topics.map((t) => (
           <TopicRow key={t} topic={t} stats={stats[t]} onLaunch={() => onLaunch(t)} onOpen={() => (onOpen ? onOpen(t) : onLaunch(t))} />

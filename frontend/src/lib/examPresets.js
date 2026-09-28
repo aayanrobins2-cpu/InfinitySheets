@@ -114,6 +114,6 @@ export function simulationScore(sheet) {
 export function examFormatText(board) {
   const p = presetFor(board);
   if (!p) return '';
-  const secs = p.sections.map((s) => `${s.name} — ${s.count} × ${s.marksEach} mark${s.marksEach === 1 ? '' : 's'} (${s.type.toLowerCase()}${s.negative ? `, −${s.negative} for a wrong answer` : ''})`);
+  const secs = p.sections.map((s) => `${s.name}, ${s.count} × ${s.marksEach} mark${s.marksEach === 1 ? '' : 's'} (${s.type.toLowerCase()}${s.negative ? `, −${s.negative} for a wrong answer` : ''})`);
   return `${p.name}, ${p.minutes} min, ${presetMarks(p)} marks: ${secs.join('; ')}`;
 }

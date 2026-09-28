@@ -93,8 +93,8 @@ const STEPS = [
     target: 'groups',
     eyebrow: 'Step 10',
     title: 'Study Groups',
-    body: 'Create a group for your class and share the 8-character code. The weekly leaderboard shows first names, questions answered, accuracy and streak — never answers or emails.',
-    bullets: ['Join with a code', 'This week in your group — no rankings', 'First names only'],
+    body: 'Create a group for your class and share the 8-character code. The weekly leaderboard shows first names, questions answered, accuracy and streak, never answers or emails.',
+    bullets: ['Join with a code', 'This week in your group, no rankings', 'First names only'],
   },
   {
     route: 'settings',
@@ -271,7 +271,7 @@ export default function TutorialOverlay() {
                 {step.task && (
                   <div className={`mt-3 rounded-xl px-3.5 py-3 text-[13px] flex items-start gap-2 border transition-colors ${done[i] ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-violet-50 border-violet-200 text-violet-900'}`} data-testid="tut-task">
                     {done[i] ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <MousePointerClick className="w-4 h-4 mt-0.5 shrink-0" />}
-                    <span><b>{done[i] ? 'Nice — done!' : 'Try it:'}</b> {step.task.text}</span>
+                    <span><b>{done[i] ? 'Nice, done!' : 'Try it:'}</b> {step.task.text}</span>
                   </div>
                 )}
               </>

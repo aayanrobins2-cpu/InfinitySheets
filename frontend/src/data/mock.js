@@ -39,11 +39,11 @@ export const EXAM_DURATIONS = {
 };
 
 export const FEATURES = [
-  { title: 'Weakness Analysis', desc: 'Every answer sharpens the picture of which concepts need attention—no self-diagnosis required.', icon: 'Brain', tone: 'secondary' },
+  { title: 'Weakness Analysis', desc: 'Every answer sharpens the picture of which concepts need attention, no self-diagnosis required.', icon: 'Brain', tone: 'secondary' },
   { title: 'Targeted Worksheets', desc: 'Practice exactly what you need, instead of repeating what you already know.', icon: 'Target', tone: 'accent' },
-  { title: 'Scores & Predicted Grades', desc: 'An accurate score after every session, plus a predicted grade—especially handy for IGCSE and IB, where predictions shape university applications.', icon: 'LineChart', tone: 'primary' },
-  { title: 'Custom Feedback & Advice', desc: 'Personalized feedback on every worksheet and clear advice on what to do next—like a tutor reviewing every session.', icon: 'Lightbulb', tone: 'success' },
-  { title: 'A Huge Question Bank', desc: 'CBSE, ICSE, ISC, IGCSE, A Levels, IB, SAT, JEE, NEET and more—including exams with barely any practice-paper support.', icon: 'BookOpen', tone: 'primary' },
+  { title: 'Scores & Predicted Grades', desc: 'An accurate score after every session, plus a predicted grade, especially handy for IGCSE and IB, where predictions shape university applications.', icon: 'LineChart', tone: 'primary' },
+  { title: 'Custom Feedback & Advice', desc: 'Personalized feedback on every worksheet and clear advice on what to do next, like a tutor reviewing every session.', icon: 'Lightbulb', tone: 'success' },
+  { title: 'A Huge Question Bank', desc: 'CBSE, ICSE, ISC, IGCSE, A Levels, IB, SAT, JEE, NEET and more, including exams with barely any practice-paper support.', icon: 'BookOpen', tone: 'primary' },
   { title: 'Fresh Questions, Free', desc: 'AI does one job here: generating new exam-style questions. For courses like IB or CLAT, where practice material sits behind paywalls, you get an endless supply at no cost.', icon: 'Brain', tone: 'secondary' },
 ];
 
@@ -51,17 +51,17 @@ export const HOW_IT_WORKS = [
   { n: '01', title: 'Complete a Worksheet', text: 'Answer fresh exam-style questions matched to your syllabus and current level.' },
   { n: '02', title: 'Weakness Analysis', text: 'The platform pinpoints the exact topics and question types costing you marks.' },
   { n: '03', title: 'Targeted Worksheets', text: 'Your next sheet adapts: more, easier problems on your weak points to build them up, and fewer, harder problems on your strong points to keep them sharp.' },
-  { n: '04', title: 'Smart Recommendations', text: 'Know exactly what to study next—no planning, no hunting for material.' },
+  { n: '04', title: 'Smart Recommendations', text: 'Know exactly what to study next, no planning, no hunting for material.' },
   { n: '05', title: 'Track Your Progress', text: 'Watch topic mastery, predicted scores, and study streaks improve over time.' },
 ];
 
 export const WHY_IT_WORKS = [
-  'Active recall—practice beats rereading',
+  'Active recall: practice beats rereading',
   'Fresh exam-style questions generated for you',
   'Targets your weak concepts automatically',
   'Accurate scores and predicted grades',
   'Instant, personalized feedback',
-  'Completely free—no paywalled practice material',
+  'Completely free, with no paywalled practice material',
 ];
 
 export const RESEARCH_STATS = [
@@ -236,12 +236,12 @@ export const TOPIC_SUMMARY = {
   'Complex Numbers': 'Operations on a + bi form, Argand diagrams, polar form and roots of unity.',
   Matrices: 'Matrix arithmetic, determinants, inverses and solving linear systems.',
   'Differential Equations': 'Modelling change with first and second order equations and solution techniques.',
-  'Heart of Algebra': 'Linear equations, systems, and inequalities — SAT foundations.',
+  'Heart of Algebra': 'Linear equations, systems, and inequalities. SAT foundations.',
   'Problem Solving': 'Ratios, percentages, and data analysis in real contexts.',
   'Advanced Math': 'Quadratics, exponentials, and manipulating higher-order expressions.',
 
   // Physics
-  Mechanics: 'Motion, forces, energy, and momentum — the core of classical physics.',
+  Mechanics: 'Motion, forces, energy, and momentum, the core of classical physics.',
   Electrostatics: 'Charges, electric fields, potential, and Coulomb interactions.',
   Optics: 'Reflection, refraction, lenses, mirrors and the wave nature of light.',
   Thermodynamics: 'Heat, work, laws of thermodynamics, and gas behaviour.',
@@ -259,7 +259,7 @@ export const TOPIC_SUMMARY = {
   'Cell Biology': 'Cell structure, organelles, transport, and the basics of cellular processes.',
   Genetics: 'Inheritance, DNA, alleles, and Mendelian and molecular genetics.',
   Ecology: 'Ecosystems, food webs, energy flow, and human impact on the environment.',
-  'Human Physiology': 'Body systems — circulation, respiration, digestion, and homeostasis.',
+  'Human Physiology': 'Body systems: circulation, respiration, digestion, and homeostasis.',
   'Plant Physiology': 'Photosynthesis, transport, and plant growth and reproduction.',
 
   // Social Science
@@ -288,7 +288,7 @@ export const TOPIC_SUMMARY = {
   // SAT Reading & Writing
   Passages: 'Reading long texts efficiently and answering evidence-based questions.',
   'Vocabulary in Context': 'Choosing the meaning of a word based on how it is used in the passage.',
-  Rhetoric: 'Recognising author choices — tone, style, and argument structure.',
+  Rhetoric: 'Recognising author choices: tone, style, and argument structure.',
 };
 
 
@@ -477,7 +477,7 @@ export const SUBJECT_INFO = {
     emoji: 'SAT',
     tone: 'primary',
     tagline: 'Reading, writing & math under time.',
-    description: 'The whole SAT in one place — Reading & Writing plus Math, practised for pacing and accuracy the way the digital test delivers them.',
+    description: 'The whole SAT in one place. Reading & Writing plus Math, practised for pacing and accuracy the way the digital test delivers them.',
     keyTopics: ['Heart of Algebra', 'Problem Solving', 'Advanced Math', 'Reading passages', 'Grammar & rhetoric'],
     studyTips: ['Answer easy questions first, flag the rest', 'Plug in answer choices on tricky math', 'Read the whole passage before detail questions'],
   },
@@ -485,7 +485,7 @@ export const SUBJECT_INFO = {
     emoji: 'JEE',
     tone: 'secondary',
     tagline: 'Physics, chemistry & maths at Advanced depth.',
-    description: 'One JEE subject covering Physics, Chemistry and Mathematics — multi-step problems, negative marking discipline and speed under NTA conditions.',
+    description: 'One JEE subject covering Physics, Chemistry and Mathematics: multi-step problems, negative marking discipline and speed under NTA conditions.',
     keyTopics: ['Mechanics', 'Electrostatics', 'Physical chemistry', 'Organic chemistry', 'Calculus'],
     studyTips: ['Attempt the sure questions first, leave the traps', 'Practise numericals to the exact unit and format', 'Time every mock at 3 hours, no exceptions'],
   },
@@ -493,7 +493,7 @@ export const SUBJECT_INFO = {
     emoji: 'LS',
     tone: 'accent',
     tagline: 'Logic under time pressure.',
-    description: 'One LSAT subject covering Logical Reasoning and Reading Comprehension — argument structure, flaw patterns and disciplined elimination at pace.',
+    description: 'One LSAT subject covering Logical Reasoning and Reading Comprehension: argument structure, flaw patterns and disciplined elimination at pace.',
     keyTopics: ['Assumptions', 'Strengthen & weaken', 'Flaws', 'Main point', 'Comparative passages'],
     studyTips: ['Find the conclusion before reading answers', 'Predict the answer, then eliminate', 'Track question types you miss and drill them'],
   },
@@ -501,15 +501,15 @@ export const SUBJECT_INFO = {
     emoji: 'NE',
     tone: 'success',
     tagline: 'Biology-heavy recall with physics & chemistry.',
-    description: 'One NEET subject covering Biology, Chemistry and Physics — high-volume recall and accuracy across the full syllabus.',
+    description: 'One NEET subject covering Biology, Chemistry and Physics: high-volume recall and accuracy across the full syllabus.',
     keyTopics: ['Human physiology', 'Plant physiology', 'Genetics', 'Organic chemistry', 'Mechanics'],
-    studyTips: ['Prioritise Biology — it is half the paper', 'Revise NCERT lines almost verbatim', 'Time full mock papers weekly'],
+    studyTips: ['Prioritise Biology. It is half the paper', 'Revise NCERT lines almost verbatim', 'Time full mock papers weekly'],
   },
   'Logical Reasoning': {
     emoji: 'LR',
     tone: 'secondary',
     tagline: 'Find the gap in the argument.',
-    description: 'Assumptions, flaws, strengthen and weaken, inference and parallel reasoning — the reasoning skills that make up most of an LSAT score.',
+    description: 'Assumptions, flaws, strengthen and weaken, inference and parallel reasoning: the reasoning skills that make up most of an LSAT score.',
     keyTopics: ['Assumptions', 'Strengthen & weaken', 'Flaws', 'Inference', 'Parallel reasoning'],
     studyTips: ['Name the conclusion before the answers', 'Predict before reading options', 'Review every wrong answer for why'],
   },
@@ -525,7 +525,7 @@ export const SUBJECT_INFO = {
     emoji: 'CS',
     tone: 'primary',
     tagline: 'Think in algorithms, write in code.',
-    description: 'Programming constructs, data structures, algorithms and databases — practised the way papers actually test them, with tracing questions and complexity reasoning.',
+    description: 'Programming constructs, data structures, algorithms and databases, practised the way papers actually test them, with tracing questions and complexity reasoning.',
     keyTopics: ['Programming basics', 'Data structures', 'Algorithms', 'Databases', 'Networks'],
     studyTips: ['Trace code by hand before running it', 'Learn one sorting algorithm properly', 'Write pseudocode first'],
   },
@@ -541,7 +541,7 @@ export const SUBJECT_INFO = {
     emoji: 'BM',
     tone: 'success',
     tagline: 'Strategy, people and numbers together.',
-    description: 'The IB business toolkit — organisation, human resources, marketing, finance and operations, assessed through applied commentary.',
+    description: 'The IB business toolkit: organisation, human resources, marketing, finance and operations, assessed through applied commentary.',
     keyTopics: ['Business organisation', 'Human resources', 'Marketing', 'Finance & accounts', 'Operations management'],
     studyTips: ['Use the business tools by name', 'Evaluate, do not just describe', 'Practise with real company data'],
   },

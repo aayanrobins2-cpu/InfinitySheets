@@ -43,7 +43,7 @@ function SubjectRow({ s }) {
         </div>
       </div>
       <div className="text-right">
-        <div className="text-[14px] font-semibold tabular-nums text-slate-900">{days !== null ? days : '—'}</div>
+        <div className="text-[14px] font-semibold tabular-nums text-slate-900">{days !== null ? days : '-'}</div>
         <div className="text-[9.5px] uppercase tracking-wider font-semibold text-slate-500">days</div>
       </div>
     </div>

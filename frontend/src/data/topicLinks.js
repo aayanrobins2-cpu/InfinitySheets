@@ -9,7 +9,7 @@ export function topicLinks({ board, subject, topic }) {
   const q = `${subject} ${topic}`;
   const general = [
     { title: 'Khan Academy', desc: 'Free lessons, videos and practice on this topic.', url: `https://www.khanacademy.org/search?page_search_query=${enc(q)}` },
-    { title: 'YouTube', desc: 'Video explanations — filter for your board.', url: `https://www.youtube.com/results?search_query=${enc(`${board} ${q}`)}` },
+    { title: 'YouTube', desc: 'Video explanations. Filter for your board.', url: `https://www.youtube.com/results?search_query=${enc(`${board} ${q}`)}` },
     { title: 'Save My Exams', desc: 'Board-specific revision notes and topic questions.', url: `https://www.savemyexams.com/search/?q=${enc(`${board} ${q}`)}` },
     { title: 'Physics & Maths Tutor', desc: 'Topic questions, notes and past-paper packs.', url: `https://www.physicsandmathstutor.com/?s=${enc(q)}` },
     { title: 'Wikipedia', desc: 'Background reading for the concept itself.', url: `https://en.wikipedia.org/w/index.php?search=${enc(topic)}` },

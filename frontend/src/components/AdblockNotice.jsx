@@ -82,7 +82,7 @@ function Wall({ kind }) {
             {isVpn ? (
               <>
                 Ads help us fund our mission, and ads shown through a VPN are worth
-                roughly nothing to us &mdash; because, as it turns out, putting a website on the
+                roughly nothing to us, because, as it turns out, putting a website on the
                 internet is <span className="font-semibold text-slate-700">preetttttyyyyyyy</span> expensive.
                 But it&rsquo;s fine if you love your VPN. Just get <PlusName />.
               </>
@@ -132,7 +132,7 @@ function Wall({ kind }) {
           className="btn-outline-dark mt-3 w-full py-2.5 rounded-lg text-[13.5px] font-semibold inline-flex items-center justify-center gap-1.5"
           data-testid={isVpn ? 'vpn-reload' : 'adblock-reload'}
         >
-          <RotateCcw className="w-4 h-4" /> {isVpn ? 'I’ve turned my VPN off — reload' : 'I’ve turned it off — reload'}
+          <RotateCcw className="w-4 h-4" /> {isVpn ? 'I’ve turned my VPN off, reload' : 'I’ve turned it off, reload'}
         </button>
       </div>
     </div>

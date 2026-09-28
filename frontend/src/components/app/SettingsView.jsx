@@ -32,11 +32,11 @@ export default function SettingsView() {
     <div className="max-w-[820px] flex flex-col gap-5">
       <p className="text-[14px] text-slate-500">Manage your account, study preferences, and how the app behaves.</p>
 
-      <Section title="InfinitySheets+" icon={SparklesIcon} subtitle="The AI-powered tier — study plans, coach, flashcards, diagnosis, ask-a-doubt, custom courses and more than 6 subjects.">
+      <Section title="InfinitySheets+" icon={SparklesIcon} subtitle="The AI-powered tier, study plans, coach, flashcards, diagnosis, ask-a-doubt, custom courses and more than 6 subjects.">
         {isPlus(state) ? (
           <div className="inline-flex items-center gap-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-2 text-[13px] font-semibold" data-testid="plus-status"><SparklesIcon className="w-4 h-4" /> {state.user?.role === 'admin' ? 'Active (included with admin)' : 'Active'}</div>
         ) : (
-          <button type="button" onClick={() => openPlusBanner()} className="inline-flex items-center gap-2 rounded-lg bg-slate-50 text-slate-700 border border-[color:var(--color-border)] px-3 py-2 text-[13px] font-medium hover:border-violet-300" data-testid="plus-status">Free plan — see what <PlusName /> includes</button>
+          <button type="button" onClick={() => openPlusBanner()} className="inline-flex items-center gap-2 rounded-lg bg-slate-50 text-slate-700 border border-[color:var(--color-border)] px-3 py-2 text-[13px] font-medium hover:border-violet-300" data-testid="plus-status">Free plan, see what <PlusName /> includes</button>
         )}
       </Section>
 
@@ -319,7 +319,7 @@ function SetupSection({ user, courses, settings, restartOnboarding }) {
 
   const redo = () => {
     restartOnboarding();
-    toast.success('Setup restarted — pick your options again');
+    toast.success('Setup restarted, pick your options again');
     window.location.hash = '#dashboard';
   };
 
@@ -401,14 +401,14 @@ function DangerZone({ resetProgress, deleteAccount, restartTutorial }) {
         </div>
         <div className="rounded-xl border border-rose-300 bg-white p-4">
           <div className="text-[13.5px] font-semibold text-rose-700">Delete account</div>
-          <div className="text-[12.5px] text-rose-600/80 mt-0.5 mb-3">Permanently remove this account, its worksheets, courses and settings — from this device and from our servers.</div>
+          <div className="text-[12.5px] text-rose-600/80 mt-0.5 mb-3">Permanently remove this account, its worksheets, courses and settings, from this device and from our servers.</div>
           {!confirmDelete ? (
             <button onClick={() => setConfirmDelete(true)} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-white bg-rose-600 hover:bg-rose-700 text-[12.5px] font-semibold">
               <Trash2 className="w-4 h-4" /> Delete account
             </button>
           ) : (
             <div className="flex gap-2">
-              <button onClick={async () => { try { await deleteAccount(); window.location.hash = ''; toast.success('Account deleted'); } catch (e) { toast.error(e.message || 'Could not delete the account — try again'); } }} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-white bg-rose-600 hover:bg-rose-700 text-[12.5px] font-semibold">Confirm delete</button>
+              <button onClick={async () => { try { await deleteAccount(); window.location.hash = ''; toast.success('Account deleted'); } catch (e) { toast.error(e.message || 'Could not delete the account, try again'); } }} className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-white bg-rose-600 hover:bg-rose-700 text-[12.5px] font-semibold">Confirm delete</button>
               <button onClick={() => setConfirmDelete(false)} className="inline-flex items-center px-3.5 py-1.5 rounded-md border border-slate-300 text-slate-700 text-[12.5px] font-semibold hover:bg-slate-50">Cancel</button>
             </div>
           )}

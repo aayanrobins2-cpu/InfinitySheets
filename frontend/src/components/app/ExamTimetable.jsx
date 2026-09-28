@@ -54,7 +54,7 @@ export default function ExamTimetable({ go }) {
         </div>
       ) : (
         <>
-          {upcoming.length === 0 && <div className="text-[13px] text-slate-500 mb-4">No upcoming exams — they're all behind you.</div>}
+          {upcoming.length === 0 && <div className="text-[13px] text-slate-500 mb-4">No upcoming exams, they're all behind you.</div>}
           {Object.entries(byMonth(upcoming)).map(([month, list]) => (
             <section key={month} className="mb-6">
               <h2 className="text-[11px] tracking-[0.14em] uppercase font-semibold text-slate-500 mb-2">{month}</h2>

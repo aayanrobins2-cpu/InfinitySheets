@@ -60,7 +60,7 @@ function BoardSummary({ track, scored, compact }) {
     sub = `Average across ${scored.length} subject${scored.length === 1 ? '' : 's'}.`;
   } else if (t === 'IGCSE' || t === 'ASA' || t === 'AS') {
     const counts = {};
-    scored.forEach((p) => { const g = p.grade?.label || '\u2014'; counts[g] = (counts[g] || 0) + 1; });
+    scored.forEach((p) => { const g = p.grade?.label || '-'; counts[g] = (counts[g] || 0) + 1; });
     const entries = IGCSE_GRADE_ORDER.filter((g) => counts[g]).map((g) => ({ key: g, count: counts[g], label: g }));
     value = <CountRow entries={entries} />;
     sub = `Across ${scored.length} subject${scored.length === 1 ? '' : 's'} \u00b7 predicted ${t === 'ASA' ? 'A Level' : t === 'AS' ? 'AS Level' : 'IGCSE'} grade.`;
@@ -102,8 +102,8 @@ export default function PredictedScoreMini({ predictedBySubject, visibleSubjects
     return (
       <div className="tile tile-royal" data-testid="predicted-grade-locked">
         <div className="eyebrow-muted tile-accent">{label}</div>
-        <div className="text-[20px] font-semibold mt-1 text-slate-400">&mdash;</div>
-        <div className="text-[11px] text-slate-500 mt-1">Not enough data yet. {first ? `Only exam-format sheets count — sit an exam simulation, or an exam-level sheet of ${first.examMinutes || 90} min or more, in ${first.label || first.subject}.` : 'Only sheets that follow the exam format count towards it.'}</div>
+        <div className="text-[20px] font-semibold mt-1 text-slate-400">-</div>
+        <div className="text-[11px] text-slate-500 mt-1">Not enough data yet. {first ? `Only exam-format sheets count, sit an exam simulation, or an exam-level sheet of ${first.examMinutes || 90} min or more, in ${first.label || first.subject}.` : 'Only sheets that follow the exam format count towards it.'}</div>
         {footer}
       </div>
     );

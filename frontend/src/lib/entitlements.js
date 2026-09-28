@@ -22,15 +22,15 @@ export function isPlus(state) {
 // One list, shown in full by the upgrade banner so nobody has to guess what
 // they are paying for.
 export const PLUS_PITCH = [
-  'Notes & Flashcards — PDF and audio notes, decks, and blurting',
+  'Notes & Flashcards. PDF and audio notes, decks, and blurting',
   'AI study plan & coach, rebuilt around every exam date',
-  'AI diagnosis after every worksheet — what went wrong and why',
+  'AI diagnosis after every worksheet, what went wrong and why',
   'Ask a doubt on any question, any topic',
-  'Custom requests — tell the AI how to tweak any worksheet',
+  'Custom requests, tell the AI how to tweak any worksheet',
   'Worksheets that draw on the notes you upload',
   'Custom courses built from your own material',
   `More than ${FREE_SUBJECT_LIMIT} subjects`,
-  'Unlimited AI — no daily credit limit',
+  'Unlimited AI, no daily credit limit',
   'No ads, anywhere',
 ];
 
@@ -92,7 +92,7 @@ export function allowanceText(feature) {
 // pricing is final — change them here and they update everywhere.
 export const PLUS_PRICING = {
   monthly: { label: 'Monthly', price: '$4.99', per: 'month', note: '' },
-  yearly: { label: 'Yearly', price: '$39.99', per: 'year', note: 'Save 33% — about $3.33 a month' },
+  yearly: { label: 'Yearly', price: '$39.99', per: 'year', note: 'Save 33%, about $3.33 a month' },
 };
 
 // Hosted checkout links (e.g. Stripe Payment Links), set as build env vars.

@@ -130,5 +130,5 @@ export async function releaseDevice(id) {
   if (error) throw error;
 }
 
-export const DEVICE_LIMIT_MESSAGE = 'This device is already set up for another InfinitySheets account. Sign in with that account, or use your own device — one account per device keeps streaks and predicted grades honest.';
+export const DEVICE_LIMIT_MESSAGE = 'This device is already set up for another InfinitySheets account. Sign in with that account, or use your own device, one account per device keeps streaks and predicted grades honest.';
 export const ACCOUNT_DEVICE_LIMIT_MESSAGE = 'This account is already signed in on 3 devices, which is the limit. Sign out of one of them (Settings → Devices) and try again.';

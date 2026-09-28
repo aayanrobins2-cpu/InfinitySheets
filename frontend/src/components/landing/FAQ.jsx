@@ -7,23 +7,23 @@ import { DoodleGradCap, DoodleBooks } from '../decor/StudyDoodles';
 const FAQS = [
   {
     q: 'Is it really free?',
-    a: 'Yes. Every feature—worksheets, weakness analysis, scores, predicted grades—is free, supported by ads so it stays that way for everyone.',
+    a: 'Yes. Every feature, worksheets, weakness analysis, scores, predicted grades, is free, supported by ads so it stays that way for everyone.',
   },
   {
     q: 'How is this different from ChatGPT?',
-    a: 'A chatbot answers what you ask, forgets you between sessions, and drifts off syllabus. InfinitySheets remembers every answer you give, tracks your weaknesses over time, matches real exam formats, and decides what you should practice next—so the burden of knowing what to study never falls back on you.',
+    a: 'A chatbot answers what you ask, forgets you between sessions, and drifts off syllabus. InfinitySheets remembers every answer you give, tracks your weaknesses over time, matches real exam formats, and decides what you should practice next, so the burden of knowing what to study never falls back on you.',
   },
   {
     q: 'Are the questions like real past papers?',
-    a: 'That is the goal of every question we generate. AI is used for one job—creating fresh, exam-style questions—and we continuously compare the output against real past papers for style, format, and difficulty. If a question ever feels off, you can flag it and we improve.',
+    a: 'That is the goal of every question we generate. AI is used for one job, creating fresh, exam-style questions, and we continuously compare the output against real past papers for style, format, and difficulty. If a question ever feels off, you can flag it and we improve.',
   },
   {
     q: 'Which exams are covered?',
-    a: 'AP, AS & A Level, CBSE (Class 10 and 12), IB, ICSE, ISC, IGCSE, JEE, LSAT, NEET, and SAT—each with subject-specific question banks. This especially helps courses like AP or IB, where practice material is usually locked behind paywalls.',
+    a: 'AP, AS & A Level, CBSE (Class 10 and 12), IB, ICSE, ISC, IGCSE, JEE, LSAT, NEET, and SAT, each with subject-specific question banks. This especially helps courses like AP or IB, where practice material is usually locked behind paywalls.',
   },
   {
     q: 'How accurate are the predicted grades?',
-    a: 'Predictions are built from your worksheet scores across topics and calibrated against how each exam is graded. They sharpen as you practice more—and the point is not just to know the number, but to change it while there is still time.',
+    a: 'Predictions are built from your worksheet scores across topics and calibrated against how each exam is graded. They sharpen as you practice more, and the point is not just to know the number, but to change it while there is still time.',
   },
   {
     q: 'Who is behind InfinitySheets?',
@@ -35,18 +35,18 @@ const FAQS = [
 const MORE_FAQS = [
   {
     q: 'Does it work on my phone?',
-    a: 'Yes — the whole site and app are built mobile-first, so you can practice on the bus, between classes, or wherever you study. Progress syncs to your account.',
+    a: 'Yes, the whole site and app are built mobile-first, so you can practice on the bus, between classes, or wherever you study. Progress syncs to your account.',
   },
   {
     q: 'Can I prepare for more than one exam at once?',
-    a: 'Absolutely. Add as many courses as you like — each gets its own subjects, exam dates, worksheets, and predicted grades, and the dashboard keeps them all in view.',
+    a: 'Absolutely. Add as many courses as you like, each gets its own subjects, exam dates, worksheets, and predicted grades, and the dashboard keeps them all in view.',
   },
   {
     q: 'What happens to my data?',
     a: 'Your worksheets and progress belong to you. We store only what the app needs to work, we never sell personal data, and you can delete your account (and everything with it) from Settings at any time.',
   },
   {
-    q: 'I found a wrong or unrealistic question — what do I do?',
+    q: 'I found a wrong or unrealistic question, what do I do?',
     a: 'Tell us! Question quality is the thing we care about most. Flag it in the app or reach out directly, and we will fix it and use it to improve generation for everyone.',
   },
 ];

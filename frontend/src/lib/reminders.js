@@ -35,9 +35,9 @@ export function maybeRemind({ enabled, hour = 18, dueCount = 0, studiedToday = f
   try { if (localStorage.getItem(LAST_KEY) === today) return false; } catch (e) { /* ignore */ }
   if (studiedToday && dueCount === 0) return false;
   let body;
-  if (dueCount > 0 && !studiedToday) body = `${dueCount} review question${dueCount === 1 ? '' : 's'} due and nothing done today yet${streak ? ` — keep the ${streak}-day streak alive` : ''}.`;
+  if (dueCount > 0 && !studiedToday) body = `${dueCount} review question${dueCount === 1 ? '' : 's'} due and nothing done today yet${streak ? `, keep the ${streak}-day streak alive` : ''}.`;
   else if (dueCount > 0) body = `${dueCount} review question${dueCount === 1 ? '' : 's'} due today.`;
-  else body = streak ? `Nothing done today — one short sheet keeps your ${streak}-day streak going.` : 'A short worksheet today keeps the momentum going.';
+  else body = streak ? `Nothing done today, one short sheet keeps your ${streak}-day streak going.` : 'A short worksheet today keeps the momentum going.';
   try { localStorage.setItem(LAST_KEY, today); } catch (e) { /* ignore */ }
   return showReminder({ title: 'Time for a quick session', body, route: dueCount > 0 ? 'worksheets' : 'dashboard' });
 }

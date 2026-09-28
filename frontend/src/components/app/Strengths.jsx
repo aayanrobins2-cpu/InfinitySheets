@@ -95,7 +95,7 @@ export default function Strengths() {
     const technique = counts.misread + counts.careless + counts.time;
     const text = counts.unknown > technique
       ? `Mostly knowledge gaps (${Math.round((counts.unknown / total) * 100)}%): revisit the topic overviews and worked solutions before doing more sheets.`
-      : `Mostly technique (${Math.round((technique / total) * 100)}%): you know the content — practise reading the command word twice, checking units, and using the pace coach.`;
+      : `Mostly technique (${Math.round((technique / total) * 100)}%): you know the content, practise reading the command word twice, checking units, and using the pace coach.`;
     return { total, rows, text };
   }, [ws]);
 
@@ -133,7 +133,7 @@ export default function Strengths() {
     const bd = predictedBreakdown(subjectWs, { board: subjectBoard });
     const g = formatGrade(bd.score, subjectBoard);
     // Locked until a full-length exam-level sheet has been sat in the subject.
-    return bd.ready ? { score: bd.score, ...g } : { score: bd.score, label: '—', tone: 'ok', sub: `Sit one exam-level sheet of ${bd.examMinutes} min or more to unlock` };
+    return bd.ready ? { score: bd.score, ...g } : { score: bd.score, label: '-', tone: 'ok', sub: `Sit one exam-level sheet of ${bd.examMinutes} min or more to unlock` };
   }, [isSubjectMode, subjectWs, subjectBoard]);
 
   // If subject filter references a subject that no longer exists (e.g., after

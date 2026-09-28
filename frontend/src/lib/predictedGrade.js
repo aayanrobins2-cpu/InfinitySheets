@@ -189,7 +189,7 @@ export function predictedBreakdown(allWorksheets, { board } = {}) {
 // Short copy for the "not ready yet" state.
 export function readinessHint(bd) {
   const mins = bd?.examMinutes || 90;
-  return `Not enough data yet — sit an exam simulation, or an exam-level sheet of ${mins} min or more`;
+  return `Not enough data yet, sit an exam simulation, or an exam-level sheet of ${mins} min or more`;
 }
 
 // -----------------------------------------------------------------------------

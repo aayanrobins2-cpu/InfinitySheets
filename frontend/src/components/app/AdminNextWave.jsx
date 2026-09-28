@@ -44,7 +44,7 @@ export function SyllabusImport({ board, subject }) {
       const rows = (state.syllabusTopics || []).filter((r) => !(r.board === board && r.subject === subject));
       setSyllabusTopics([...rows, { board, subject, topics, source }]);
       setDrafts(null);
-      toast.success(isReal ? `Syllabus saved — ${subject} now uses these ${topics.length} topics` : 'Saved on this device (sign in as an admin to publish for everyone)');
+      toast.success(isReal ? `Syllabus saved, ${subject} now uses these ${topics.length} topics` : 'Saved on this device (sign in as an admin to publish for everyone)');
     } catch (e) { toast.error(e.message || 'Could not save'); }
     finally { setSaving(false); }
   };

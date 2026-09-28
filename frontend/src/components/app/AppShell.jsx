@@ -262,7 +262,7 @@ export default function AppShell({ hash }) {
       <main ref={mainRef} data-app-scroll className="min-w-0 flex-1 relative h-screen overflow-y-auto overscroll-contain">
         {isDemo && (
           <div className="sticky top-0 z-30 bg-violet-600 text-white text-[12.5px] font-medium px-4 py-1.5 flex items-center justify-center gap-3" data-testid="demo-banner">
-            <span>Test mode — sample data, nothing is saved.</span>
+            <span>Test mode, sample data, nothing is saved.</span>
             <span className="inline-flex items-center rounded-full bg-white/15 p-0.5 text-[11px] font-semibold">
               <button type="button" onClick={() => setTestPlan('free')} className={`px-2 py-0.5 rounded-full ${state.testPlan !== 'plus' ? 'bg-white text-violet-700' : 'text-white/90'}`} data-testid="test-plan-free">Free</button>
               <button type="button" onClick={() => setTestPlan('plus')} className={`px-2 py-0.5 rounded-full ${state.testPlan === 'plus' ? 'bg-white text-violet-700' : 'text-white/90'}`} data-testid="test-plan-plus">InfinitySheets+</button>

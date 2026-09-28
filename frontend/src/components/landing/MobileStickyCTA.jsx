@@ -26,7 +26,7 @@ export default function MobileStickyCTA() {
       aria-hidden={!show}
     >
       <div className="liquid-glass border-t border-[color:var(--color-border)] px-4 py-3 flex items-center justify-between gap-3">
-        <span className="text-[13.5px] font-medium text-slate-800 leading-tight">Study smarter&mdash;free forever.</span>
+        <span className="text-[13.5px] font-medium text-slate-800 leading-tight">Study smarter, free forever.</span>
         <a href="#signup" className="btn-violet inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[14px] font-medium shrink-0">
           Start free <ArrowRight className="w-4 h-4" />
         </a>

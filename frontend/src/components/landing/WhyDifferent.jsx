@@ -24,8 +24,8 @@ export default function WhyDifferent() {
               Real practice, <Emphasis variant="highlight" amber>real results</Emphasis>.
             </h2>
             <p className="mt-7 text-[16.5px] sm:text-[18px] leading-relaxed text-slate-600 max-w-[720px] mx-auto">
-              Practice sheets catered to your exact exam&mdash;the right boards, the right question
-              styles, the right mark schemes&mdash;and tweaked to your level as you improve. Where
+              Practice sheets catered to your exact exam, the right boards, the right question
+              styles, the right mark schemes, and tweaked to your level as you improve. Where
               you struggle, the sheets meet you where you are and build you up. Where you are
               strong, they push you further. That is how scores actually move.
             </p>
@@ -54,7 +54,7 @@ export default function WhyDifferent() {
           </div>
           <p className="mt-6 text-[12.5px] text-slate-500 italic text-center max-w-[720px] mx-auto">
             Active recall, spaced repetition, and instant feedback are among the most-replicated
-            findings in cognitive science and learning research&mdash;that loop is exactly what
+            findings in cognitive science and learning research, that loop is exactly what
             InfinitySheets automates.
           </p>
         </Reveal>

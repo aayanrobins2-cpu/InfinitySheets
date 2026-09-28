@@ -352,9 +352,9 @@ function SubjectPredictedRow({ s, color, info, label, name, board, p, d, ws, isH
               {p.grade?.sub || 'Predicted'}
             </div>
             <div className={`text-[18px] font-semibold ${p.ready === false ? 'text-slate-400' : tone.text} tabular-nums leading-tight`} title={p.ready === false ? `Unlocks after one exam-level sheet of ${p.examMinutes || 90} min or more` : undefined}>
-              {noPred || p.ready === false ? '\u2014' : (p.grade?.label ?? `${p.predicted}%`)}
+              {noPred || p.ready === false ? '-' : (p.grade?.label ?? `${p.predicted}%`)}
             </div>
-            {p.ready === false && <div className="text-[10px] text-amber-700 font-medium" data-testid="predicted-locked">Not enough data — needs an exam simulation or a {p.examMinutes || 90}-min exam-level sheet</div>}
+            {p.ready === false && <div className="text-[10px] text-amber-700 font-medium" data-testid="predicted-locked">Not enough data, needs an exam simulation or a {p.examMinutes || 90}-min exam-level sheet</div>}
           </div>
           {d.hasEnough ? <DeltaPill delta={d.delta} /> : <span className="text-[11.5px] text-slate-400">2+ needed</span>}
         </div>

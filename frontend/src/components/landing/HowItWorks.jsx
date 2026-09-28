@@ -35,7 +35,7 @@ export default function HowItWorks() {
           <div className="relative text-center max-w-[860px] mx-auto">
             <h2 className="h-display text-[46px] sm:text-[60px] lg:text-[70px] leading-[1.05]">From your first worksheet to mastery.</h2>
             <p className="mt-6 text-[17px] sm:text-[18px] text-slate-500 leading-relaxed max-w-[680px] mx-auto">
-              A simple loop that adapts to you&mdash;every step targets your{' '}
+              A simple loop that adapts to you, every step targets your{' '}
               <Emphasis variant="underline" className="font-medium text-slate-700">weak concepts</Emphasis>, so practice gets sharper over time.
             </p>
             <div className="hidden lg:block absolute -left-48 top-8"><DoodleLaptop /></div>

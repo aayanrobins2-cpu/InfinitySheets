@@ -43,7 +43,7 @@ export default function Blurting({ subject, topics, board, ibLevel }) {
       if (noteId) {
         const n = pdfNotes.find((x) => x.id === noteId);
         if (n) {
-          if ((n.size || 0) > 8 * 1024 * 1024) throw new Error('That PDF is over 8 MB — the AI can only read smaller notes. Pick another or go from the syllabus.');
+          if ((n.size || 0) > 8 * 1024 * 1024) throw new Error('That PDF is over 8 MB, the AI can only read smaller notes. Pick another or go from the syllabus.');
           const blob = await downloadNoteFile(n.path);
           const parts = await fileToParts(blob);
           files = [{ mimeType: 'application/pdf', data: parts.data, label: `NOTES: ${n.name}` }];

@@ -38,7 +38,7 @@ export default function SubjectSidePanels({ subject, board, ibLevel }) {
         </div>
         <p className="text-[12.5px] text-slate-500 mt-1 leading-relaxed">
           {syl.exact
-            ? 'The official subject page — the full syllabus, how it is assessed, and specimen papers.'
+            ? 'The official subject page, the full syllabus, how it is assessed, and specimen papers.'
             : `${syl.boardName}. The board publishes each subject’s syllabus from this page.`}
         </p>
         <div className="flex flex-wrap items-center gap-2 mt-3">
@@ -62,7 +62,7 @@ export default function SubjectSidePanels({ subject, board, ibLevel }) {
         </div>
 
         {topicCount === 0 ? (
-          <p className="text-[13px] text-slate-500">This syllabus hasn’t been added yet — open the official syllabus above for the full content.</p>
+          <p className="text-[13px] text-slate-500">This syllabus hasn’t been added yet, open the official syllabus above for the full content.</p>
         ) : (
           <>
             <p className="text-[12.5px] text-slate-500 mb-3">
@@ -78,7 +78,7 @@ export default function SubjectSidePanels({ subject, board, ibLevel }) {
               ))}
             </ul>
             {(flat ? groups[0].units.length : groups.length) > 12 && (
-              <div className="text-[12px] text-slate-400 mt-2">+ {(flat ? groups[0].units.length : groups.length) - 12} more — all are in the topic list.</div>
+              <div className="text-[12px] text-slate-400 mt-2">+ {(flat ? groups[0].units.length : groups.length) - 12} more, all are in the topic list.</div>
             )}
           </>
         )}
@@ -188,7 +188,7 @@ function ExamFormat({ subject, board, ibLevel, papers }) {
           ))}
         </ul>
       )}
-      <div className="text-[11px] text-slate-400">AI summary — check the official syllabus above for the final word.</div>
+      <div className="text-[11px] text-slate-400">AI summary, check the official syllabus above for the final word.</div>
     </div>
   );
 }

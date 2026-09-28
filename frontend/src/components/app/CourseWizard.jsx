@@ -119,7 +119,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
     const earliest = subjects.map((x) => x.examDate).sort()[0];
     if (isOnboarding) {
       completeOnboarding({ examTrack, examDate: earliest, subjects: picked, frequency, weeklyGoal });
-      toast.success(`Setup complete — here's your course overview`);
+      toast.success(`Setup complete, here's your course overview`);
       // The tutorial's first step will navigate to #course-overview automatically.
     } else {
       // The Schedule step is shown here too; keep what the student chose.
@@ -139,7 +139,7 @@ export default function CourseWizard({ mode = 'onboarding', onClose }) {
     return (
       <CustomCourseWizard
         onCreated={isOnboarding ? ({ subject }) => completeOnboarding({ examTrack: 'Custom', examDate: '', subjects: [subject], frequency, weeklyGoal }) : undefined}
-        onUseOffered={({ board, subject }) => { setCustomOpen(false); setExamTrack(board); setPicked([subject]); setDates({}); setStep(1); toast.success(`${subject} is already offered — added to this course`); }}
+        onUseOffered={({ board, subject }) => { setCustomOpen(false); setExamTrack(board); setPicked([subject]); setDates({}); setStep(1); toast.success(`${subject} is already offered, added to this course`); }}
         onClose={() => { setCustomOpen(false); if (onClose) onClose(); }}
       />
     );

@@ -4,19 +4,19 @@
 // search so the student always lands on the official source.
 
 export const BOARD_SYLLABUS = {
-  CBSE10: { name: 'CBSE Academic — Secondary curriculum (Class 9-10)', url: 'https://cbseacademic.nic.in/curriculum_2026.html', domain: 'cbseacademic.nic.in' },
-  CBSE: { name: 'CBSE Academic — Curriculum', url: 'https://cbseacademic.nic.in/curriculum_2026.html', domain: 'cbseacademic.nic.in' },
-  ICSE: { name: 'CISCE — Regulations & Syllabuses', url: 'https://cisce.org/publications/', domain: 'cisce.org' },
-  ISC: { name: 'CISCE — ISC Regulations & Syllabuses', url: 'https://cisce.org/publications/', domain: 'cisce.org' },
-  IGCSE: { name: 'Cambridge IGCSE — Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-upper-secondary/cambridge-igcse/subjects/', domain: 'cambridgeinternational.org' },
-  AS: { name: 'Cambridge International AS Level — Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-advanced/cambridge-international-as-and-a-levels/subjects/', domain: 'cambridgeinternational.org' },
-  ASA: { name: 'Cambridge International A Level — Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-advanced/cambridge-international-as-and-a-levels/subjects/', domain: 'cambridgeinternational.org' },
-  IB: { name: 'IB Diploma Programme — Curriculum', url: 'https://www.ibo.org/programmes/diploma-programme/curriculum/', domain: 'ibo.org' },
-  AP: { name: 'AP Central — Courses', url: 'https://apcentral.collegeboard.org/courses', domain: 'apcentral.collegeboard.org' },
-  SAT: { name: "College Board — What's on the SAT", url: 'https://satsuite.collegeboard.org/sat/whats-on-the-test', domain: 'satsuite.collegeboard.org' },
-  JEE: { name: 'NTA — JEE (Main) information bulletin & syllabus', url: 'https://jeemain.nta.nic.in/', domain: 'jeemain.nta.nic.in' },
-  NEET: { name: 'NTA — NEET (UG) syllabus', url: 'https://neet.nta.nic.in/', domain: 'neet.nta.nic.in' },
-  LSAT: { name: 'LSAC — About the LSAT', url: 'https://www.lsac.org/lsat/taking-lsat/about-lsat', domain: 'lsac.org' },
+  CBSE10: { name: 'CBSE Academic: Secondary curriculum (Class 9-10)', url: 'https://cbseacademic.nic.in/curriculum_2026.html', domain: 'cbseacademic.nic.in' },
+  CBSE: { name: 'CBSE Academic: Curriculum', url: 'https://cbseacademic.nic.in/curriculum_2026.html', domain: 'cbseacademic.nic.in' },
+  ICSE: { name: 'CISCE: Regulations & Syllabuses', url: 'https://cisce.org/publications/', domain: 'cisce.org' },
+  ISC: { name: 'CISCE: ISC Regulations & Syllabuses', url: 'https://cisce.org/publications/', domain: 'cisce.org' },
+  IGCSE: { name: 'Cambridge IGCSE: Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-upper-secondary/cambridge-igcse/subjects/', domain: 'cambridgeinternational.org' },
+  AS: { name: 'Cambridge International AS Level: Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-advanced/cambridge-international-as-and-a-levels/subjects/', domain: 'cambridgeinternational.org' },
+  ASA: { name: 'Cambridge International A Level: Subjects', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-advanced/cambridge-international-as-and-a-levels/subjects/', domain: 'cambridgeinternational.org' },
+  IB: { name: 'IB Diploma Programme: Curriculum', url: 'https://www.ibo.org/programmes/diploma-programme/curriculum/', domain: 'ibo.org' },
+  AP: { name: 'AP Central: Courses', url: 'https://apcentral.collegeboard.org/courses', domain: 'apcentral.collegeboard.org' },
+  SAT: { name: "College Board: What's on the SAT", url: 'https://satsuite.collegeboard.org/sat/whats-on-the-test', domain: 'satsuite.collegeboard.org' },
+  JEE: { name: 'NTA: JEE (Main) information bulletin & syllabus', url: 'https://jeemain.nta.nic.in/', domain: 'jeemain.nta.nic.in' },
+  NEET: { name: 'NTA: NEET (UG) syllabus', url: 'https://neet.nta.nic.in/', domain: 'neet.nta.nic.in' },
+  LSAT: { name: 'LSAC: About the LSAT', url: 'https://www.lsac.org/lsat/taking-lsat/about-lsat', domain: 'lsac.org' },
 };
 
 const CAM = 'https://www.cambridgeinternational.org/programmes-and-qualifications/';
@@ -173,7 +173,7 @@ export function syllabusLink(board, subject) {
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`site:${info.domain} ${subject} syllabus`)}`;
   return {
     url: exact || info.url,
-    title: exact ? `${subject} syllabus (${info.name.split(' — ')[0]})` : info.name,
+    title: exact ? `${subject} syllabus (${info.name.split('-')[0]})` : info.name,
     exact: !!exact,
     boardName: info.name,
     searchUrl,

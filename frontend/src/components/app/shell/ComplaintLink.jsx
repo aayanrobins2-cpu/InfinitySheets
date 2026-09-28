@@ -16,7 +16,7 @@ I have a complaint about InfinitySheets:
 
 
 
-— ${user?.name || 'A student'}${user?.email ? ` (${user.email})` : ''}`);
+, ${user?.name || 'A student'}${user?.email ? ` (${user.email})` : ''}`);
   return (
     <a
       href={`mailto:${COMPLAINT_EMAIL}?subject=${subject}&body=${body}`}

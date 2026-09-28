@@ -90,7 +90,7 @@ export default function ResourcesPage() {
                     Find your course.
                   </h1>
                   <p className="mt-6 text-[16.5px] text-slate-600 leading-relaxed max-w-[640px]">
-                    Search by course or subject to see what InfinitySheets offers for it&mdash;questions
+                    Search by course or subject to see what InfinitySheets offers for it, questions
                     stored, diagnosis tools, and every official past paper and syllabus source, free.
                   </p>
                 </div>
@@ -102,7 +102,7 @@ export default function ResourcesPage() {
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search your course or subject — e.g. AP, IGCSE, Physics…"
+                    placeholder="Search your course or subject, e.g. AP, IGCSE, Physics…"
                     className="w-full liquid-glass rounded-2xl pl-12 pr-4 py-4 text-[15px] text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-400/60"
                     data-testid="course-search"
                   />
@@ -133,7 +133,7 @@ export default function ResourcesPage() {
                 {results.length === 0 && (
                   <div className="col-span-full liquid-glass rounded-2xl p-8 text-center">
                     <p className="text-[15px] text-slate-600">No course matches &ldquo;{query}&rdquo; yet.</p>
-                    <p className="text-[13px] text-slate-400 mt-1">We add new curricula regularly — tell us what you need after signing up.</p>
+                    <p className="text-[13px] text-slate-400 mt-1">We add new curricula regularly, tell us what you need after signing up.</p>
                   </div>
                 )}
               </div>

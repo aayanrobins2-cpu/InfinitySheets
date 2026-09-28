@@ -31,7 +31,7 @@ export default function ReportQuestion({ q, subject, compact = false, testid }) 
       track('question_flagged', { reason, source: q.source });
       setDone(true);
       setOpen(false);
-      toast.success(isReal ? 'Thanks — an admin will review this question' : 'Thanks — flags are saved for real accounts; in the demo this is a preview');
+      toast.success(isReal ? 'Thanks, an admin will review this question' : 'Thanks, flags are saved for real accounts; in the demo this is a preview');
     } catch (e) {
       toast.error(e.message || 'Could not send the report');
     } finally { setBusy(false); }

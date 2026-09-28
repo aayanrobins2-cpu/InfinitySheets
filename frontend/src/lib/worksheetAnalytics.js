@@ -127,39 +127,39 @@ export function analyticsInsights(a) {
   const slowWrong = a.perQuestion.filter((p) => p.answered && !p.correct && a.avgMs > 0 && p.timeMs >= Math.max(2 * a.avgMs, 45000));
   if (slowWrong.length) {
     const worst = slowWrong.reduce((m, p) => (p.timeMs > m.timeMs ? p : m));
-    out.push({ tone: 'warn', text: `You spent ${fmtMs(worst.timeMs)} on ${q(worst)} — ${(worst.timeMs / a.avgMs).toFixed(1)}× your average — and still got it wrong. That reads as a gap in the topic${worst.topic ? ` (${worst.topic})` : ''}, not a careless slip.` });
+    out.push({ tone: 'warn', text: `You spent ${fmtMs(worst.timeMs)} on ${q(worst)}, ${(worst.timeMs / a.avgMs).toFixed(1)}× your average, and still got it wrong. That reads as a gap in the topic${worst.topic ? ` (${worst.topic})` : ''}, not a careless slip.` });
   }
 
   // Fast and wrong → guessing / rushing.
   const fastWrong = a.perQuestion.filter((p) => p.answered && !p.correct && p.timeMs > 0 && p.timeMs <= Math.min(0.45 * a.avgMs, 12000));
   if (fastWrong.length >= 2) {
-    out.push({ tone: 'warn', text: `${list(fastWrong)} took under ${fmtMs(Math.max(...fastWrong.map((p) => p.timeMs)))} each and all were wrong — that looks like guessing. Slowing down on those would have been cheap marks.` });
+    out.push({ tone: 'warn', text: `${list(fastWrong)} took under ${fmtMs(Math.max(...fastWrong.map((p) => p.timeMs)))} each and all were wrong, that looks like guessing. Slowing down on those would have been cheap marks.` });
   } else if (fastWrong.length === 1) {
-    out.push({ tone: 'warn', text: `${q(fastWrong[0])} took only ${fmtMs(fastWrong[0].timeMs)} and was wrong — worth a second look before moving on next time.` });
+    out.push({ tone: 'warn', text: `${q(fastWrong[0])} took only ${fmtMs(fastWrong[0].timeMs)} and was wrong, worth a second look before moving on next time.` });
   }
 
   // Second-guessing.
   if (a.changedRightToWrong > 0) {
-    out.push({ tone: 'warn', text: `You changed a right answer to a wrong one ${a.changedRightToWrong === 1 ? 'once' : `${a.changedRightToWrong} times`}. Your first instinct was better — only change an answer when you can say exactly why.` });
+    out.push({ tone: 'warn', text: `You changed a right answer to a wrong one ${a.changedRightToWrong === 1 ? 'once' : `${a.changedRightToWrong} times`}. Your first instinct was better, only change an answer when you can say exactly why.` });
   }
   if (a.changedWrongToRight > 0) {
-    out.push({ tone: 'good', text: `Changing your mind paid off ${a.changedWrongToRight === 1 ? 'once' : `${a.changedWrongToRight} times`} — you caught your own mistake${a.changedWrongToRight === 1 ? '' : 's'}.` });
+    out.push({ tone: 'good', text: `Changing your mind paid off ${a.changedWrongToRight === 1 ? 'once' : `${a.changedWrongToRight} times`}, you caught your own mistake${a.changedWrongToRight === 1 ? '' : 's'}.` });
   }
 
   // Pace.
   const { firstHalfAvgMs: f, secondHalfAvgMs: s, firstHalfAccuracy: fa, secondHalfAccuracy: sa } = a.pace;
   if (n >= 6 && f > 0 && s > 0) {
     if (s < f * 0.65 && sa < fa - 0.15) {
-      out.push({ tone: 'warn', text: `You sped up a lot in the second half (${fmtMs(s)} a question vs ${fmtMs(f)}) and accuracy fell from ${Math.round(fa * 100)}% to ${Math.round(sa * 100)}%. Pace yourself — the last questions are worth the same marks as the first.` });
+      out.push({ tone: 'warn', text: `You sped up a lot in the second half (${fmtMs(s)} a question vs ${fmtMs(f)}) and accuracy fell from ${Math.round(fa * 100)}% to ${Math.round(sa * 100)}%. Pace yourself, the last questions are worth the same marks as the first.` });
     } else if (s > f * 1.5) {
-      out.push({ tone: 'info', text: `The second half took ${fmtMs(s)} a question against ${fmtMs(f)} in the first — either the questions got harder or fatigue set in. Note where it started.` });
+      out.push({ tone: 'info', text: `The second half took ${fmtMs(s)} a question against ${fmtMs(f)} in the first, either the questions got harder or fatigue set in. Note where it started.` });
     }
   }
 
   // Time budget.
   if (a.usedFraction !== null && a.allottedMs > 0) {
     if (a.usedFraction >= 0.98) {
-      out.push({ tone: 'warn', text: `You used the whole ${fmtMs(a.allottedMs)}${a.unanswered ? ` and left ${a.unanswered} unanswered` : ''}. In the real exam that's ${fmtMs(a.expectedMsPerQuestion)} a question — practise hitting that.` });
+      out.push({ tone: 'warn', text: `You used the whole ${fmtMs(a.allottedMs)}${a.unanswered ? ` and left ${a.unanswered} unanswered` : ''}. In the real exam that's ${fmtMs(a.expectedMsPerQuestion)} a question, practise hitting that.` });
     } else if (a.usedFraction < 0.4 && a.perQuestion.some((p) => !p.correct)) {
       out.push({ tone: 'info', text: `You finished with ${fmtMs(a.allottedMs - a.totalActiveMs)} to spare and still dropped marks. Use leftover time to re-read the ones you weren't sure about.` });
     }
@@ -168,7 +168,7 @@ export function analyticsInsights(a) {
   // Revisits.
   const bounced = a.perQuestion.filter((p) => p.visits >= 3);
   if (bounced.length) {
-    out.push({ tone: 'info', text: `You came back to ${list(bounced)} three or more times. Flagging and moving on is fine — just make sure you return with a plan, not a re-read.` });
+    out.push({ tone: 'info', text: `You came back to ${list(bounced)} three or more times. Flagging and moving on is fine, just make sure you return with a plan, not a re-read.` });
   }
 
   if (a.unanswered > 0 && !(a.usedFraction >= 0.98)) {
@@ -177,7 +177,7 @@ export function analyticsInsights(a) {
 
   // Positive close if nothing else fired.
   if (out.length === 0) {
-    out.push({ tone: 'good', text: `Steady pacing and no second-guessing — ${fmtMs(a.avgMs)} a question with no wild swings. Keep that rhythm.` });
+    out.push({ tone: 'good', text: `Steady pacing and no second-guessing, ${fmtMs(a.avgMs)} a question with no wild swings. Keep that rhythm.` });
   }
   return out.slice(0, 5);
 }
@@ -186,7 +186,7 @@ export function analyticsInsights(a) {
 export function analyticsForPrompt(a) {
   if (!a || !a.perQuestion?.length) return '';
   const rows = a.perQuestion.map((p) =>
-    `Q${p.i + 1}: ${fmtMs(p.timeMs)}${p.visits > 1 ? `, visited ${p.visits}x` : ''}${p.changedFromFirst ? `, changed answer${p.firstCorrect === true && !p.correct ? ' (right->wrong)' : p.firstCorrect === false && p.correct ? ' (wrong->right)' : ''}` : ''}${p.answered ? '' : ', unanswered'} — ${p.correct ? 'correct' : 'wrong'}`);
+    `Q${p.i + 1}: ${fmtMs(p.timeMs)}${p.visits > 1 ? `, visited ${p.visits}x` : ''}${p.changedFromFirst ? `, changed answer${p.firstCorrect === true && !p.correct ? ' (right->wrong)' : p.firstCorrect === false && p.correct ? ' (wrong->right)' : ''}` : ''}${p.answered ? '' : ', unanswered'}, ${p.correct ? 'correct' : 'wrong'}`);
   const pace = a.pace.firstHalfAvgMs && a.pace.secondHalfAvgMs
     ? `First half ${fmtMs(a.pace.firstHalfAvgMs)}/question at ${Math.round(a.pace.firstHalfAccuracy * 100)}% accuracy; second half ${fmtMs(a.pace.secondHalfAvgMs)}/question at ${Math.round(a.pace.secondHalfAccuracy * 100)}%.`
     : '';

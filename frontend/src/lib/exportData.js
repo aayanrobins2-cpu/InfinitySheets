@@ -39,7 +39,7 @@ export function exportFlashcardsPdf(deck, title = 'Flashcards') {
   const clean = (s) => String(s || '').replace(/[^\x20-\x7e\n°±²³¹¼½¾×÷]/g, (c) => ({ '√': 'sqrt', '≤': '<=', '≥': '>=', '≠': '!=', 'π': 'pi', '→': '->' }[c] || ''));
   const page = (cards, side) => {
     doc.setFontSize(9); doc.setTextColor(120);
-    doc.text(`${title} — ${side} (print double-sided, flip on long edge)`, margin, 7);
+    doc.text(`${title}, ${side} (print double-sided, flip on long edge)`, margin, 7);
     cards.forEach((c, i) => {
       const r = Math.floor(i / cols);
       // Backs are mirrored horizontally so they line up after flipping.

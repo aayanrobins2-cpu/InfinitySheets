@@ -38,7 +38,7 @@ export default class RouteBoundary extends React.Component {
       <div className="max-w-[640px] mx-auto rounded-2xl border border-rose-200 bg-rose-50/50 p-8 text-center" data-testid="route-error">
         <AlertTriangle className="w-8 h-8 text-rose-600 mx-auto mb-2" />
         <div className="text-[16px] font-semibold text-slate-900">This page hit a problem</div>
-        <div className="text-[13px] text-slate-600 mt-1">Nothing you did is lost — your work is saved. Try it again, or go back to the dashboard.</div>
+        <div className="text-[13px] text-slate-600 mt-1">Nothing you did is lost, your work is saved. Try it again, or go back to the dashboard.</div>
         <div className="text-[11.5px] text-slate-500 mt-2 font-mono break-words">{String(this.state.error?.message || this.state.error).slice(0, 160)}</div>
         <div className="flex flex-wrap justify-center gap-2 mt-4">
           <button type="button" onClick={() => this.setState({ error: null })} className="btn-outline-dark inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px]"><RotateCcw className="w-4 h-4" /> Try again</button>

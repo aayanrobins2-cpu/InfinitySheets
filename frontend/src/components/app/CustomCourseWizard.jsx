@@ -134,7 +134,7 @@ export default function CustomCourseWizard({ onClose, onCreated, onUseOffered })
         files: allFiles, // metadata only — the file blobs never leave the browser here
         status: 'Active',
       });
-      toast.success(`${name.trim()} added — course overview ready`);
+      toast.success(`${name.trim()} added, course overview ready`);
       if (onCreated) onCreated({ courseId, subject: subject.trim() });
       if (onClose) onClose();
       window.location.hash = `#course-overview?id=${encodeURIComponent(courseId)}`;
@@ -162,7 +162,7 @@ export default function CustomCourseWizard({ onClose, onCreated, onUseOffered })
         <div className="p-6 flex flex-col gap-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Course name">
-              <input className="input-base" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., IB HL Chemistry — Term 2" data-testid="cc-name" />
+              <input className="input-base" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. IB HL Chemistry, Term 2" data-testid="cc-name" />
             </Field>
             <Field label="Subject">
               <input className="input-base" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g., Chemistry, Data Structures, Music Theory" data-testid="cc-subject" />
@@ -170,7 +170,7 @@ export default function CustomCourseWizard({ onClose, onCreated, onUseOffered })
           </div>
 
           <Field label="Short description">
-            <textarea className="input-base" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is this course about? Exam board, level, country — anything that helps identify it." data-testid="cc-description" />
+            <textarea className="input-base" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is this course about? Exam board, level, country, anything that helps identify it." data-testid="cc-description" />
             <span className="text-[11.5px] text-blue-800/80 inline-flex items-center gap-1 mt-1"><Search className="w-3.5 h-3.5" /> Our AI reads this to search the web for your official course and more study material for this subject.</span>
           </Field>
 
@@ -187,7 +187,7 @@ export default function CustomCourseWizard({ onClose, onCreated, onUseOffered })
                 </button>
               )}
             </div>
-            <p className="text-[11.5px] text-blue-900/70 mt-1">The AI searches for real, official courses and specifications that match yours — it may ask a couple of quick questions first.</p>
+            <p className="text-[11.5px] text-blue-900/70 mt-1">The AI searches for real, official courses and specifications that match yours, it may ask a couple of quick questions first.</p>
 
             {offered.length > 0 && !matched && (
               <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5" data-testid="cc-offered">
@@ -241,7 +241,7 @@ export default function CustomCourseWizard({ onClose, onCreated, onUseOffered })
                           <button type="button" onClick={() => setMatched(c)} className="btn-outline-dark px-3 py-1.5 rounded-lg text-[12px] font-semibold shrink-0" data-testid={`cc-match-${i}`}>This is mine</button>
                         </div>
                       ))}
-                      <button type="button" onClick={() => runSearch('None of these match — try again with different options.')} disabled={searching} className="text-[12px] text-slate-500 hover:text-slate-800 self-start">None of these — search again</button>
+                      <button type="button" onClick={() => runSearch('None of these match, try again with different options.')} disabled={searching} className="text-[12px] text-slate-500 hover:text-slate-800 self-start">None of these, search again</button>
                     </div>
                   ) : (
                     <div className="mt-3 text-[12.5px] text-slate-500">No official course was found. You can still create the course from your material.</div>

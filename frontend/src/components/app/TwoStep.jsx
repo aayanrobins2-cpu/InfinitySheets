@@ -42,7 +42,7 @@ export function TwoStepGate({ onVerified, onSignOut }) {
       if (error) throw error;
       onVerified();
     } catch (err) {
-      toast.error('That code didn’t work — check your authenticator app and try again.');
+      toast.error('That code didn’t work, check your authenticator app and try again.');
       setCode('');
     } finally { setBusy(false); }
   };
@@ -107,7 +107,7 @@ export function TwoStepSettings() {
       setSetup(null); setCode('');
       load();
     } catch (err) {
-      toast.error('That code didn’t work — scan the QR code again and use the newest code.');
+      toast.error('That code didn’t work, scan the QR code again and use the newest code.');
     } finally { setBusy(false); }
   };
 
@@ -133,7 +133,7 @@ export function TwoStepSettings() {
         <div className="min-w-0 flex-1">
           <div className="text-[16px] font-semibold text-slate-900">Two-step verification</div>
           <div className="text-[12.5px] text-slate-500 mt-0.5">
-            {on ? 'On — signing in asks for a code from your authenticator app.' : 'Add a second step to sign-in: a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password…).'}
+            {on ? 'On, signing in asks for a code from your authenticator app.' : 'Add a second step to sign-in: a 6-digit code from an authenticator app (Google Authenticator, Authy, 1Password…).'}
           </div>
         </div>
         {!on && !setup && (

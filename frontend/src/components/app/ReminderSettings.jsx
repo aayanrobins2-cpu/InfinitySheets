@@ -41,7 +41,7 @@ export function RemindersSection() {
   const togglePush = async (v) => {
     if (v) {
       const p = await requestNotificationPermission();
-      if (p !== 'granted') { toast.error(p === 'unsupported' ? 'This browser does not support notifications' : 'Notifications are blocked for this site — allow them in the browser settings'); return; }
+      if (p !== 'granted') { toast.error(p === 'unsupported' ? 'This browser does not support notifications' : 'Notifications are blocked for this site, allow them in the browser settings'); return; }
     }
     updateSettings({ pushReminders: v });
     if (isReal) store.updateNotificationPrefs({ pushReminders: v }, state.user.id).catch(() => null);
@@ -60,7 +60,7 @@ export function RemindersSection() {
       <div className="flex flex-col gap-4">
         <Toggle checked={!!s.pushReminders} onChange={togglePush} testid="pref-push"
           label={<span className="inline-flex items-center gap-1.5"><Bell className="w-4 h-4 text-slate-600" /> Daily study reminder</span>}
-          hint={perm === 'denied' ? 'Blocked in this browser — allow notifications for this site to use reminders.' : 'One notification a day, only when you have reviews due or your streak is at risk. Works while the app is installed or open in a tab.'} />
+          hint={perm === 'denied' ? 'Blocked in this browser, allow notifications for this site to use reminders.' : 'One notification a day, only when you have reviews due or your streak is at risk. Works while the app is installed or open in a tab.'} />
         {s.pushReminders && (
           <div className="flex flex-wrap items-center gap-3 pl-[52px]">
             <label className="text-[12.5px] text-slate-600 inline-flex items-center gap-2">Remind me at

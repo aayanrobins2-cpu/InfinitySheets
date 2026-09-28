@@ -18,7 +18,7 @@ export default function PlusCheckout() {
   const [notice, setNotice] = useState('');
 
   const checkout = () => {
-    if (!url) { setNotice('Secure checkout is opening soon — we will let you know the moment you can upgrade.'); return; }
+    if (!url) { setNotice('Secure checkout is opening soon, we will let you know the moment you can upgrade.'); return; }
     // The account id travels with the checkout so the payment is matched to
     // this account when it completes.
     const u = new URL(url);
@@ -74,7 +74,7 @@ export default function PlusCheckout() {
               {notice && <p className="text-[12.5px] text-slate-600 mt-3 text-center" role="status" data-testid="plus-checkout-soon">{notice}</p>}
               <div className="mt-4 text-[12px] text-slate-500 flex items-start gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>Payment is handled by our payment provider on their secure page — your card details never touch InfinitySheets. Cancel anytime; you keep + until the end of the period you paid for.</span>
+                <span>Payment is handled by our payment provider on their secure page, your card details never touch InfinitySheets. Cancel anytime; you keep + until the end of the period you paid for.</span>
               </div>
             </>
           )}

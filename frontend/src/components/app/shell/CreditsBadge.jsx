@@ -22,7 +22,7 @@ export default function CreditsBadge() {
     <button
       type="button"
       onClick={() => openPlusBanner('aiCredits')}
-      title={`${c.left} of ${c.limit} free AI credits left today — refills in about ${hrs} h. Unlimited with InfinitySheets+.`}
+      title={`${c.left} of ${c.limit} free AI credits left today, refills in about ${hrs} h. Unlimited with InfinitySheets+.`}
       className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full border text-[12px] font-semibold tabular-nums transition-colors ${c.left === 0 ? 'border-rose-300 text-rose-700 bg-rose-50' : low ? 'border-amber-300 text-amber-700 bg-amber-50' : 'border-[color:var(--color-border)] text-slate-600 hover:bg-slate-50'}`}
       data-testid="credits-badge"
     >

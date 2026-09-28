@@ -17,7 +17,7 @@ const SECTIONS = [
   },
   {
     h: 'AI helpers (Google Gemini)',
-    p: 'Several features — original practice questions, marking against a scheme, worked solutions, the study coach and topic overviews — are powered by Google Gemini. While the AI is switched on, the questions you answer, your typed answers and any photos of working you upload are sent to Google to produce those answers. We never send your name, email address or account identifiers, the requests are made through our own server (your device never talks to Google directly), and under the API terms we use Google does not use this data to train its models. You can switch every AI feature off in Settings → Privacy & your data, and nothing is sent while it is off.',
+    p: 'Several features, original practice questions, marking against a scheme, worked solutions, the study coach and topic overviews, are powered by Google Gemini. While the AI is switched on, the questions you answer, your typed answers and any photos of working you upload are sent to Google to produce those answers. We never send your name, email address or account identifiers, the requests are made through our own server (your device never talks to Google directly), and under the API terms we use Google does not use this data to train its models. You can switch every AI feature off in Settings → Privacy & your data, and nothing is sent while it is off.',
   },
   {
     h: 'Children',
@@ -25,7 +25,7 @@ const SECTIONS = [
   },
   {
     h: 'Study groups',
-    p: 'If you join a study group, other members see your first name, how many worksheets and questions you did this week and your streak — never your answers, scores or email. Groups have no rankings.',
+    p: 'If you join a study group, other members see your first name, how many worksheets and questions you did this week and your streak, never your answers, scores or email. Groups have no rankings.',
   },
   {
     h: 'Ads',
@@ -37,7 +37,7 @@ const SECTIONS = [
   },
   {
     h: 'Your choices',
-    p: 'You can ask us to remove your waitlist email or delete your account and its data at any time — write to us and we will do it. Account deletion from Settings removes your study data immediately.',
+    p: 'You can ask us to remove your waitlist email or delete your account and its data at any time, write to us and we will do it. Account deletion from Settings removes your study data immediately.',
   },
   {
     h: 'Changes',

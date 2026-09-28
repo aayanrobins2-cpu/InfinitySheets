@@ -11,23 +11,23 @@ export const RESOURCE_TRACKS = [
       {
         label: 'Official',
         links: [
-          { title: 'Cambridge International — subject pages', desc: 'Syllabus, past papers, specimen papers, and examiner reports for every subject.', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-upper-secondary/cambridge-igcse/subjects/' },
-          { title: 'Cambridge help — where to find past papers', desc: 'Official guide to where Cambridge publishes papers and mark schemes.', url: 'https://help.cambridgeinternational.org/hc/en-gb/articles/115004448905-Where-can-I-find-past-papers-mark-schemes-and-resources-for-our-exams' },
+          { title: 'Cambridge International: subject pages', desc: 'Syllabus, past papers, specimen papers, and examiner reports for every subject.', url: 'https://www.cambridgeinternational.org/programmes-and-qualifications/cambridge-upper-secondary/cambridge-igcse/subjects/' },
+          { title: 'Cambridge help: where to find past papers', desc: 'Official guide to where Cambridge publishes papers and mark schemes.', url: 'https://help.cambridgeinternational.org/hc/en-gb/articles/115004448905-Where-can-I-find-past-papers-mark-schemes-and-resources-for-our-exams' },
         ],
       },
       {
         label: 'Past paper archives',
         links: [
-          { title: 'PapaCambridge — IGCSE', desc: 'Full free archive of past papers, 2002 to present.', url: 'https://pastpapers.papacambridge.com/papers/caie/igcse' },
-          { title: 'PastPapers.Co — IGCSE', desc: 'Alternative free archive.', url: 'https://pastpapers.co/caie/igcse' },
-          { title: 'PapersDaddy — IGCSE', desc: 'Archive covering 151 subjects.', url: 'https://www.papersdaddy.com/cambridge/igcse' },
+          { title: 'PapaCambridge: IGCSE', desc: 'Full free archive of past papers, 2002 to present.', url: 'https://pastpapers.papacambridge.com/papers/caie/igcse' },
+          { title: 'PastPapers.Co: IGCSE', desc: 'Alternative free archive.', url: 'https://pastpapers.co/caie/igcse' },
+          { title: 'PapersDaddy: IGCSE', desc: 'Archive covering 151 subjects.', url: 'https://www.papersdaddy.com/cambridge/igcse' },
         ],
       },
       {
         label: 'Worksheets & topic questions',
         links: [
-          { title: 'Save My Exams — IGCSE', desc: 'Topic questions and revision notes.', url: 'https://www.savemyexams.com/igcse/' },
-          { title: 'Physics & Maths Tutor — CIE IGCSE', desc: 'Topic-wise questions and revision material.', url: 'https://www.physicsandmathstutor.com/physics-revision/igcse-cie/' },
+          { title: 'Save My Exams: IGCSE', desc: 'Topic questions and revision notes.', url: 'https://www.savemyexams.com/igcse/' },
+          { title: 'Physics & Maths Tutor: CIE IGCSE', desc: 'Topic-wise questions and revision material.', url: 'https://www.physicsandmathstutor.com/physics-revision/igcse-cie/' },
         ],
       },
     ],
@@ -50,8 +50,8 @@ export const RESOURCE_TRACKS = [
       {
         label: 'Past paper archives',
         links: [
-          { title: 'PapaCambridge — AS & A Level', desc: 'Full free archive of past papers.', url: 'https://pastpapers.papacambridge.com/papers/caie/as-and-a-level' },
-          { title: 'BestExamHelp — A Level', desc: 'Alternative free archive.', url: 'https://bestexamhelp.com/exam/cambridge-international-a-level/pp-a.php' },
+          { title: 'PapaCambridge: AS & A Level', desc: 'Full free archive of past papers.', url: 'https://pastpapers.papacambridge.com/papers/caie/as-and-a-level' },
+          { title: 'BestExamHelp: A Level', desc: 'Alternative free archive.', url: 'https://bestexamhelp.com/exam/cambridge-international-a-level/pp-a.php' },
         ],
       },
       {
@@ -59,7 +59,7 @@ export const RESOURCE_TRACKS = [
         links: [
           { title: 'Physics & Maths Tutor', desc: 'Topic questions and revision notes for A Level.', url: 'https://www.physicsandmathstutor.com/' },
           { title: 'Save My Exams', desc: 'Topic questions and model answers.', url: 'https://www.savemyexams.com/' },
-          { title: 'SchoolMyKids — CAIE syllabus index', desc: 'Index of syllabi and learner guides.', url: 'https://www.schoolmykids.com/education/cambridge-cie-past-papers-syllabuses-guides' },
+          { title: 'SchoolMyKids: CAIE syllabus index', desc: 'Index of syllabi and learner guides.', url: 'https://www.schoolmykids.com/education/cambridge-cie-past-papers-syllabuses-guides' },
         ],
       },
     ],
@@ -68,12 +68,12 @@ export const RESOURCE_TRACKS = [
     id: 'IB',
     name: 'IB Diploma Programme',
     short: 'IB',
-    note: 'IB enforces copyright strictly — always use official or licensed sources for papers.',
+    note: 'IB enforces copyright strictly, always use official or licensed sources for papers.',
     groups: [
       {
         label: 'Official',
         links: [
-          { title: 'ibo.org — DP sample exam papers', desc: 'Free official sample papers for the Diploma Programme.', url: 'https://ibo.org/programmes/diploma-programme/assessment-and-exams/sample-exam-papers/' },
+          { title: 'ibo.org: DP sample exam papers', desc: 'Free official sample papers for the Diploma Programme.', url: 'https://ibo.org/programmes/diploma-programme/assessment-and-exams/sample-exam-papers/' },
           { title: 'Follett IB Store', desc: 'Official past papers (paid, legal source).', url: 'https://www.follettibstore.com/main/dp' },
         ],
       },
@@ -81,7 +81,7 @@ export const RESOURCE_TRACKS = [
         label: 'Practice questions',
         links: [
           { title: 'Revision Village', desc: 'Practice and prediction papers for IB subjects.', url: 'https://www.revisionvillage.com/ib-past-papers/' },
-          { title: 'Save My Exams — IB DP', desc: 'Topic questions and revision material.', url: 'https://www.savemyexams.com/dp/past-papers/' },
+          { title: 'Save My Exams: IB DP', desc: 'Topic questions and revision material.', url: 'https://www.savemyexams.com/dp/past-papers/' },
         ],
       },
     ],
@@ -94,18 +94,18 @@ export const RESOURCE_TRACKS = [
       {
         label: 'Official',
         links: [
-          { title: 'CISCE — ICSE Class X specimen papers', desc: 'Official specimen question papers.', url: 'https://cisceboard.org/icse_X_Specimen_Question_Papers.html' },
-          { title: 'CISCE — ISC Class XII specimen papers', desc: 'Official specimen question papers.', url: 'https://cisceboard.org/isc_XII_Specimen_Question_Papers.html' },
-          { title: 'cisce.org', desc: 'Official portal — syllabus, circulars, and papers.', url: 'https://cisce.org/' },
+          { title: 'CISCE: ICSE Class X specimen papers', desc: 'Official specimen question papers.', url: 'https://cisceboard.org/icse_X_Specimen_Question_Papers.html' },
+          { title: 'CISCE: ISC Class XII specimen papers', desc: 'Official specimen question papers.', url: 'https://cisceboard.org/isc_XII_Specimen_Question_Papers.html' },
+          { title: 'cisce.org', desc: 'Official portal, syllabus, circulars, and papers.', url: 'https://cisce.org/' },
         ],
       },
       {
         label: 'Solved previous-year papers',
         links: [
-          { title: 'SelfStudys — CISCE PYQs', desc: 'Solved previous-year question papers.', url: 'https://www.selfstudys.com/books/cisce-previous-year-question-paper' },
-          { title: 'AglaSem — CISCE papers', desc: 'Question paper collection.', url: 'https://schools.aglasem.com/cisce-question-papers/' },
+          { title: 'SelfStudys: CISCE PYQs', desc: 'Solved previous-year question papers.', url: 'https://www.selfstudys.com/books/cisce-previous-year-question-paper' },
+          { title: 'AglaSem: CISCE papers', desc: 'Question paper collection.', url: 'https://schools.aglasem.com/cisce-question-papers/' },
           { title: 'ICSEonline', desc: 'ICSE resources and papers.', url: 'https://www.icseonline.com/' },
-          { title: 'Physics Wallah — ISC Class 12 PYQs', desc: 'Subject-wise previous-year papers.', url: 'https://www.pw.live/school-prep/exams/isc-class-12-previous-year-question-papers' },
+          { title: 'Physics Wallah: ISC Class 12 PYQs', desc: 'Subject-wise previous-year papers.', url: 'https://www.pw.live/school-prep/exams/isc-class-12-previous-year-question-papers' },
         ],
       },
     ],
@@ -118,18 +118,18 @@ export const RESOURCE_TRACKS = [
       {
         label: 'Official',
         links: [
-          { title: 'CISCE — ICSE Class X specimen papers', desc: 'Official specimen question papers.', url: 'https://cisceboard.org/icse_X_Specimen_Question_Papers.html' },
-          { title: 'CISCE — ISC Class XII specimen papers', desc: 'Official specimen question papers.', url: 'https://cisceboard.org/isc_XII_Specimen_Question_Papers.html' },
-          { title: 'cisce.org', desc: 'Official portal — syllabus, circulars, and papers.', url: 'https://cisce.org/' },
+          { title: 'CISCE: ICSE Class X specimen papers', desc: 'Official specimen question papers.', url: 'https://cisceboard.org/icse_X_Specimen_Question_Papers.html' },
+          { title: 'CISCE: ISC Class XII specimen papers', desc: 'Official specimen question papers.', url: 'https://cisceboard.org/isc_XII_Specimen_Question_Papers.html' },
+          { title: 'cisce.org', desc: 'Official portal, syllabus, circulars, and papers.', url: 'https://cisce.org/' },
         ],
       },
       {
         label: 'Solved previous-year papers',
         links: [
-          { title: 'SelfStudys — CISCE PYQs', desc: 'Solved previous-year question papers.', url: 'https://www.selfstudys.com/books/cisce-previous-year-question-paper' },
-          { title: 'AglaSem — CISCE papers', desc: 'Question paper collection.', url: 'https://schools.aglasem.com/cisce-question-papers/' },
+          { title: 'SelfStudys: CISCE PYQs', desc: 'Solved previous-year question papers.', url: 'https://www.selfstudys.com/books/cisce-previous-year-question-paper' },
+          { title: 'AglaSem: CISCE papers', desc: 'Question paper collection.', url: 'https://schools.aglasem.com/cisce-question-papers/' },
           { title: 'ICSEonline', desc: 'ICSE resources and papers.', url: 'https://www.icseonline.com/' },
-          { title: 'Physics Wallah — ISC Class 12 PYQs', desc: 'Subject-wise previous-year papers.', url: 'https://www.pw.live/school-prep/exams/isc-class-12-previous-year-question-papers' },
+          { title: 'Physics Wallah: ISC Class 12 PYQs', desc: 'Subject-wise previous-year papers.', url: 'https://www.pw.live/school-prep/exams/isc-class-12-previous-year-question-papers' },
         ],
       },
     ],
@@ -142,17 +142,17 @@ export const RESOURCE_TRACKS = [
       {
         label: 'Official',
         links: [
-          { title: 'CBSE Academic — sample paper archive', desc: 'Official sample question papers with marking schemes.', url: 'https://cbseacademic.nic.in/sqp_archive.html' },
-          { title: 'cbse.gov.in — question papers', desc: 'Official previous-year question papers.', url: 'https://www.cbse.gov.in/cbsenew/question-paper.html' },
-          { title: 'cbse.gov.in — sample papers', desc: 'Official sample papers.', url: 'https://www.cbse.gov.in/cbsenew/samplepaper.html' },
-          { title: 'CBSE Academic — curriculum & syllabus', desc: 'Official curriculum, syllabus, and portions.', url: 'https://cbseacademic.nic.in/' },
-          { title: 'NCERT — textbooks', desc: 'Free official NCERT textbook PDFs.', url: 'https://ncert.nic.in/textbook.php' },
+          { title: 'CBSE Academic: sample paper archive', desc: 'Official sample question papers with marking schemes.', url: 'https://cbseacademic.nic.in/sqp_archive.html' },
+          { title: 'cbse.gov.in: question papers', desc: 'Official previous-year question papers.', url: 'https://www.cbse.gov.in/cbsenew/question-paper.html' },
+          { title: 'cbse.gov.in: sample papers', desc: 'Official sample papers.', url: 'https://www.cbse.gov.in/cbsenew/samplepaper.html' },
+          { title: 'CBSE Academic: curriculum & syllabus', desc: 'Official curriculum, syllabus, and portions.', url: 'https://cbseacademic.nic.in/' },
+          { title: 'NCERT: textbooks', desc: 'Free official NCERT textbook PDFs.', url: 'https://ncert.nic.in/textbook.php' },
         ],
       },
       {
         label: 'Aggregated papers',
         links: [
-          { title: 'Shiksha — CBSE question papers', desc: 'Compiled previous-year question papers.', url: 'https://www.shiksha.com/boards/cbse-board-question-papers' },
+          { title: 'Shiksha: CBSE question papers', desc: 'Compiled previous-year question papers.', url: 'https://www.shiksha.com/boards/cbse-board-question-papers' },
         ],
       },
     ],
@@ -165,17 +165,17 @@ export const RESOURCE_TRACKS = [
       {
         label: 'Official',
         links: [
-          { title: 'CBSE Academic — sample paper archive', desc: 'Official sample question papers with marking schemes.', url: 'https://cbseacademic.nic.in/sqp_archive.html' },
-          { title: 'cbse.gov.in — question papers', desc: 'Official previous-year question papers.', url: 'https://www.cbse.gov.in/cbsenew/question-paper.html' },
-          { title: 'cbse.gov.in — sample papers', desc: 'Official sample papers.', url: 'https://www.cbse.gov.in/cbsenew/samplepaper.html' },
-          { title: 'CBSE Academic — curriculum & syllabus', desc: 'Official curriculum, syllabus, and portions.', url: 'https://cbseacademic.nic.in/' },
-          { title: 'NCERT — textbooks', desc: 'Free official NCERT textbook PDFs.', url: 'https://ncert.nic.in/textbook.php' },
+          { title: 'CBSE Academic: sample paper archive', desc: 'Official sample question papers with marking schemes.', url: 'https://cbseacademic.nic.in/sqp_archive.html' },
+          { title: 'cbse.gov.in: question papers', desc: 'Official previous-year question papers.', url: 'https://www.cbse.gov.in/cbsenew/question-paper.html' },
+          { title: 'cbse.gov.in: sample papers', desc: 'Official sample papers.', url: 'https://www.cbse.gov.in/cbsenew/samplepaper.html' },
+          { title: 'CBSE Academic: curriculum & syllabus', desc: 'Official curriculum, syllabus, and portions.', url: 'https://cbseacademic.nic.in/' },
+          { title: 'NCERT: textbooks', desc: 'Free official NCERT textbook PDFs.', url: 'https://ncert.nic.in/textbook.php' },
         ],
       },
       {
         label: 'Aggregated papers',
         links: [
-          { title: 'Shiksha — CBSE question papers', desc: 'Compiled previous-year question papers.', url: 'https://www.shiksha.com/boards/cbse-board-question-papers' },
+          { title: 'Shiksha: CBSE question papers', desc: 'Compiled previous-year question papers.', url: 'https://www.shiksha.com/boards/cbse-board-question-papers' },
         ],
       },
     ],
@@ -188,17 +188,17 @@ export const RESOURCE_TRACKS = [
       {
         label: 'Official (College Board)',
         links: [
-          { title: 'College Board — practice tests', desc: 'Full-length official practice tests.', url: 'https://satsuite.collegeboard.org/practice/practice-tests' },
-          { title: 'Bluebook — digital practice', desc: 'Official digital adaptive practice tests.', url: 'https://bluebook.collegeboard.org/students/practice' },
-          { title: 'Bluebook — test list', desc: 'All Bluebook practice tests.', url: 'https://satsuite.collegeboard.org/practice/practice-tests/bluebook' },
-          { title: 'College Board — paper practice tests', desc: 'Downloadable official paper test PDFs.', url: 'https://satsuite.collegeboard.org/practice/practice-tests/paper' },
+          { title: 'College Board: practice tests', desc: 'Full-length official practice tests.', url: 'https://satsuite.collegeboard.org/practice/practice-tests' },
+          { title: 'Bluebook: digital practice', desc: 'Official digital adaptive practice tests.', url: 'https://bluebook.collegeboard.org/students/practice' },
+          { title: 'Bluebook: test list', desc: 'All Bluebook practice tests.', url: 'https://satsuite.collegeboard.org/practice/practice-tests/bluebook' },
+          { title: 'College Board: paper practice tests', desc: 'Downloadable official paper test PDFs.', url: 'https://satsuite.collegeboard.org/practice/practice-tests/paper' },
         ],
       },
       {
         label: 'Free prep & indexes',
         links: [
-          { title: 'Khan Academy — Digital SAT prep', desc: 'Free prep from the official College Board partner.', url: 'https://www.khanacademy.org/digital-sat' },
-          { title: 'LearnQ — released Digital SAT index', desc: 'Index of all released digital SAT tests.', url: 'https://blogs.learnq.ai/released-sat/' },
+          { title: 'Khan Academy: Digital SAT prep', desc: 'Free prep from the official College Board partner.', url: 'https://www.khanacademy.org/digital-sat' },
+          { title: 'LearnQ: released Digital SAT index', desc: 'Index of all released digital SAT tests.', url: 'https://blogs.learnq.ai/released-sat/' },
         ],
       },
     ],
@@ -214,15 +214,15 @@ export const RESOURCE_TRACKS = [
           { title: 'jeemain.nta.nic.in', desc: 'Official JEE Main portal.', url: 'https://jeemain.nta.nic.in/' },
           { title: 'JEE Main syllabus 2026', desc: 'Official syllabus PDF.', url: 'https://jeemain.nta.nic.in/document/syllabus-2026/' },
           { title: 'JEE Main paper archive', desc: 'Official question paper archive.', url: 'https://jeemain.nta.nic.in/document-category/archive/' },
-          { title: 'jeeadv.ac.in', desc: 'Official JEE Advanced site — past papers in the Archive section.', url: 'https://jeeadv.ac.in/' },
+          { title: 'jeeadv.ac.in', desc: 'Official JEE Advanced site, past papers in the Archive section.', url: 'https://jeeadv.ac.in/' },
         ],
       },
       {
         label: 'Solved previous-year papers',
         links: [
-          { title: 'Vedantu — JEE Main PYQs', desc: 'Solved papers, 2014 to present.', url: 'https://www.vedantu.com/jee-main/previous-year-question-paper' },
-          { title: 'Aakash — JEE Advanced PYQs', desc: 'Solved JEE Advanced papers.', url: 'https://www.aakash.ac.in/jee-advanced-previous-year-question-papers' },
-          { title: 'eSaral — JEE Main 2026 papers', desc: 'Recent JEE Main papers.', url: 'https://www.esaral.com/jee/jee-main-2026-question-paper/' },
+          { title: 'Vedantu: JEE Main PYQs', desc: 'Solved papers, 2014 to present.', url: 'https://www.vedantu.com/jee-main/previous-year-question-paper' },
+          { title: 'Aakash: JEE Advanced PYQs', desc: 'Solved JEE Advanced papers.', url: 'https://www.aakash.ac.in/jee-advanced-previous-year-question-papers' },
+          { title: 'eSaral: JEE Main 2026 papers', desc: 'Recent JEE Main papers.', url: 'https://www.esaral.com/jee/jee-main-2026-question-paper/' },
         ],
       },
     ],
@@ -235,16 +235,16 @@ export const RESOURCE_TRACKS = [
       {
         label: 'Official (NTA)',
         links: [
-          { title: 'neet.nta.nic.in — archive', desc: 'Official portal and question paper archive.', url: 'https://neet.nta.nic.in/document-category/archive/' },
+          { title: 'neet.nta.nic.in: archive', desc: 'Official portal and question paper archive.', url: 'https://neet.nta.nic.in/document-category/archive/' },
         ],
       },
       {
         label: 'Solved previous-year papers',
         links: [
-          { title: 'Careers360 — NEET papers', desc: 'Code-wise official papers, 2015 to present.', url: 'https://medicine.careers360.com/articles/neet-question-paper' },
-          { title: 'Vedantu — NEET PYQs', desc: 'Solved previous-year papers.', url: 'https://www.vedantu.com/neet/neet-previous-year-question-paper' },
-          { title: 'Aakash — NEET PYQs', desc: 'Solved previous-year papers.', url: 'https://www.aakash.ac.in/neet-previous-year-question-papers' },
-          { title: 'SelfStudys — NEET 2005 onwards', desc: 'Two decades of solved papers.', url: 'https://www.selfstudys.com/books/neet-previous-year-paper' },
+          { title: 'Careers360: NEET papers', desc: 'Code-wise official papers, 2015 to present.', url: 'https://medicine.careers360.com/articles/neet-question-paper' },
+          { title: 'Vedantu: NEET PYQs', desc: 'Solved previous-year papers.', url: 'https://www.vedantu.com/neet/neet-previous-year-question-paper' },
+          { title: 'Aakash: NEET PYQs', desc: 'Solved previous-year papers.', url: 'https://www.aakash.ac.in/neet-previous-year-question-papers' },
+          { title: 'SelfStudys: NEET 2005 onwards', desc: 'Two decades of solved papers.', url: 'https://www.selfstudys.com/books/neet-previous-year-paper' },
         ],
       },
     ],
@@ -253,15 +253,15 @@ export const RESOURCE_TRACKS = [
     id: 'LSAT',
     name: 'LSAT',
     short: 'LSAT',
-    note: 'LSAC enforces copyright — always use official sources for real PrepTests.',
+    note: 'LSAC enforces copyright, always use official sources for real PrepTests.',
     groups: [
       {
         label: 'Official (LSAC)',
         links: [
-          { title: 'LSAC — official practice tests', desc: 'Information on official LSAT practice tests.', url: 'https://www.lsac.org/lsat/prepare/official-lsat-practice-tests' },
-          { title: 'LawHub — PrepTest library', desc: 'Four full free PrepTests with an account.', url: 'https://app.lawhub.org/library/fulltests' },
+          { title: 'LSAC: official practice tests', desc: 'Information on official LSAT practice tests.', url: 'https://www.lsac.org/lsat/prepare/official-lsat-practice-tests' },
+          { title: 'LawHub: PrepTest library', desc: 'Four full free PrepTests with an account.', url: 'https://app.lawhub.org/library/fulltests' },
           { title: 'LawHub Advantage', desc: 'Full PrepTest library (paid).', url: 'https://www.lawhub.org/LawHubAdvantage' },
-          { title: 'LSAC — free prep', desc: 'Free official prep, including Khan Academy.', url: 'https://www.lsac.org/lsat/prep' },
+          { title: 'LSAC: free prep', desc: 'Free official prep, including Khan Academy.', url: 'https://www.lsac.org/lsat/prep' },
         ],
       },
     ],

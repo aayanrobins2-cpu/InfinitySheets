@@ -89,7 +89,7 @@ export default function WorkingCapture({ value, onChange, question, subject, boa
       {images.length === 0 ? (
         <div className="text-[12px] text-slate-500">
           {required
-            ? 'This question needs a drawn answer. Draw it on paper, then scan or upload a photo — typing is disabled.'
+            ? 'This question needs a drawn answer. Draw it on paper, then scan or upload a photo, typing is disabled.'
             : 'Photograph your working on paper so the AI can check your steps, not just the final answer.'}
         </div>
       ) : (

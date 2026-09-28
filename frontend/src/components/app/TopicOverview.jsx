@@ -76,7 +76,7 @@ export default function TopicOverview({ subject, topic, go }) {
           <div className="text-[13px] text-slate-500 mt-1.5">
             {acc !== null
               ? <>Your accuracy <span className="font-semibold text-slate-800">{acc}%</span> across {attempts.length} worksheet{attempts.length === 1 ? '' : 's'}{best ? <> · best <span className="font-semibold text-slate-800">{best.score}%</span></> : null}</>
-              : 'Not attempted yet — start with a worksheet or read the overview below.'}
+              : 'Not attempted yet, start with a worksheet or read the overview below.'}
           </div>
         </div>
         <CreateWorksheetButton onClick={launch} data-testid="topic-create-worksheet" />
@@ -101,7 +101,7 @@ export default function TopicOverview({ subject, topic, go }) {
             testid="topic-chat"
           />
           ) : (
-            <button type="button" onClick={() => { if (requirePlus('askDoubt')) setAskOpen(true); }} className="card-soft p-5 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:border-violet-300" data-testid="ask-doubt-locked">{usesLeft('askDoubt') > 0 ? <>Ask a doubt &mdash; {usesLeft('askDoubt')} free today, unlimited with <PlusName />.</> : <>Ask a doubt is an <PlusName /> feature. Today&rsquo;s free ones are used.</>}</button>
+            <button type="button" onClick={() => { if (requirePlus('askDoubt')) setAskOpen(true); }} className="card-soft p-5 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:border-violet-300" data-testid="ask-doubt-locked">{usesLeft('askDoubt') > 0 ? <>Ask a doubt, {usesLeft('askDoubt')} free today, unlimited with <PlusName />.</> : <>Ask a doubt is an <PlusName /> feature. Today&rsquo;s free ones are used.</>}</button>
           )}
         </div>
 

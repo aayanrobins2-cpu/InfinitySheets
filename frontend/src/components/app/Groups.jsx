@@ -45,7 +45,7 @@ export default function Groups() {
     setBusy(true);
     try {
       const g = await store.createGroup(name.trim(), school.trim());
-      toast.success(`Group created — share the code ${g.code}`);
+      toast.success(`Group created, share the code ${g.code}`);
       track('group_created');
       setName(''); setSchool('');
       await refresh();
@@ -53,7 +53,7 @@ export default function Groups() {
     finally { setBusy(false); }
   };
   const join = async () => {
-    if (!isReal) { toast('Sign up to join a real group — this one is a sample'); return; }
+    if (!isReal) { toast('Sign up to join a real group, this one is a sample'); return; }
     if (!code.trim()) return;
     setBusy(true);
     try {
@@ -67,7 +67,7 @@ export default function Groups() {
     finally { setBusy(false); }
   };
   const leave = async (g) => {
-    if (!isReal) { toast('Sample group — nothing to leave'); return; }
+    if (!isReal) { toast('Sample group, nothing to leave'); return; }
     if (!window.confirm(`Leave ${g.name}?`)) return;
     try { await store.leaveGroup(g.id, state.user.id); toast.success('Left the group'); await refresh(); }
     catch (e) { toast.error(e.message || 'Could not leave'); }
@@ -81,7 +81,7 @@ export default function Groups() {
           <Users className="w-4 h-4 text-blue-600" /> This is a sample group so you can see how it works. Sign up to create a real one for your class and share its code.
         </div>
       )}
-      <p className="text-[14px] text-zinc-500">Practise with your class. Groups show first names and this week's activity — no rankings, no scores against each other, never answers or emails.</p>
+      <p className="text-[14px] text-zinc-500">Practise with your class. Groups show first names and this week's activity, no rankings, no scores against each other, never answers or emails.</p>
       <div className="grid md:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-[color:var(--color-border)] bg-white p-5">
           <div className="text-[14px] font-semibold text-slate-900 inline-flex items-center gap-2 mb-3"><Plus className="w-4 h-4 text-violet-600" /> Create a group</div>

@@ -220,7 +220,7 @@ function sanitizeForPDF(s) {
     .replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/≠/g, '!=').replace(/⇌/g, '<->')
     .replace(/⅓/g, '1/3').replace(/⅔/g, '2/3')
     // Dashes and minus.
-    .replace(/[‐‑‒–—−]/g, '-')
+    .replace(/[‐‑‒–, −]/g, '-')
     // Quotes and apostrophes.
     .replace(/[‘’‚‛]/g, "'")
     .replace(/[“”„‟]/g, '"')
@@ -847,7 +847,7 @@ export default function Worksheets({ go, active = true }) {
       if (qs.length) return qs;
     }
     if (simulation) return assembleSimulation();
-    if (!subject) { toast.error(chosenSubjects.length ? 'Select a subject' : 'Add a course first — its subjects appear here'); return null; }
+    if (!subject) { toast.error(chosenSubjects.length ? 'Select a subject' : 'Add a course first, its subjects appear here'); return null; }
     if (!topics.length) { toast.error('Select at least one topic'); return null; }
     if (!pastPapers && !aiGenerated) { toast.error('Pick past papers, AI generated, or both'); return null; }
     if (pastPapers && !aiGenerated && ppAvailable === 0) {
@@ -877,7 +877,7 @@ export default function Worksheets({ go, active = true }) {
         try {
           generated = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics, answerType: recap ? 'Typed response' : answerType, difficulty: recap ? 'Easy' : effDifficulty, count: need, instructions: request, notes });
         } catch (e) {
-          toast.error(`${e.message || 'The AI could not write questions'}${pastPapers ? ' — using past-paper questions instead.' : ''}`);
+          toast.error(`${e.message || 'The AI could not write questions'}${pastPapers ? ', using past-paper questions instead.' : ''}`);
         } finally {
           setGenerating(false);
         }
@@ -930,7 +930,7 @@ export default function Worksheets({ go, active = true }) {
     const gotMarks = sheetMarks(qs, boardForSubject);
     if (goalMarks ? gotMarks < goalMarks * PACE_TOLERANCE.low : qs.length < length) {
       toast(goalMarks
-        ? `This sheet has ${gotMarks} of the ${goalMarks} marks ${duration} minutes would hold in the real exam — ${aiGenerated ? 'the AI couldn’t write the rest right now' : 'there aren’t more matching questions'}.${aiGenerated ? '' : ' Tick Accurate to you for more.'}`
+        ? `This sheet has ${gotMarks} of the ${goalMarks} marks ${duration} minutes would hold in the real exam, ${aiGenerated ? 'the AI couldn’t write the rest right now' : 'there aren’t more matching questions'}.${aiGenerated ? '' : ' Tick Accurate to you for more.'}`
         : `Only ${qs.length} question${qs.length === 1 ? '' : 's'} could be made, so this sheet is shorter.`);
     }
     return qs;
@@ -940,7 +940,7 @@ export default function Worksheets({ go, active = true }) {
   // question stamped with its section and mark weight. The local bank fills
   // any section the AI could not.
   const assembleSimulation = async () => {
-    if (!subject) { toast.error('Add a course first — its subjects appear here'); return null; }
+    if (!subject) { toast.error('Add a course first, its subjects appear here'); return null; }
     const allTopics = topicsList.length ? topicsList : topics;
     if (!allTopics.length) { toast.error('This subject has no topics to build a paper from'); return null; }
     const out = [];
@@ -952,7 +952,7 @@ export default function Worksheets({ go, active = true }) {
         if (aiOn) {
           try {
             got = await generateQuestions({ board: boardForSubject, ibLevel: ibLevelForSubject, subject, topics: allTopics, answerType: sec.type, difficulty: 'Exam level', count: sec.count });
-          } catch (e) { toast.error(`${sec.name}: ${e.message || 'AI unavailable'} — using the bank.`); }
+          } catch (e) { toast.error(`${sec.name}: ${e.message || 'AI unavailable'}, using the bank.`); }
         }
         const qs = buildQuestions({ topics: allTopics, answerType: sec.type, difficulty: 'Exam level', length: sec.count, pastPapers: false, aiGenerated: true, pastPaperPool, reviewQuestions: [], generated: got });
         qs.forEach((q) => out.push({ ...q, _section: si, marks: sec.marksEach }));
@@ -1029,7 +1029,7 @@ export default function Worksheets({ go, active = true }) {
         studentName: state.user?.name || '',
         paperLabel: paperType?.label,
       });
-      toast.success('PDF ready \u2014 check your downloads folder.');
+      toast.success('PDF ready, check your downloads folder.');
       // Open a paper session so the student can time it and hand in the answers.
       setPaper({ id: `paper_${Date.now()}`, subject, topics, answerType, difficulty, duration, questions: qs, createdAt: new Date().toISOString(), startedAt: null, submittedAt: null });
       setPaperFiles([]);
@@ -1297,7 +1297,7 @@ export default function Worksheets({ go, active = true }) {
     const budget = budgetMsFor(current);
     if (budget > 0 && spentOnCurrentMs() > budget && !paceWarnedRef.current.has(current)) {
       paceWarnedRef.current.add(current);
-      toast(`Over pace on Q${current + 1} — flag it and move on, come back if there is time.`, { icon: '⏱️' });
+      toast(`Over pace on Q${current + 1}, flag it and move on, come back if there is time.`, { icon: '⏱️' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paceTick, current, stage, paceCoach]);
@@ -1392,7 +1392,7 @@ export default function Worksheets({ go, active = true }) {
             </button>
             {!examMode && (
               <button
-                onClick={() => { saveDraftWorksheet(makeDraft(liveRef.current)); toast.success('Progress saved — resume it anytime'); go('dashboard'); }}
+                onClick={() => { saveDraftWorksheet(makeDraft(liveRef.current)); toast.success('Progress saved, resume it anytime'); go('dashboard'); }}
                 data-testid="ws-save-exit"
                 className="btn-outline-dark inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium"
               >
@@ -1437,7 +1437,7 @@ export default function Worksheets({ go, active = true }) {
               </span>
             )}
             {q.source === 'review' && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-800 text-[10px] font-semibold" title="You missed this before — spaced review">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-800 text-[10px] font-semibold" title="You missed this before, spaced review">
                 <RotateCcw className="w-3.5 h-3.5" /> Review
               </span>
             )}
@@ -1617,7 +1617,7 @@ export default function Worksheets({ go, active = true }) {
                 <DiagnosisPanel sheet={result} autoRun testid="worksheet-diagnosis" />
               ) : (
                 <button type="button" onClick={() => { if (requirePlus('diagnosis')) setFreeDiagnosis(result); }} className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 text-[13px] text-slate-700 inline-flex items-center gap-2 hover:bg-violet-50" data-testid="diagnosis-locked">
-                  {usesLeft('diagnosis') > 0 ? <>Get your AI diagnosis &mdash; {usesLeft('diagnosis')} free today, unlimited with <PlusName />.</> : <>AI worksheet diagnosis is an <PlusName /> feature. Your free one for today is used.</>}
+                  {usesLeft('diagnosis') > 0 ? <>Get your AI diagnosis, {usesLeft('diagnosis')} free today, unlimited with <PlusName />.</> : <>AI worksheet diagnosis is an <PlusName /> feature. Your free one for today is used.</>}
                 </button>
               )}
             </div>
@@ -1689,12 +1689,12 @@ export default function Worksheets({ go, active = true }) {
                       </>
                     )}
                     {isDrawing && (
-                      <div className="text-[13px] text-zinc-600 mt-1">{q.examAnswer ? <>Expected: <span className="font-medium text-slate-800">{q.examAnswer}</span></> : 'Drawn answer — marked against the scheme.'}</div>
+                      <div className="text-[13px] text-zinc-600 mt-1">{q.examAnswer ? <>Expected: <span className="font-medium text-slate-800">{q.examAnswer}</span></> : 'Drawn answer, marked against the scheme.'}</div>
                     )}
                     {Array.isArray(q.markScheme) && q.markScheme.length > 0 && (
                       <div className="text-[12.5px] text-slate-600 mt-1.5 rounded-lg bg-slate-50 border border-[color:var(--color-border)] px-3 py-2">
                         <div className="text-[10.5px] uppercase tracking-wide text-slate-500 mb-1 inline-flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5" /> Marking scheme</div>
-                        <ul className="list-disc pl-4 space-y-0.5">{q.markScheme.map((pt, k) => <li key={k}><span className="font-semibold">{pt.marks || 1}</span> — {pt.point}</li>)}</ul>
+                        <ul className="list-disc pl-4 space-y-0.5">{q.markScheme.map((pt, k) => <li key={k}><span className="font-semibold">{pt.marks || 1}</span>, {pt.point}</li>)}</ul>
                       </div>
                     )}
                     {(w?.images?.length || w?.transcript) && (
@@ -1744,7 +1744,7 @@ export default function Worksheets({ go, active = true }) {
       <p className="text-[14px] text-zinc-500 mb-6">Create targeted practice. Choose a subject you&apos;re studying, pick one or more topics, and dial in the format.</p>
       {challengePick && (
         <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-3 text-[13px] text-slate-700 flex flex-wrap items-center gap-2" data-testid="ws-challenge-pick">
-          <Zap className="w-4 h-4 text-amber-600" /> <span className="font-semibold text-amber-900">Today's 5:</span> {challengePick.subject} · {challengePick.topics.join(' & ')}. Five questions, about 5 minutes — press Create to start.
+          <Zap className="w-4 h-4 text-amber-600" /> <span className="font-semibold text-amber-900">Today's 5:</span> {challengePick.subject} · {challengePick.topics.join(' & ')}. Five questions, about 5 minutes, press Create to start.
         </div>
       )}
       {paperPick && paperPick.ids?.length > 0 && (
@@ -1763,7 +1763,7 @@ export default function Worksheets({ go, active = true }) {
             )}
             {chosenSubjects.length === 0 && (
               <button type="button" onClick={() => go('courses')} className="text-[12px] text-blue-700 hover:text-blue-900 mt-1 text-left" data-testid="ws-add-course-hint">
-                No subjects yet — add a course to choose from its subjects &rarr;
+                No subjects yet, add a course to choose from its subjects &rarr;
               </button>
             )}
           </Field>
@@ -1917,13 +1917,13 @@ export default function Worksheets({ go, active = true }) {
             <label className={`mt-2.5 flex items-start gap-2.5 rounded-lg border px-3 py-2.5 cursor-pointer ${useNotes ? 'border-violet-300 bg-violet-50/60' : 'border-[color:var(--color-border)]'}`} data-testid="ws-use-notes">
               <input type="checkbox" className="mt-0.5" checked={useNotes} onChange={(e) => { if (e.target.checked && !plus && usesLeft('notesInWorksheets') <= 0) { openPlusBanner('notesInWorksheets'); return; } setUseNotes(e.target.checked); }} />
               <span className="text-[12.5px] text-slate-700">
-                <span className="font-medium">Use my notes</span> <PlusBadge /> &mdash; the AI builds the questions from your {subjectNotes.length} uploaded {subject} note{subjectNotes.length === 1 ? '' : 's'}.
-                {!plus && <span className="block text-slate-500 text-[11.5px] mt-0.5">{usesLeft('notesInWorksheets') > 0 ? '1 free sheet from your notes a day.' : 'Today’s free one is used — unlimited with InfinitySheets+.'}</span>}
+                <span className="font-medium">Use my notes</span> <PlusBadge />, the AI builds the questions from your {subjectNotes.length} uploaded {subject} note{subjectNotes.length === 1 ? '' : 's'}.
+                {!plus && <span className="block text-slate-500 text-[11.5px] mt-0.5">{usesLeft('notesInWorksheets') > 0 ? '1 free sheet from your notes a day.' : 'Today’s free one is used, unlimited with InfinitySheets+.'}</span>}
               </span>
             </label>
           )}
           {pastPapers && ppAvailable === 0 && (
-            <div className="text-[11.5px] text-amber-700 mt-2 inline-flex items-center gap-1.5"><AlertCircle className="w-4 h-4" /> {ppDone.done + ppDone.review > 0 ? 'You have already done every past-paper question for this selection — the ones you missed come back as reviews.' : 'No past-paper questions match this subject / topic / answer type. Uploads live on the Admin page.'}</div>
+            <div className="text-[11.5px] text-amber-700 mt-2 inline-flex items-center gap-1.5"><AlertCircle className="w-4 h-4" /> {ppDone.done + ppDone.review > 0 ? 'You have already done every past-paper question for this selection, the ones you missed come back as reviews.' : 'No past-paper questions match this subject / topic / answer type. Uploads live on the Admin page.'}</div>
           )}
           {!pastPapers && !aiGenerated && (
             <div className="text-[11.5px] text-rose-600 mt-2">Pick at least one question source.</div>
@@ -1943,28 +1943,28 @@ export default function Worksheets({ go, active = true }) {
           <div className="text-[10px] tracking-[0.14em] uppercase font-semibold text-zinc-500 mb-2">Mode</div>
           <div className="flex flex-col sm:flex-row gap-2.5">
             <CheckboxCard
-              label={<span>Exam mode <span className="text-slate-500 font-normal">— fullscreen, locked until submitted</span></span>}
+              label={<span>Exam mode <span className="text-slate-500 font-normal">· fullscreen, locked until submitted</span></span>}
               icon={<Lock className="w-5 h-5 text-rose-600" />}
               checked={examMode}
               onChange={setExamMode}
               testid="ws-exam-mode"
             />
             <CheckboxCard
-              label={<span>Exam simulation <span className="text-slate-500 font-normal">— full paper, real sections</span></span>}
+              label={<span>Exam simulation <span className="text-slate-500 font-normal">· full paper, real sections</span></span>}
               icon={<BookOpenCheck className="w-5 h-5 text-violet-600" />}
               checked={simulation}
               onChange={setSimulation}
               testid="ws-simulation"
             />
             <CheckboxCard
-              label={<span>Pace coach <span className="text-slate-500 font-normal">— a time budget per question</span></span>}
+              label={<span>Pace coach <span className="text-slate-500 font-normal">· a time budget per question</span></span>}
               icon={<Gauge className="w-5 h-5 text-amber-600" />}
               checked={paceCoach}
               onChange={setPaceCoach}
               testid="ws-pace-coach"
             />
             <CheckboxCard
-              label={<span>Recap <span className="text-slate-500 font-normal">— quick short answers, as many as the time allows, answers only</span></span>}
+              label={<span>Recap <span className="text-slate-500 font-normal">· quick short answers, as many as the time allows, answers only</span></span>}
               icon={<Zap className="w-5 h-5 text-emerald-600" />}
               checked={recap}
               onChange={(v) => { setRecap(v); if (v) setSimulation(false); }}
@@ -1996,7 +1996,7 @@ export default function Worksheets({ go, active = true }) {
         </button>
       </div>
       {aiGenerated && aiOn && (
-        <div className="text-[11.5px] text-slate-500 mt-2 inline-flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-blue-600" /> AI questions are written fresh for this sheet — original, in-syllabus, in {boardForSubject} style — not picked from a bank.</div>
+        <div className="text-[11.5px] text-slate-500 mt-2 inline-flex items-center gap-1.5"><Sparkles className="w-3.5 h-3.5 text-blue-600" /> AI questions are written fresh for this sheet, original, in-syllabus, in {boardForSubject} style, not picked from a bank.</div>
       )}
 
       {paper && (
@@ -2063,7 +2063,7 @@ function CustomRequestPanel({ value, onChange, plus, left, aiOn }) {
         <div className="text-[10px] tracking-[0.14em] uppercase font-semibold text-zinc-500 inline-flex items-center gap-1.5"><Wand2 className="w-3.5 h-3.5 text-violet-500" /> Custom request</div>
         <PlusBadge />
       </div>
-      <p className="text-[12.5px] text-slate-500 mt-2 leading-relaxed">Tell the AI how to tweak this worksheet — the kind of questions, contexts, focus or style you want.</p>
+      <p className="text-[12.5px] text-slate-500 mt-2 leading-relaxed">Tell the AI how to tweak this worksheet, the kind of questions, contexts, focus or style you want.</p>
       <div className="relative mt-3">
         <textarea
           value={value}
@@ -2082,7 +2082,7 @@ function CustomRequestPanel({ value, onChange, plus, left, aiOn }) {
         ))}
       </div>
       <div className="text-[11.5px] text-slate-400 mt-3">
-        {!plus ? (left > 0 ? `${left} free custom request today (used when you press Create) — unlimited with InfinitySheets+.` : 'An InfinitySheets+ feature. Today’s free one is used.') : aiOn ? `${value.length}/500 · applied when you press Create.` : 'Tick “Accurate to you” so the AI writes the questions — requests apply to those.'}
+        {!plus ? (left > 0 ? `${left} free custom request today (used when you press Create), unlimited with InfinitySheets+.` : 'An InfinitySheets+ feature. Today’s free one is used.') : aiOn ? `${value.length}/500 · applied when you press Create.` : 'Tick “Accurate to you” so the AI writes the questions, requests apply to those.'}
       </div>
     </aside>
   );
@@ -2137,7 +2137,7 @@ function AskRow({ q, given, board, ibLevel, subject, idx }) {
       </button>
       {open && (
         <div className="mt-2">
-          <AiChat title="About this question" context={{ board, ibLevel, subject, topic: q._topic || q.topic }} primer={primer} intro="Ask me anything about this question — why the answer is what it is, what the examiner wanted, or how to spot it next time." suggestions={['Why is my answer wrong?', 'Explain the correct answer step by step', 'How would the examiner mark this?']} placeholder="Ask about this question…" testid={`ask-chat-${idx}`} />
+          <AiChat title="About this question" context={{ board, ibLevel, subject, topic: q._topic || q.topic }} primer={primer} intro="Ask me anything about this question, why the answer is what it is, what the examiner wanted, or how to spot it next time." suggestions={['Why is my answer wrong?', 'Explain the correct answer step by step', 'How would the examiner mark this?']} placeholder="Ask about this question…" testid={`ask-chat-${idx}`} />
         </div>
       )}
     </div>

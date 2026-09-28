@@ -51,7 +51,7 @@ export default function Flashcards({ go, subject: forcedSubject }) {
 
   return (
     <div className="max-w-[900px]">
-      <p className="text-[14px] text-zinc-500 mb-5">Pick a topic and work through its cards: read, reveal, then say whether you knew it. No scores — the ones you didn't know just come round again.</p>
+      <p className="text-[14px] text-zinc-500 mb-5">Pick a topic and work through its cards: read, reveal, then say whether you knew it. No scores, the ones you didn't know just come round again.</p>
       {!forcedSubject && (
         <div className="flex flex-wrap items-center gap-2 mb-5">
           {subjects.map((s) => (
@@ -143,7 +143,7 @@ function TopicSession({ subject, topic, board, aiOn, onBack, markFlashcard, save
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <button onClick={onBack} className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-slate-600 hover:text-slate-900" data-testid="fc-back"><ArrowLeft className="w-4 h-4" /> {subject}</button>
         <div className="flex items-center gap-2">
-          {deck.length > 0 && <button type="button" onClick={() => { exportFlashcardsPdf(deck, `${subject} — ${topic}`); track('flashcards_printed', { n: deck.length }); }} className="btn-outline-dark inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12.5px]" data-testid="fc-print"><Printer className="w-3.5 h-3.5" /> Print</button>}
+          {deck.length > 0 && <button type="button" onClick={() => { exportFlashcardsPdf(deck, `${subject}, ${topic}`); track('flashcards_printed', { n: deck.length }); }} className="btn-outline-dark inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12.5px]" data-testid="fc-print"><Printer className="w-3.5 h-3.5" /> Print</button>}
           {aiOn && !hasConcepts && <button onClick={build} disabled={building} className="btn-violet inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12.5px] font-semibold disabled:opacity-60" data-testid="fc-build">{building ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} Build concept cards</button>}
         </div>
       </div>
@@ -157,14 +157,14 @@ function TopicSession({ subject, topic, board, aiOn, onBack, markFlashcard, save
         <div className="rounded-2xl border border-dashed border-[color:var(--color-border)] p-10 text-center bg-slate-50/50" data-testid="fc-empty">
           <Layers className="w-8 h-8 text-slate-400 mx-auto mb-2" />
           <div className="text-[15px] font-semibold text-slate-800">No cards for {topic} yet</div>
-          <div className="text-[13px] text-slate-500 mt-1">{aiOn ? 'Build the concept cards for this topic — one click, then they are yours for good.' : 'Cards come from questions you miss on worksheets, or from the AI when it is on.'}</div>
+          <div className="text-[13px] text-slate-500 mt-1">{aiOn ? 'Build the concept cards for this topic, one click, then they are yours for good.' : 'Cards come from questions you miss on worksheets, or from the AI when it is on.'}</div>
           {aiOn && <button onClick={build} disabled={building} className="btn-violet mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13.5px] font-medium disabled:opacity-60" data-testid="fc-build-empty">{building ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} Build concept cards</button>}
         </div>
       ) : !card ? (
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-8 text-center" data-testid="fc-done">
           <Check className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
           <div className="text-[16px] font-semibold text-slate-900">{tally.seen.size ? 'Deck done' : 'Nothing to review right now'}</div>
-          <div className="text-[13px] text-slate-600 mt-1">{tally.seen.size ? `You knew ${tally.known} straight away and got the other ${tally.unknown} on the second pass.` : 'Every card here is one you knew recently — they come back when it is time.'}</div>
+          <div className="text-[13px] text-slate-600 mt-1">{tally.seen.size ? `You knew ${tally.known} straight away and got the other ${tally.unknown} on the second pass.` : 'Every card here is one you knew recently, they come back when it is time.'}</div>
           <div className="flex flex-wrap justify-center gap-2 mt-4">
             <button onClick={() => restart(false)} className="btn-outline-dark inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px]"><RotateCcw className="w-4 h-4" /> Go again</button>
             {!includeResting && deck.some((c) => c.resting) && <button onClick={() => restart(true)} className="btn-violet px-4 py-2 rounded-lg text-[13px] font-medium" data-testid="fc-all">Include the ones I knew</button>}

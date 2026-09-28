@@ -96,7 +96,7 @@ export default function AdminPlaceholder() {
   const handleSeed = () => {
     if (!window.confirm('Replace your worksheet history with 9 randomized attempts per subject? This overwrites current progress.')) return;
     seedTestPerformance();
-    toast.success('Test performance seeded — check Dashboard, Performance and history.');
+    toast.success('Test performance seeded, check Dashboard, Performance and history.');
   };
 
   return (
@@ -389,7 +389,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
               <Field label="What the drawing must show">
                 <textarea className="input-base" rows={2} value={form.examAnswer} onChange={(e) => setF({ examAnswer: e.target.value })} placeholder="e.g. Labelled ray diagram for a convex lens with the object beyond 2F: two rays, image position, arrows on rays." />
               </Field>
-              <div className="text-[11.5px] text-slate-500 mt-1 inline-flex items-center gap-1"><PenTool className="w-3.5 h-3.5" /> Students can only answer this with a photo of their drawing — no typed answer.</div>
+              <div className="text-[11.5px] text-slate-500 mt-1 inline-flex items-center gap-1"><PenTool className="w-3.5 h-3.5" /> Students can only answer this with a photo of their drawing, no typed answer.</div>
             </div>
           )}
 
@@ -439,7 +439,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
         {showChains && (
           <div className="mb-4 rounded-xl border border-teal-200 bg-teal-50/40 p-3" data-testid="admin-chain-panel">
             <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="text-[12.5px] font-semibold text-teal-900">{chains.length ? `${chains.length} context chain${chains.length === 1 ? '' : 's'} — parts of one printed question` : 'No context chains in this category'}</div>
+              <div className="text-[12.5px] font-semibold text-teal-900">{chains.length ? `${chains.length} context chain${chains.length === 1 ? '' : 's'}, parts of one printed question` : 'No context chains in this category'}</div>
               <button type="button" onClick={() => setShowChains(false)} className="w-6 h-6 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white flex items-center justify-center" aria-label="Close"><X className="w-3.5 h-3.5" /></button>
             </div>
             <div className="text-[11.5px] text-slate-600 mb-2">A part flagged <span className="font-semibold text-teal-800">needs context</span> refers back to an earlier one, so the worksheet builder always serves the parts before it, in order.</div>
@@ -475,7 +475,7 @@ function CategoryPanel({ syllabus, subject, pastPapers, addPastPaper, updatePast
                     <div key={q.id} className="flex items-start gap-2 py-1 border-t border-[color:var(--color-border)] first:border-t-0">
                       <div className="min-w-0 flex-1 text-[12.5px] text-slate-800">
                         <span className="text-slate-900">{q.q}</span>
-                        <div className="text-[11px] text-slate-500 mt-0.5">{q.topic || '—'}{q.year ? ` · ${q.year}` : ''}{q.paper ? ` · ${q.paper}` : ''}{q.answerType ? ` · ${q.answerType}` : ''}{i === 0 ? ' · kept' : ''}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">{q.topic || '-'}{q.year ? ` · ${q.year}` : ''}{q.paper ? ` · ${q.paper}` : ''}{q.answerType ? ` · ${q.answerType}` : ''}{i === 0 ? ' · kept' : ''}</div>
                       </div>
                       {i > 0 && <button type="button" onClick={() => { if (confirmDelete('this question')) removePastPaper(q.id); }} className="text-[11.5px] font-semibold text-rose-700 hover:text-rose-900 shrink-0" data-testid={`admin-dup-remove-${q.id}`}>Remove</button>}
                     </div>
@@ -620,7 +620,7 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopics 
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         <div className="min-w-0">
           <div className="text-[12.5px] font-semibold text-blue-900 inline-flex items-center gap-1.5"><Layers className="w-4 h-4" /> Multiply</div>
-          <div className="text-[11.5px] text-slate-600">Reads the {pool.length} question{pool.length === 1 ? '' : 's'} {filterTopics.length ? `in ${filterTopics.length === 1 ? filterTopics[0] : `${filterTopics.length} topics (${filterTopics.join(', ')})`}` : 'in this category'} together with the {syllabus} {subject} syllabus and writes new ones on the same concepts — changed values, a different quantity asked for, or two concepts combined.</div>
+          <div className="text-[11.5px] text-slate-600">Reads the {pool.length} question{pool.length === 1 ? '' : 's'} {filterTopics.length ? `in ${filterTopics.length === 1 ? filterTopics[0] : `${filterTopics.length} topics (${filterTopics.join(', ')})`}` : 'in this category'} together with the {syllabus} {subject} syllabus and writes new ones on the same concepts, changed values, a different quantity asked for, or two concepts combined.</div>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-[11.5px] text-slate-600 inline-flex items-center gap-1.5">Make
@@ -637,7 +637,7 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopics 
       {drafts.length > 0 && (
         <>
           <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="text-[11.5px] font-semibold text-slate-700">{drafts.length} draft{drafts.length === 1 ? '' : 's'} — review, then add</div>
+            <div className="text-[11.5px] font-semibold text-slate-700">{drafts.length} draft{drafts.length === 1 ? '' : 's'}, review, then add</div>
             <div className="flex items-center gap-3">
               <button type="button" onClick={() => setDrafts([])} className="text-[11.5px] font-semibold text-slate-500 hover:text-slate-800">Discard all</button>
               <button type="button" onClick={saveAll} disabled={saving} className="text-[11.5px] font-semibold text-blue-700 hover:text-blue-900 inline-flex items-center gap-1 disabled:opacity-50" data-testid="admin-multiply-save-all">{saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Add all to library</button>
@@ -656,9 +656,9 @@ function MultiplyPanel({ syllabus, subject, questions, topicsList, filterTopics 
                     </div>
                     <div className="text-[12.5px] text-slate-900">{d.q}</div>
                     <div className="text-[11.5px] text-slate-600 mt-0.5">
-                      {d.answerType === 'Multiple choice' ? <>Options: {(d.options || []).join(' · ')} — correct: <span className="font-medium text-emerald-700">{(d.options || [])[d.a]}</span></>
+                      {d.answerType === 'Multiple choice' ? <>Options: {(d.options || []).join(' · ')}, correct: <span className="font-medium text-emerald-700">{(d.options || [])[d.a]}</span></>
                         : d.answerType === 'Typed response' ? <>Expected: <span className="font-medium text-emerald-700">{d.typedAnswer}</span></>
-                        : <>Answer: <span className="font-medium text-slate-800">{d.examAnswer || '\u2014'}</span></>}
+                        : <>Answer: <span className="font-medium text-slate-800">{d.examAnswer || '-'}</span></>}
                     </div>
                   </div>
                   <div className="flex flex-col gap-1 shrink-0">
@@ -713,7 +713,7 @@ function LibraryRow({ p, onRemove, onSave, topicsList = [], syllabus }) {
           {p.answerType === 'Exam style' && (
             <div className="text-[12.5px] text-slate-600 mt-1 flex items-start gap-1.5">
               <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-              <span>Keywords: <span className="font-medium text-slate-800">{(p.examKeywords || []).join(', ') || '\u2014'}</span></span>
+              <span>Keywords: <span className="font-medium text-slate-800">{(p.examKeywords || []).join(', ') || '-'}</span></span>
             </div>
           )}
           {p.answerType === 'Drawing' && (
@@ -725,7 +725,7 @@ function LibraryRow({ p, onRemove, onSave, topicsList = [], syllabus }) {
           {Array.isArray(p.markScheme) && p.markScheme.length > 0 && (
             <div className="text-[12px] text-slate-600 mt-1.5 rounded-md bg-slate-50 border border-[color:var(--color-border)] px-2.5 py-1.5">
               <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-0.5 inline-flex items-center gap-1"><ClipboardCheck className="w-3.5 h-3.5" /> Marking scheme · {schemeTotal(p.markScheme, p.marks)} marks</div>
-              <ul className="list-disc pl-4 space-y-0.5">{p.markScheme.map((pt, k) => <li key={k}><span className="font-semibold">{pt.marks}</span> — {pt.point}</li>)}</ul>
+              <ul className="list-disc pl-4 space-y-0.5">{p.markScheme.map((pt, k) => <li key={k}><span className="font-semibold">{pt.marks}</span> · {pt.point}</li>)}</ul>
             </div>
           )}
           {p.diagramUrl && (
@@ -831,7 +831,7 @@ function QuestionEditor({ p, topicsList, syllabus, onSave, onClose }) {
         <div className="text-[11px] tracking-[0.14em] uppercase font-semibold text-blue-700 inline-flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" /> Edit question</div>
         <button type="button" onClick={onClose} className="w-7 h-7 rounded-md text-slate-400 hover:text-slate-700 hover:bg-white flex items-center justify-center" aria-label="Cancel"><X className="w-4 h-4" /></button>
       </div>
-      <label className="block text-[10.5px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Extract — shared source material for this question (optional)</label>
+      <label className="block text-[10.5px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Extract, shared source material for this question (optional)</label>
       <textarea className="input-base min-h-[60px] text-[12.5px] mb-2" placeholder="The passage / data / scenario the parts hang off. Shown above the question, once." value={f.extract} onChange={(e) => set({ extract: e.target.value })} data-testid="editor-extract" />
       <label className="block text-[10.5px] uppercase tracking-wide text-slate-500 font-semibold mb-1">Question</label>
       <textarea className="input-base min-h-[80px] text-[13px]" value={f.q} onChange={(e) => set({ q: e.target.value })} data-testid="editor-q" />
@@ -943,7 +943,7 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
   const extract = async () => {
     if (!file) { toast.error('Choose a PDF first'); return; }
     if (!paperMeta) { toast.error('Pick which paper this PDF is (Paper 1, Paper 2 …) before scanning'); return; }
-    if (!aiOn) { toast.error('AI is switched off in Settings — turn it on to scan the PDF.'); return; }
+    if (!aiOn) { toast.error('AI is switched off in Settings, turn it on to scan the PDF.'); return; }
     if (state.user?.role !== 'admin') { toast.error('Admin access is required to add to the question bank.'); return; }
     setUploading(true);
     try {
@@ -963,7 +963,7 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
         source: 'past-paper',
         _draftId: `d_${Date.now()}_${i}`,
       }));
-      if (!list.length) throw new Error('No complete questions were found in that PDF (MCQs without a known correct option are skipped — attach the mark scheme).');
+      if (!list.length) throw new Error('No complete questions were found in that PDF (MCQs without a known correct option are skipped, attach the mark scheme).');
       if (autosave) {
         let ok = 0;
         for (const d of list) {
@@ -1042,7 +1042,7 @@ function BulkPdfUpload({ syllabus, subject, addPastPaper }) {
         <Field label="Which paper is this? (required)">
           <select className="input-base" value={paperId} onChange={(e) => setPaperId(e.target.value)} data-testid="admin-bulk-paper" required>
             <option value="">Select the paper…</option>
-            {papers.map((x) => <option key={x.id} value={x.id}>{x.label} — {x.hint}</option>)}
+            {papers.map((x) => <option key={x.id} value={x.id}>{x.label}, {x.hint}</option>)}
           </select>
         </Field>
         <Field label="Reference link (optional, attached to every question)">
@@ -1224,13 +1224,13 @@ export function MarkSchemeEditor({ value = [], onChange, marks, compact = false 
         </button>
       </div>
       {rows.length === 0 ? (
-        <div className="text-[12px] text-slate-500">Optional but recommended: list what earns each mark (e.g. "1 — correct formula", "2 — substitution and answer with units"). The AI examiner marks student answers against these points.</div>
+        <div className="text-[12px] text-slate-500">Optional but recommended: list what earns each mark (e.g. "1, correct formula", "2, substitution and answer with units"). The AI examiner marks student answers against these points.</div>
       ) : (
         <div className="flex flex-col gap-1.5">
           {rows.map((r, i) => (
             <div key={i} className="flex items-center gap-1.5">
               <input type="number" min="1" max="20" value={r.marks ?? 1} onChange={(e) => set(i, { marks: e.target.value })} className="input-base w-16 text-[12.5px] text-center" aria-label="Marks" />
-              <input value={r.point || ''} onChange={(e) => set(i, { point: e.target.value })} placeholder={`Mark point ${i + 1} — what the student must show`} className="input-base flex-1 text-[12.5px]" />
+              <input value={r.point || ''} onChange={(e) => set(i, { point: e.target.value })} placeholder={`Mark point ${i + 1}, what the student must show`} className="input-base flex-1 text-[12.5px]" />
               <button type="button" onClick={() => remove(i)} className="w-7 h-7 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center shrink-0" aria-label="Remove mark point"><X className="w-4 h-4" /></button>
             </div>
           ))}

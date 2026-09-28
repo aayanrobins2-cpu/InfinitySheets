@@ -19,7 +19,7 @@ export default function FoundingStory() {
           <div className="mt-8 flex flex-col gap-5 text-[16.5px] sm:text-[17.5px] text-slate-600 leading-relaxed">
             <p>
               Endless on-syllabus practice. Relentless drilling of weak points. Total familiarity with
-              how questions are actually asked. That&rsquo;s what families pay thousands for&mdash;and it&rsquo;s
+              how questions are actually asked. That&rsquo;s what families pay thousands for, and it&rsquo;s
               why the students who can afford it walk into exams already knowing what&rsquo;s coming.
             </p>
             <p>
@@ -28,7 +28,7 @@ export default function FoundingStory() {
               <Emphasis variant="underline" className="font-medium text-slate-800">the coaching-centre method, free, on every device</Emphasis>.
             </p>
             <p className="text-slate-500 text-[15px]">
-              InfinitySheets is early, and we&rsquo;re building it in the open&mdash;so if something can be
+              InfinitySheets is early, and we&rsquo;re building it in the open, so if something can be
               better, tell us. You&rsquo;re not just using it; you&rsquo;re shaping it.
             </p>
           </div>

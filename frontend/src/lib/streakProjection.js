@@ -90,7 +90,7 @@ export function projectStreak(worksheets = [], { subject, board, streak = 0, now
   const message = crosses
     ? `Keep this up for ${weeks} weeks and you're on track for ${nb.label === projectedLabel ? projectedLabel : projectedLabel} in ${subject}.`
     : nb && weeksToNext
-      ? `At this pace you reach ${nb.label} in ${subject} in about ${weeksToNext} week${weeksToNext === 1 ? '' : 's'}${streak >= 3 ? ` — your ${streak}-day streak is doing the work` : ''}.`
+      ? `At this pace you reach ${nb.label} in ${subject} in about ${weeksToNext} week${weeksToNext === 1 ? '' : 's'}${streak >= 3 ? `, your ${streak}-day streak is doing the work` : ''}.`
       : `Keep this rhythm and ${subject} holds at ${projectedLabel}.`;
 
   // A projection is only worth showing when it actually predicts a change:

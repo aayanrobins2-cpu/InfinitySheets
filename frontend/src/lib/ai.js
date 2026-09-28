@@ -26,10 +26,10 @@ export function setAiStudentContext({ courses = [], school = null } = {}) {
     if (subs.length) byStatus[status].push(`${c.name || c.track || 'Course'}: ${subs.join(', ')}`);
   });
   if (byStatus['On hold'].length || byStatus.Completed.length) {
-    lines.push(`Student's courses — active: ${byStatus.Active.join('; ') || 'none'}; ON HOLD: ${byStatus['On hold'].join('; ') || 'none'}; completed: ${byStatus.Completed.join('; ') || 'none'}.`);
+    lines.push(`Student's courses, active: ${byStatus.Active.join('; ') || 'none'}; ON HOLD: ${byStatus['On hold'].join('; ') || 'none'}; completed: ${byStatus.Completed.join('; ') || 'none'}.`);
     lines.push('Courses on hold are paused by the student: do not schedule, recommend or push work for them unless the student explicitly asks about them. Completed courses need no further study.');
   }
-  if (school?.name) lines.push(`The student's school: ${school.name}${school.notes ? ` — ${school.notes}` : ''}. Tailor advice to it where relevant.`);
+  if (school?.name) lines.push(`The student's school: ${school.name}${school.notes ? `, ${school.notes}` : ''}. Tailor advice to it where relevant.`);
   studentNote = lines.join('\n');
 }
 
@@ -55,6 +55,16 @@ async function readErrorMessage(error) {
  * Ask the assistant. `messages` is [{ role: 'user' | 'assistant', content }].
  * Resolves to the reply text; throws an Error with a readable message.
  */
+// Em dashes read as machine-written. Swap them for plain punctuation in every
+// AI reply (prose and JSON alike; ", " never breaks a JSON string).
+function noDashes(text) {
+  return String(text)
+    .replace(/\s*—\s*(?=[A-Z])/g, '. ')
+    .replace(/\s*—\s*/g, ', ')
+    .replace(/,\s*,/g, ',')
+    .replace(/\.\s*,/g, '.');
+}
+
 export async function askAi({ mode = 'chat', context = {}, messages = [], force = false, images = [], files = [] }) {
   if (!isSupabaseConfigured) {
     throw new Error('AI needs the Supabase connection (set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY).');
@@ -69,7 +79,7 @@ export async function askAi({ mode = 'chat', context = {}, messages = [], force 
   if (error) throw new Error(await readErrorMessage(error));
   if (data?.credits) setCredits(data.credits);
   if (data?.error) throw new Error(data.error);
-  return data?.text || '';
+  return noDashes(data?.text || '');
 }
 
 /** Today's AI credit balance ({ plan, used, limit, left, resetsAt }). */
@@ -193,7 +203,7 @@ export async function markAgainstScheme({ q, given, working, board, subject }) {
 ${String(q.extract).slice(0, 2000)}` : '',
     `Question: ${q.q}`,
     q.examAnswer ? `Model answer: ${q.examAnswer}` : '',
-    `Marking scheme (total ${max}): ${scheme || '(none — use the model answer)'}`,
+    `Marking scheme (total ${max}): ${scheme || '(none, use the model answer)'}`,
     `Student's typed answer: ${student}`,
     working?.transcript ? `Student's working (transcribed from photo): ${working.transcript}` : '',
     '',
@@ -219,7 +229,7 @@ function parseJsonReply(text) {
   return JSON.parse(repaired);
 }
 
-const QUESTION_SHAPE = 'Write all maths and science in textbook Unicode notation: 3², x⁻¹, 10⁻³, √2, ×, ÷, ≤, ≥, ±, π, θ, H₂O, m/s² — never ^, sqrt(), *, or LaTeX. Each question object: {"q": string, "topic": one of the given topics, "answerType": "Multiple choice" | "Typed response" | "Exam style" | "Drawing", "marks": integer, "options": [4 strings, MCQ only], "a": index of the correct option (MCQ only), "typedAnswer": string (typed only), "typedAliases": [strings] (typed only), "examAnswer": model answer (exam style / drawing), "examKeywords": [3-6 key ideas], "hasDiagram": true when the question shows or needs a figure, "diagramNote": short description of that figure, "markScheme": [{"point": string, "marks": integer}]}';
+const QUESTION_SHAPE = 'Write all maths and science in textbook Unicode notation: 3², x⁻¹, 10⁻³, √2, ×, ÷, ≤, ≥, ±, π, θ, H₂O, m/s², never ^, sqrt(), *, or LaTeX. Each question object: {"q": string, "topic": one of the given topics, "answerType": "Multiple choice" | "Typed response" | "Exam style" | "Drawing", "marks": integer, "options": [4 strings, MCQ only], "a": index of the correct option (MCQ only), "typedAnswer": string (typed only), "typedAliases": [strings] (typed only), "examAnswer": model answer (exam style / drawing), "examKeywords": [3-6 key ideas], "hasDiagram": true when the question shows or needs a figure, "diagramNote": short description of that figure, "markScheme": [{"point": string, "marks": integer}]}';
 
 // Recover as many COMPLETE question objects as possible from a `{"questions":[
 // ...]}` reply even when the JSON was cut off by the token limit — we walk the
@@ -323,7 +333,7 @@ function readQuestions(text) {
   try {
     const parsed = parseJsonReply(text);
     if (Array.isArray(parsed?.questions)) return parsed.questions;
-  } catch (_) { /* truncated or malformed — salvage below */ }
+  } catch (_) { /* truncated or malformed, salvage below */ }
   return recoverQuestions(text);
 }
 
@@ -345,8 +355,8 @@ export async function generateQuestions({ board, ibLevel, subject, topics, answe
       'They must be brand-new questions in the exact style this exam uses. Never reproduce a past-paper question; vary the contexts and numbers. Every question needs a correct answer and a marking scheme, and "marks" must match the scheme.',
       batches.length > 1 ? `This is batch ${i + 1} of ${batches.length}; make these questions different from the other batches by leaning on different topics and contexts.` : '',
       avoidLine,
-      notes.length ? `The student's own study notes are attached (${notes.map((f) => f.label).join(', ')}). Base the questions on what these notes cover, so the sheet tests what they have been studying — while keeping every question on the syllabus and in this exam's style.` : '',
-      String(instructions || '').trim() ? `The student asked for this — follow it as long as the questions stay on the syllabus, in this exam's style, and correct: "${String(instructions).trim().slice(0, 500)}"` : '',
+      notes.length ? `The student's own study notes are attached (${notes.map((f) => f.label).join(', ')}). Base the questions on what these notes cover, so the sheet tests what they have been studying, while keeping every question on the syllabus and in this exam's style.` : '',
+      String(instructions || '').trim() ? `The student asked for this, follow it as long as the questions stay on the syllabus, in this exam's style, and correct: "${String(instructions).trim().slice(0, 500)}"` : '',
       'For multiple choice, "a" is the 0-based INDEX of the correct option (0 = first), and options have no "A." / "B." labels.',
       `Reply as {"questions": [...]}. ${QUESTION_SHAPE}. Use "answerType": "${answerType}" for every question.`,
     ].filter(Boolean).join('\n');
@@ -377,16 +387,16 @@ export async function extractFromPdf({ paper, scheme, board, subject, topics = [
   const files = [{ ...paper, label: 'QUESTION PAPER' }];
   if (scheme) files.push({ ...scheme, label: 'MARK SCHEME' });
   const baseLines = [
-    `Extract EVERY question from the QUESTION PAPER for ${subject} (${board}) — do not stop until the last question on the last page.`,
+    `Extract EVERY question from the QUESTION PAPER for ${subject} (${board}), do not stop until the last question on the last page.`,
     scheme
       ? 'A MARK SCHEME is attached: take the accepted answer and the mark points for each question from it, matched by question number.'
       : 'No mark scheme is attached: give the correct answer and write a sensible examiner-style marking scheme for each question.',
     `Tag each question with the closest topic from: ${topics.join('; ') || '(free choice)'}.`,
     'Choose "Multiple choice" only when the paper prints options; short numeric / one-line answers are "Typed response"; anything that must be drawn/sketched/plotted/labelled is "Drawing" (it cannot be typed); anything else needing explanation or working is "Exam style". Keep every sub-part (a), (b), (c) as a separate question.',
-    'EXTRACTS: when several parts hang off the same source material — a passage, a data table, a described experiment, a scenario, a set of values — do NOT repeat it inside every part. Put it once in an "extract" field on the FIRST part of that question, verbatim, and write each part\'s "q" as only what that part actually asks. Leave "extract" out when a question needs no shared material.',
+    'EXTRACTS: when several parts hang off the same source material, a passage, a data table, a described experiment, a scenario, a set of values, do NOT repeat it inside every part. Put it once in an "extract" field on the FIRST part of that question, verbatim, and write each part\'s "q" as only what that part actually asks. Leave "extract" out when a question needs no shared material.',
     'Include a "number" field with the printed question label, e.g. "1", "3(b)", "12 (ii)".',
     'CONTEXT CHAINS: when a part cannot be answered on its own because it refers back to an earlier part or to a shared stem ("hence", "your answer to (a)", "the graph above", "using this value"), set "dependsOnPrevious": true. A part that stands completely alone gets false. Repeat the shared stem in "q" anyway, but still flag the dependency.',
-    'Put the question stem in "q" without the question number and without repeating the options (options go in "options" only). For MCQs set "a" only when the correct option is printed, given in the mark scheme, or unambiguous — otherwise set "a" to null; never guess. Include diagram questions: set "hasDiagram": true with a short "diagramNote". Skip only cover pages, instructions and answer-key commentary. Never invent options or answers you cannot see.',
+    'Put the question stem in "q" without the question number and without repeating the options (options go in "options" only). For MCQs set "a" only when the correct option is printed, given in the mark scheme, or unambiguous, otherwise set "a" to null; never guess. Include diagram questions: set "hasDiagram": true with a short "diagramNote". Skip only cover pages, instructions and answer-key commentary. Never invent options or answers you cannot see.',
     `${QUESTION_SHAPE}. Include "year" if it is printed on the paper.`,
   ];
   const seen = new Set();
@@ -538,15 +548,15 @@ export async function buildStudyPlan({ board, boards = {}, examDate, exams = [],
   const examLines = (exams || [])
     .filter((e) => e && e.date)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-    .map((e) => `${e.subject}${e.name && e.name !== 'Exam' ? ` (${e.name})` : ''} — ${e.date}`);
+    .map((e) => `${e.subject}${e.name && e.name !== 'Exam' ? ` (${e.name})` : ''}, ${e.date}`);
   const content = [
     Object.keys(boards).length ? `Board per subject: ${Object.entries(boards).map(([s, b]) => `${s} (${b.board}${b.ibLevel ? ' ' + b.ibLevel : ''})`).join(', ')}.` : '',
     `Today is ${startDate}. Study frequency the student chose: ${frequency || '3-4 per week'}. Weekly question goal: ${weeklyGoal || 50}.`,
     examLines.length
-      ? `Registered exams (soonest first): ${examLines.join('; ')}. Build the plan around ALL of these — give each subject time weighted by how soon its exam is, front-load the nearest exam, and make sure every registered exam gets covered before its date.`
+      ? `Registered exams (soonest first): ${examLines.join('; ')}. Build the plan around ALL of these, give each subject time weighted by how soon its exam is, front-load the nearest exam, and make sure every registered exam gets covered before its date.`
       : `Exam date: ${examDate || 'not set'}.`,
     `Subjects: ${(subjects || []).join(', ') || '(none yet)'}.`,
-    `Weakest topics (subject · topic · accuracy%): ${(weakTopics || []).map((t) => `${t.subject} · ${t.topic} · ${t.accuracy}%`).join('; ') || '(no data yet — spread evenly)'}.`,
+    `Weakest topics (subject · topic · accuracy%): ${(weakTopics || []).map((t) => `${t.subject} · ${t.topic} · ${t.accuracy}%`).join('; ') || '(no data yet, spread evenly)'}.`,
     'Plan the next 7 days starting today, prioritising subjects by how close their exam is.',
   ].filter(Boolean).join('\n');
   const text = await askAi({ mode: 'plan', context: { board }, messages: [{ role: 'user', content }] });
@@ -568,7 +578,7 @@ export async function buildStudyPlan({ board, boards = {}, examDate, exams = [],
  */
 export async function tweakStudyPlan({ plan, instruction, history = [], board, boards = {}, exams = [], subjects, startDate }) {
   const current = JSON.stringify({ summary: plan.summary, days: plan.days.map((d) => ({ day: d.day, date: d.date, tasks: d.tasks.map((t) => ({ subject: t.subject, topic: t.topic, minutes: t.minutes, what: t.what })) })) });
-  const examLines = (exams || []).filter((e) => e && e.date).map((e) => `${e.subject}${e.name && e.name !== 'Exam' ? ` (${e.name})` : ''} — ${e.date}`);
+  const examLines = (exams || []).filter((e) => e && e.date).map((e) => `${e.subject}${e.name && e.name !== 'Exam' ? ` (${e.name})` : ''}, ${e.date}`);
   const content = [
     `Today is ${startDate}. Subjects: ${(subjects || []).join(', ') || '(none)'}.`,
     examLines.length ? `Registered exams: ${examLines.join('; ')}.` : '',
@@ -634,7 +644,7 @@ export async function courseSearch({ subject, description, history = [] }) {
  * the front, a short exact answer on the back. Resolves to [{ front, back }].
  */
 export async function generateFlashcards({ board, subject, topic, count = 12 }) {
-  const content = `Write ${count} revision flashcards for the topic "${topic}" in ${subject} (${board}). Cover the definitions, formulas, laws, key facts and common exam traps a student must know for this topic — not practice questions. Front: one term, question or prompt (under 20 words). Back: the exact answer or definition in the words the mark scheme rewards (under 40 words, textbook Unicode notation). Reply as {"cards": [{"front": string, "back": string}]}.`;
+  const content = `Write ${count} revision flashcards for the topic "${topic}" in ${subject} (${board}). Cover the definitions, formulas, laws, key facts and common exam traps a student must know for this topic, not practice questions. Front: one term, question or prompt (under 20 words). Back: the exact answer or definition in the words the mark scheme rewards (under 40 words, textbook Unicode notation). Reply as {"cards": [{"front": string, "back": string}]}.`;
   const text = await askAi({ mode: 'flashcards', context: { board, subject, topic }, messages: [{ role: 'user', content }] });
   const parsed = parseJsonReply(text);
   const cards = (parsed.cards || []).map((c) => ({ front: String(c.front || '').trim(), back: String(c.back || '').trim() })).filter((c) => c.front && c.back).slice(0, 30);
@@ -679,7 +689,7 @@ export async function multiplyQuestions({ board, ibLevel, subject, questions, co
  * notes from the syllabus. Resolves to { title, passage, blanks:[{n, answer, aliases}] }.
  */
 export async function buildBlurt({ board, ibLevel, subject, topic, notes = '', files = [] }) {
-  const own = files.length ? 'Use ONLY the attached notes as the source material (rewrite them tidily, keep the facts). Stay on the requested topic if the notes cover more.' : notes ? `Use ONLY these notes from the student as the source material (rewrite them tidily, keep the facts):\n"""\n${String(notes).slice(0, 12000)}\n"""` : 'No notes were supplied — write them from the syllabus for this exam.';
+  const own = files.length ? 'Use ONLY the attached notes as the source material (rewrite them tidily, keep the facts). Stay on the requested topic if the notes cover more.' : notes ? `Use ONLY these notes from the student as the source material (rewrite them tidily, keep the facts):\n"""\n${String(notes).slice(0, 12000)}\n"""` : 'No notes were supplied, write them from the syllabus for this exam.';
   const content = `Build a blurting exercise for the topic "${topic}" in ${subject} (${board}${ibLevel ? ` ${ibLevel}` : ''}).\n${own}\nReply as {"title", "passage", "blanks"} exactly as instructed. Number the blanks [[1]], [[2]]… in order of appearance.`;
   const text = await askAi({ mode: 'blurt', context: { board, ibLevel, subject, topic }, messages: [{ role: 'user', content }], files });
   const parsed = parseJsonReply(text);

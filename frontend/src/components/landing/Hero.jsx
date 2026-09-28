@@ -9,7 +9,7 @@ import FeatureCarousel from './FeatureCarousel';
 import { EXAM_TRACKS } from '../../data/mock';
 
 /* Static heading; the word "you" gets swept with a marker highlight
-   shortly after load — study vibes, no typing. */
+   shortly after load, study vibes, no typing. */
 function HeroHeading() {
   const [highlight, setHighlight] = useState(false);
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           className="mt-8 text-[18px] sm:text-[20px] text-slate-500 max-w-[680px] leading-relaxed"
         >
-          Endless on-syllabus practice, targeted feedback, and worksheets that actually help you improve, &mdash;<Emphasis variant="highlight" className="text-slate-800 font-medium">completely free</Emphasis>.
+          Endless on-syllabus practice, targeted feedback, and worksheets that actually help you improve, <Emphasis variant="highlight" className="text-slate-800 font-medium">completely free</Emphasis>.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 24 }}

@@ -55,7 +55,7 @@ export function FeatureDemo({ kind }) {
           <text x="30" y="35" fontSize="10" fill="#64748b">Your answer: 4.2 m/s</text>
           <g className="demo-slide">
             <rect x="60" y="58" width="184" height="38" rx="12" fill="#eff6ff" stroke="#93c5fd" strokeWidth="1.2" />
-            <text x="74" y="74" fontSize="9.5" fill="#1d4ed8" fontWeight="600">Almost — remember to convert</text>
+            <text x="74" y="74" fontSize="9.5" fill="#1d4ed8" fontWeight="600">Almost, remember to convert</text>
             <text x="74" y="87" fontSize="9.5" fill="#1d4ed8" fontWeight="600">km/h to m/s before dividing.</text>
           </g>
         </g>

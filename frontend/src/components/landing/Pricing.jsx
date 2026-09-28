@@ -24,7 +24,7 @@ export default function Pricing() {
             <div className="max-w-[760px]">
               <h2 className="h-display text-[44px] sm:text-[54px] lg:text-[60px] leading-[1.05]">Your grades deserve better. This costs nothing.</h2>
               <p className="mt-6 text-[16px] text-slate-600 leading-relaxed max-w-[520px]">
-                The training that moves exam results has always sat behind a price&mdash;coaching fees, paid
+                The training that moves exam results has always sat behind a price, coaching fees, paid
                 question banks, private tutors. We built InfinitySheets so the only thing standing between
                 you and a better grade is the decision to start. Every feature. Every subject. Free.
               </p>

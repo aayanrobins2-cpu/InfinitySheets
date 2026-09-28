@@ -32,13 +32,13 @@ export function topicAccuracy(worksheets = [], subject, topics = []) {
 export function adaptiveDifficulty(worksheets, subject, topics, fallback = 'Medium') {
   const { accuracy, sample, lastDifficulty } = topicAccuracy(worksheets, subject, topics);
   if (accuracy === null || sample < 5) {
-    return { level: fallback, reason: 'Not enough recent answers on these topics yet — starting at your default.', accuracy, sample };
+    return { level: fallback, reason: 'Not enough recent answers on these topics yet, starting at your default.', accuracy, sample };
   }
   const base = LEVELS.indexOf(LEVELS.includes(lastDifficulty) ? lastDifficulty : fallback);
   let idx = base;
   let reason;
-  if (accuracy >= 85) { idx = Math.min(LEVELS.length - 1, base + 1); reason = `${accuracy}% on the last ${sample} questions — stepping up.`; }
-  else if (accuracy < 55) { idx = Math.max(0, base - 1); reason = `${accuracy}% on the last ${sample} questions — easing off to rebuild the basics.`; }
-  else { reason = `${accuracy}% on the last ${sample} questions — holding this level.`; }
+  if (accuracy >= 85) { idx = Math.min(LEVELS.length - 1, base + 1); reason = `${accuracy}% on the last ${sample} questions, stepping up.`; }
+  else if (accuracy < 55) { idx = Math.max(0, base - 1); reason = `${accuracy}% on the last ${sample} questions, easing off to rebuild the basics.`; }
+  else { reason = `${accuracy}% on the last ${sample} questions, holding this level.`; }
   return { level: LEVELS[idx], reason, accuracy, sample };
 }

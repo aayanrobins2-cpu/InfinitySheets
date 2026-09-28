@@ -98,7 +98,7 @@ export default function PlusUpgradeBanner() {
         >
           Keep using the free plan
         </button>
-        <p className="mt-3 text-[11.5px] text-slate-400 text-center">The free plan keeps every core feature &mdash; worksheets, weakness analysis, predicted grades and streaks.</p>
+        <p className="mt-3 text-[11.5px] text-slate-400 text-center">The free plan keeps every core feature, worksheets, weakness analysis, predicted grades and streaks.</p>
       </div>
     </div>
   );

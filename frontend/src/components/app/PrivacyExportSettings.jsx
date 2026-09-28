@@ -14,9 +14,9 @@ export function PrivacySection() {
   const c = state.consent;
   const setBand = (band) => recordConsent({ ageBand: band, aiConsent: band === 'under13' ? !!c?.parentConsent && !!c?.aiConsent : c?.aiConsent !== false, parentConsent: band === 'under13' ? !!c?.parentConsent : null });
   const setAi = (on) => {
-    if (on && c?.ageBand === 'under13' && !c?.parentConsent) { toast.error('Under 13: a parent or guardian needs to OK the AI first — tick the box below.'); return; }
+    if (on && c?.ageBand === 'under13' && !c?.parentConsent) { toast.error('Under 13: a parent or guardian needs to OK the AI first, tick the box below.'); return; }
     recordConsent({ ...c, aiConsent: on });
-    toast.success(on ? 'AI helpers on' : 'AI helpers off — nothing is sent to Gemini');
+    toast.success(on ? 'AI helpers on' : 'AI helpers off, nothing is sent to Gemini');
   };
   const setParent = (ok) => recordConsent({ ...c, parentConsent: ok, aiConsent: ok ? c?.aiConsent !== false : false });
 
